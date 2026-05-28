@@ -185,7 +185,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 <div class="landing" id="lp">
   <div class="lp"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="lc">
-    <div class="icon">✨</div>
+    <div class="icon">⚓</div>
     <h2>舰长信息登记</h2>
     <p class="sub">Luminos · Captain Gift Registry</p>
     <button class="btn-captain" onclick="openGuestNick()">📝 填写舰长礼物</button>
@@ -226,7 +226,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   <div class="hd">
   <div class="hd-in">
     <div class="hd-title">
-      <span class="ic">✨</span>
+      <span class="ic">⚓</span>
       <div>
         <h1 id="hdTitle">舰长信息管理</h1>
         <div class="sub" id="hdSub">管理员 · --</div>
@@ -253,11 +253,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   <div class="m-hd"><h2 id="ft">添加记录</h2><button onclick="closeForm()">✕</button></div>
   <div class="m-bd">
     <div class="fg"><label>昵称 <span class="rq">*</span></label><input id="fn" type="text" placeholder="昵称" maxlength="20"></div>
-    <div class="fg"><label>手机号</label><input id="fph" type="tel" inputmode="numeric" placeholder="11位手机号（加密存储）" maxlength="11"></div>
+    <div class="fg"><label>手机号 <span style="color:var(--err)">*</span></label><input id="fph" type="tel" inputmode="numeric" placeholder="11位手机号（加密存储）" maxlength="11" required></div>
     <div class="fg"><label>省份</label><select id="fp"><option value="">请选择省份</option></select></div>
     <div class="fg"><label>城市</label><select id="fc" disabled><option value="">请先选省份</option></select></div>
     <div class="fg"><label>区县</label><select id="fd" disabled><option value="">请先选城市</option></select></div>
-    <div class="fg"><label>详细地址</label><input id="fa" type="text" placeholder="详细地址（加密存储）"></div>
+    <div class="fg"><label>详细地址 <span style="color:var(--err)">*</span></label><input id="fa" type="text" placeholder="详细地址（加密存储）" required></div>
     <div class="fg"><label>备注</label><textarea id="fnote" rows="2" placeholder="备注（选填）"></textarea></div>
   </div>
   <div class="m-ft">
@@ -725,7 +725,9 @@ async function saveForm() {
   const fa = document.getElementById('fa').value.trim();
   const fn = document.getElementById('fnote').value.trim();
   if (!n) { toast('请输入昵称','e'); return; }
-  if (ph && !/^1[3-9]\d{9}$/.test(ph)) { toast('请输入正确的11位手机号','e'); return; }
+  if (!ph) { toast('请输入手机号','e'); return; }
+  if (!/^1[3-9]\d{9}$/.test(ph)) { toast('请输入正确的11位手机号','e'); return; }
+  if (!fa) { toast('请输入详细地址','e'); return; }
 
   const phone_enc = await encrypt(ph);
   const address_enc = await encrypt(fa);
