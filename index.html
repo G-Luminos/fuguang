@@ -218,6 +218,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   </div>
 </div>
 
+<!-- Guest Nickname Modal -->
+<div class="mo" id="gnm">
+  <div class="m">
+    <div class="m-hd"><h2>✏️ 填写舰长信息</h2><button onclick="closeGuestNick()">✕</button></div>
+    <div class="m-bd">
+      <div class="fg">
+        <label>你的B站昵称 <span class="rq">*</span></label>
+        <input type="text" id="gnInput" placeholder="请输入B站昵称" autocomplete="off">
+        <div class="hi">昵称将用于标识你的登记信息</div>
+      </div>
+      <div class="err" id="gne" style="color:var(--err);font-size:12px;display:none;margin-top:-6px;margin-bottom:8px">请输入昵称</div>
+      <button class="ok" style="width:100%;padding:11px;border-radius:9px;border:none;background:linear-gradient(135deg,#00A1D6,#23ADE5);color:#FFF;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px" onclick="submitGuestNick()">进入填写</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== App ===== -->
 <div class="app" id="app">
   <div class="hd">
@@ -393,11 +409,19 @@ function doLogin(){
   }
 }
 function doGuest(){
-  const nm=prompt('请输入你的B站昵称：');
-  if(!nm||!nm.trim()){toast('请输入昵称','e');return}
-  role='guest';guestName=nm.trim();
+  document.getElementById('gnInput').value='';
+  document.getElementById('gne').style.display='none';
+  document.getElementById('gnm').classList.add('show');
+  setTimeout(()=>document.getElementById('gnInput').focus(),300);
+}
+function closeGuestNick(){document.getElementById('gnm').classList.remove('show')}
+function submitGuestNick(){
+  const nm=document.getElementById('gnInput').value.trim();
+  if(!nm){document.getElementById('gne').style.display='block';return}
+  role='guest';guestName=nm;
   localStorage.setItem(SK+'_role','guest');
   localStorage.setItem(SK+'_gn',guestName);
+  closeGuestNick();
   enterApp();
 }
 function doLogout(){
@@ -634,6 +658,7 @@ function toast(msg,t){
 /* ========= Enter key ========= */
 document.getElementById('lpw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lpw').focus()});
+document.getElementById('gnInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitGuestNick()});
 
 /* ================================================================
    Area API + Autocomplete (Mobile-friendly)
