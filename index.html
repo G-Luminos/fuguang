@@ -167,7 +167,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .to.s{background:var(--ok)}.to.e{background:var(--err)}.to.i{background:var(--p)}
 @keyframes ti{from{opacity:0;transform:translateY(-14px)}to{opacity:1}}@keyframes to{from{opacity:1}to{opacity:0;transform:translateY(-14px)}}
 
-/* ===== Missing Button & Modal Styles ===== */
+/* ===== Missing Button Styles ===== */
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:1.5px solid var(--bd);border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;background:transparent;color:var(--txt)}
 .btn:hover{background:var(--bg)}
 .btn-p{border:none;background:var(--p);color:#FFF;border-radius:9px;box-shadow:0 2px 8px rgba(0,161,214,.25)}
@@ -176,11 +176,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .btn-e{border:none;background:var(--err);color:#FFF;border-radius:9px}
 .btn-e:hover{opacity:.9}
 .btn-e:active{transform:scale(.97)}
-.md{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:20px 16px 16px;animation:su .25s ease;-webkit-overflow-scrolling:touch}
-@media(min-width:600px){.md{border-radius:16px;width:480px}}
-.md h3{font-size:16px;font-weight:700;margin-bottom:12px}
-.sr{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:860px;margin:12px auto 0;padding:0 16px}
-@media(min-width:600px){.sr{grid-template-columns:repeat(4,1fr)}}
 
 </style>
 </head>
@@ -189,99 +184,106 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 <!-- ===== Landing Page ===== -->
 <div class="landing" id="lp">
   <div class="lp"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  <div style="position:relative;z-index:1">
-    <div class="logo">✨ 浮光</div>
-    <h2 style="color:#fff;margin:8px 0 4px;font-size:18px;font-weight:500">舰长信息登记</h2>
-    <p style="color:rgba(255,255,255,.6);font-size:13px;margin-bottom:32px">Luminos · Captain Gift Registry</p>
-    <button class="btn-captain" onclick="openGuestNick()" style="max-width:320px;margin-bottom:12px">📝 填写舰长礼物</button>
-    <div style="margin-top:24px">
-      <span style="color:rgba(255,255,255,.35);font-size:12px;cursor:pointer" onclick="openAdminLogin()">管理入口 ▸</span>
-    </div>
+  <div class="lc">
+    <div class="icon">✨</div>
+    <h2>舰长信息登记</h2>
+    <p class="sub">Luminos · Captain Gift Registry</p>
+    <button class="btn-captain" onclick="openGuestNick()">📝 填写舰长礼物</button>
+    <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>
   </div>
 </div>
 
 <!-- Admin Login Modal -->
-<div class="mo" id="alm"><div class="md">
-  <h3>管理员登录</h3>
-  <div class="fg"><label>账号</label><input id="lu" type="text" placeholder="请输入账号" autocomplete="username"></div>
-  <div class="fg"><label>密码</label><input id="lpw" type="password" placeholder="请输入密码" autocomplete="current-password"></div>
-  <div id="le" style="color:var(--err);font-size:13px;display:none;text-align:center;margin:8px 0">账号或密码错误</div>
-  <div style="display:flex;gap:8px;margin-top:16px">
-    <button class="btn" onclick="closeAdminLogin()" style="flex:1">取消</button>
-    <button class="btn btn-p" onclick="doLogin()" style="flex:1">登录</button>
+<div class="mo" id="alm"><div class="m">
+  <div class="m-hd"><h2>管理员登录</h2><button onclick="closeAdminLogin()">✕</button></div>
+  <div class="m-bd">
+    <div class="fg"><label>账号</label><input id="lu" type="text" placeholder="请输入账号" autocomplete="username"></div>
+    <div class="fg"><label>密码</label><input id="lpw" type="password" placeholder="请输入密码" autocomplete="current-password"></div>
+    <div id="le" style="color:var(--err);font-size:13px;display:none;text-align:center;margin:8px 0">账号或密码错误</div>
+  </div>
+  <div class="m-ft">
+    <button class="cancel" onclick="closeAdminLogin()">取消</button>
+    <button class="ok" onclick="doLogin()">登录</button>
   </div>
 </div></div>
 
 <!-- Guest Nickname Modal -->
-<div class="mo" id="gnm"><div class="md">
-  <h3>填写昵称</h3>
-  <p style="color:var(--ts);font-size:13px;margin:8px 0 16px">请输入你的昵称，用于标识你的记录</p>
-  <div class="fg"><input id="gnInput" type="text" placeholder="你的昵称" maxlength="20"></div>
-  <div id="gne" style="color:var(--err);font-size:13px;display:none;margin:8px 0">请输入昵称</div>
-  <div style="display:flex;gap:8px;margin-top:16px">
-    <button class="btn" onclick="closeGuestNick()" style="flex:1">取消</button>
-    <button class="btn btn-p" onclick="submitGuestNick()" style="flex:1">进入</button>
+<div class="mo" id="gnm"><div class="m">
+  <div class="m-hd"><h2>填写昵称</h2><button onclick="closeGuestNick()">✕</button></div>
+  <div class="m-bd">
+    <p style="color:var(--ts);font-size:13px;margin-bottom:12px">请输入你的昵称，用于标识你的记录</p>
+    <div class="fg"><input id="gnInput" type="text" placeholder="你的昵称" maxlength="20"></div>
+    <div id="gne" style="color:var(--err);font-size:13px;display:none;margin:8px 0">请输入昵称</div>
+  </div>
+  <div class="m-ft">
+    <button class="cancel" onclick="closeGuestNick()">取消</button>
+    <button class="ok" onclick="submitGuestNick()">进入</button>
   </div>
 </div></div>
 
 <!-- ===== Main App ===== -->
 <div class="app" id="app">
   <div class="hd">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="logo-sm">✨</span>
+  <div class="hd-in">
+    <div class="hd-title">
+      <span class="ic">✨</span>
       <div>
-        <div id="hdTitle" style="font-weight:600;font-size:15px">舰长信息管理</div>
-        <div id="hdSub" style="font-size:11px;color:var(--ts)">管理员 · --</div>
+        <h1 id="hdTitle">舰长信息管理</h1>
+        <div class="sub" id="hdSub">管理员 · --</div>
       </div>
     </div>
-    <div style="display:flex;gap:6px">
-      <button id="btnHist" onclick="openHistory()" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--ts);cursor:pointer">📅 历史</button>
-      <button id="btnExport" onclick="exportData()" style="background:none;border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--ts);cursor:pointer">📤 导出</button>
+    <div class="hd-act">
+      <button class="btn-o" id="btnHist" onclick="openHistory()">📅 历史</button>
+      <button class="btn-o" id="btnExport" onclick="exportData()">📤 导出</button>
       <button onclick="doLogout()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px">👋</button>
     </div>
   </div>
-  <div id="gb" style="display:none;background:var(--p);color:#fff;padding:10px 16px;font-size:13px;text-align:center">
-    当前昵称：<strong id="guestName"></strong>
   </div>
-  <div id="statsRow" class="sr"></div>
-  <div id="srch" style="padding:8px 16px;display:none">
-    <input id="si" type="text" placeholder="搜索昵称/手机/地址..." oninput="render()" style="width:100%;padding:10px 14px;border:1px solid var(--bd);border-radius:10px;font-size:14px;outline:none">
+  <div id="gb" class="gb" style="display:none"><div class="gb-in">当前昵称：<strong id="guestName"></strong></div></div>
+  <div id="statsRow" class="stats"></div>
+  <div id="srch" class="srch" style="display:none">
+    <input id="si" type="text" placeholder="搜索昵称/手机/地址..." oninput="render()">
   </div>
-  <div id="gl" style="padding:8px 16px 80px"></div>
+  <div id="gl" class="main"></div>
   <button class="fab" onclick="openForm()">＋</button>
 </div>
 
 <!-- Form Modal -->
-<div class="mo" id="fm"><div class="md" style="max-height:85vh;overflow-y:auto">
-  <h3 id="ft">添加记录</h3>
-  <div class="fg"><label>昵称 <span style="color:var(--err)">*</span></label><input id="fn" type="text" placeholder="昵称" maxlength="20"></div>
-  <div class="fg"><label>手机号</label><input id="fph" type="tel" placeholder="手机号（加密存储）" maxlength="20"></div>
-  <div class="fg"><label>省份</label><select id="fp"><option value="">请选择省份</option></select></div>
-  <div class="fg"><label>城市</label><select id="fc" disabled><option value="">请先选省份</option></select></div>
-  <div class="fg"><label>区县</label><select id="fd" disabled><option value="">请先选城市</option></select></div>
-  <div class="fg"><label>详细地址</label><input id="fa" type="text" placeholder="详细地址（加密存储）"></div>
-  <div class="fg"><label>备注</label><textarea id="fnote" rows="2" placeholder="备注（选填）"></textarea></div>
-  <div style="display:flex;gap:8px;margin-top:16px">
-    <button class="btn" onclick="closeForm()" style="flex:1">取消</button>
-    <button class="btn btn-p" onclick="saveForm()" style="flex:1">保存</button>
+<div class="mo" id="fm"><div class="m" style="max-height:85vh;overflow-y:auto">
+  <div class="m-hd"><h2 id="ft">添加记录</h2><button onclick="closeForm()">✕</button></div>
+  <div class="m-bd">
+    <div class="fg"><label>昵称 <span class="rq">*</span></label><input id="fn" type="text" placeholder="昵称" maxlength="20"></div>
+    <div class="fg"><label>手机号</label><input id="fph" type="tel" inputmode="numeric" placeholder="11位手机号（加密存储）" maxlength="11"></div>
+    <div class="fg"><label>省份</label><select id="fp"><option value="">请选择省份</option></select></div>
+    <div class="fg"><label>城市</label><select id="fc" disabled><option value="">请先选省份</option></select></div>
+    <div class="fg"><label>区县</label><select id="fd" disabled><option value="">请先选城市</option></select></div>
+    <div class="fg"><label>详细地址</label><input id="fa" type="text" placeholder="详细地址（加密存储）"></div>
+    <div class="fg"><label>备注</label><textarea id="fnote" rows="2" placeholder="备注（选填）"></textarea></div>
+  </div>
+  <div class="m-ft">
+    <button class="cancel" onclick="closeForm()">取消</button>
+    <button class="ok" onclick="saveForm()">保存</button>
   </div>
 </div></div>
 
 <!-- Confirm Modal -->
-<div class="mo" id="cd"><div class="md">
-  <h3>确认操作</h3>
-  <p id="cm" style="margin:12px 0;font-size:14px;color:var(--ts)"></p>
-  <div style="display:flex;gap:8px;margin-top:16px">
-    <button class="btn" onclick="closeConfirm()" style="flex:1">取消</button>
-    <button class="btn btn-e" id="cok" style="flex:1">确定</button>
+<div class="cd" id="cd"><div class="cx">
+  <p id="cm"></p>
+  <div class="cx-act">
+    <button class="cc" onclick="closeConfirm()">取消</button>
+    <button class="ck" id="cok">确定</button>
   </div>
 </div></div>
 
 <!-- History Modal -->
-<div class="mo" id="hm"><div class="md">
-  <h3>历史月份</h3>
-  <div id="hmBody" style="margin-top:12px"></div>
-  <button class="btn" onclick="closeHistory()" style="width:100%;margin-top:16px">关闭</button>
+<div class="mo" id="hm"><div class="m">
+  <div class="m-hd"><h2>历史月份</h2><button onclick="closeHistory()">✕</button></div>
+  <div class="m-bd">
+    <div id="hmBody"></div>
+  </div>
+  <div class="m-ft">
+    <button class="cancel" onclick="closeHistory()" style="flex:1">关闭</button>
+  </div>
 </div></div>
 
 <!-- Toast -->
@@ -723,7 +725,7 @@ async function saveForm() {
   const fa = document.getElementById('fa').value.trim();
   const fn = document.getElementById('fnote').value.trim();
   if (!n) { toast('请输入昵称','e'); return; }
-  if (ph && !/^[\d\-]+$/.test(ph)) { toast('手机号格式不正确','e'); return; }
+  if (ph && !/^1[3-9]\d{9}$/.test(ph)) { toast('请输入正确的11位手机号','e'); return; }
 
   const phone_enc = await encrypt(ph);
   const address_enc = await encrypt(fa);
