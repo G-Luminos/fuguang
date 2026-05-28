@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>浮光舰长信息登记</title>
+<style>
+:root{
+--p:#00A1D6;--pd:#0084B5;--al:#FB7299;--bg:#F4F5F7;--card:#FFF;
+--txt:#18191C;--ts:#61666D;--bd:#E3E5E7;--ok:#00C091;--err:#F04864;
+--rd:12px;--sd:0 2px 12px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;-webkit-tap-highlight-color:transparent}
+
+/* ===== Landing ===== */
+.landing{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a1628;padding:24px;text-align:center;position:relative;overflow:hidden;perspective:1200px}
+/* 3D floating orbs */
+.landing::before,.landing::after{content:'';position:absolute;border-radius:50%;pointer-events:none;will-change:transform}
+.landing::before{width:340px;height:340px;top:-80px;left:-60px;background:radial-gradient(circle,rgba(0,161,214,.55) 0%,transparent 70%);animation:orb1 8s ease-in-out infinite alternate;filter:blur(40px)}
+.landing::after{width:280px;height:280px;bottom:-60px;right:-40px;background:radial-gradient(circle,rgba(251,114,153,.45) 0%,transparent 70%);animation:orb2 10s ease-in-out infinite alternate;filter:blur(40px)}
+@keyframes orb1{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(40px,30px,80px) scale(1.15)}}
+@keyframes orb2{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(-30px,-40px,60px) scale(1.2)}}
+/* Particle dots container */
+.lp{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lp i{position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.35);will-change:transform,opacity;animation:float 6s ease-in-out infinite}
+.lp i:nth-child(1){left:12%;top:20%;animation-delay:0s;animation-duration:7s}
+.lp i:nth-child(2){left:75%;top:15%;animation-delay:1s;animation-duration:8s;width:2px;height:2px}
+.lp i:nth-child(3){left:45%;top:70%;animation-delay:2s;animation-duration:6s}
+.lp i:nth-child(4){left:85%;top:55%;animation-delay:.5s;animation-duration:9s;width:4px;height:4px;background:rgba(0,161,214,.5)}
+.lp i:nth-child(5){left:20%;top:80%;animation-delay:3s;animation-duration:7s;width:2px;height:2px}
+.lp i:nth-child(6){left:60%;top:35%;animation-delay:1.5s;animation-duration:10s;background:rgba(251,114,153,.4)}
+.lp i:nth-child(7){left:35%;top:45%;animation-delay:4s;animation-duration:6s;width:2px;height:2px}
+.lp i:nth-child(8){left:90%;top:80%;animation-delay:2.5s;animation-duration:8s}
+.lp i:nth-child(9){left:5%;top:55%;animation-delay:3.5s;animation-duration:7s;background:rgba(0,161,214,.4);width:4px;height:4px}
+.lp i:nth-child(10){left:50%;top:10%;animation-delay:0.8s;animation-duration:9s;width:2px;height:2px}
+.lp i:nth-child(11){left:70%;top:75%;animation-delay:1.2s;animation-duration:6s;background:rgba(251,114,153,.3)}
+.lp i:nth-child(12){left:28%;top:30%;animation-delay:2.2s;animation-duration:11s;width:2px;height:2px}
+@keyframes float{0%{transform:translate3d(0,0,0);opacity:.2}25%{opacity:.7}50%{transform:translate3d(15px,-30px,20px);opacity:.4}75%{opacity:.8}100%{transform:translate3d(-10px,20px,-10px);opacity:.2}}
+/* Grid floor for 3D depth */
+.lg{position:absolute;bottom:0;left:-20%;right:-20%;height:40%;background:linear-gradient(180deg,transparent 0%,rgba(0,161,214,.06) 100%);transform:rotateX(55deg);transform-origin:bottom center;pointer-events:none;opacity:.5}
+.lg::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,transparent 1px,transparent 60px);animation:gridPulse 4s ease-in-out infinite alternate}
+@keyframes gridPulse{0%{opacity:.3}100%{opacity:.6}}
+/* Content z-lift */
+.lc{position:relative;z-index:2;animation:contentIn .8s ease-out}
+@keyframes contentIn{from{transform:translate3d(0,30px,-40px);opacity:0}to{transform:translate3d(0,0,0);opacity:1}}
+.landing .icon{font-size:60px;margin-bottom:8px;animation:iconFloat 3s ease-in-out infinite alternate;filter:drop-shadow(0 4px 12px rgba(0,161,214,.4))}
+@keyframes iconFloat{0%{transform:translateY(0)}100%{transform:translateY(-8px)}}
+.landing h2{font-size:26px;font-weight:800;color:#FFF;letter-spacing:1px;text-shadow:0 0 30px rgba(0,161,214,.3)}
+.landing .sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:6px;margin-bottom:36px}
+.landing .btn-captain{display:block;width:100%;max-width:320px;margin:0 auto;padding:15px 24px;border:none;border-radius:12px;background:linear-gradient(135deg,#00A1D6,#23ADE5);color:#FFF;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 24px rgba(0,161,214,.35),inset 0 1px 0 rgba(255,255,255,.2);transition:all .18s;font-family:inherit;letter-spacing:1px;transform-style:preserve-3d}
+.landing .btn-captain:hover{transform:translateY(-3px) translateZ(8px);box-shadow:0 12px 36px rgba(0,161,214,.45)}
+.landing .btn-captain:active{transform:translateY(0) translateZ(0) scale(.97)}
+.landing .admin-link{margin-top:32px;font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;transition:color .15s}
+.landing .admin-link:hover{color:rgba(255,255,255,.6)}
+/* Admin login modal */
+.alogin .m{border-radius:16px;max-width:340px;width:calc(100% - 32px)}
+.alogin .m-hd{border-bottom:none;padding-bottom:0}
+.alogin .m-hd h2{font-size:15px;color:var(--ts)}
+.alogin .err{color:var(--err);font-size:12px;display:none;margin-bottom:8px}
+
+/* ===== App ===== */
+.app{display:none}.app.show{display:block}
+
+/* ===== Header ===== */
+.hd{background:linear-gradient(135deg,var(--p) 0%,#23ADE5 100%);color:#FFF;padding:12px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,161,214,.25)}
+.hd-in{display:flex;align-items:center;justify-content:space-between;max-width:860px;margin:0 auto}
+.hd-title{display:flex;align-items:center;gap:8px}
+.hd-title .ic{font-size:22px}
+.hd-title h1{font-size:16px;font-weight:700}
+.hd-title .sub{font-size:11px;opacity:.8}
+.hd-act{display:flex;gap:6px}
+.hd-act .btn-o{background:rgba(255,255,255,.15);color:#FFF;border:1px solid rgba(255,255,255,.25);padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit}
+.hd-act .btn-o:hover{background:rgba(255,255,255,.28)}
+
+/* ===== Admin-only ===== */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:860px;margin:12px auto 0;padding:0 16px}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr)}}
+.sc{background:var(--card);border-radius:var(--rd);padding:14px;text-align:center;box-shadow:var(--sd)}
+.sc .num{font-size:24px;font-weight:800;color:var(--p)}
+.sc .lb{font-size:11px;color:var(--ts);margin-top:3px}
+.srch{max-width:860px;margin:10px auto 0;padding:0 16px}
+.srch input{width:100%;padding:10px 14px 10px 36px;border:1.5px solid var(--bd);border-radius:10px;font-size:14px;background:var(--card);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='%23999' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:11px center;transition:border-color .15s;font-family:inherit}
+.srch input:focus{outline:none;border-color:var(--p)}
+
+/* ===== Guest banner ===== */
+.gb{max-width:860px;margin:10px auto 0;padding:0 16px}
+.gb-in{background:linear-gradient(135deg,#E6F7FC,#F0F9FF);border:1.5px solid #BAE7FF;border-radius:var(--rd);padding:11px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ts)}
+.gb-in b{color:var(--p)}
+
+/* ===== Cards ===== */
+.main{max-width:860px;margin:0 auto;padding:10px 16px 120px}
+.gl{display:flex;flex-direction:column;gap:9px}
+.gc{background:var(--card);border-radius:var(--rd);box-shadow:var(--sd);overflow:hidden;border-left:4px solid var(--p)}
+.gc-hd{display:flex;align-items:center;padding:11px 14px;gap:10px}
+.gc-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#FFF;font-weight:700;font-size:14px;background:linear-gradient(135deg,var(--p),#23ADE5);flex-shrink:0}
+.gc-info{flex:1;min-width:0}
+.gc-nm{font-weight:700;font-size:14px}
+.gc-meta{font-size:12px;color:var(--ts);margin-top:2px}
+.gc-act{display:flex;gap:2px;flex-shrink:0}
+.gc-act button{background:none;border:none;padding:5px;cursor:pointer;border-radius:6px;font-size:14px;transition:background .15s}
+.gc-act button:hover{background:var(--bg)}
+.gc-dt{display:none;padding:0 14px 11px;font-size:12px;color:var(--ts);line-height:1.7;border-top:1px solid var(--bd);margin-top:0;padding-top:9px}
+.gc-dt.show{display:block}
+.gc-dt p{margin-bottom:2px}
+.gc-dt strong{color:var(--txt);font-weight:600}
+
+/* ===== Empty ===== */
+.empty{text-align:center;padding:48px 20px;color:var(--ts)}
+.empty .ic{font-size:48px;margin-bottom:10px}
+.empty p{font-size:14px}
+
+/* ===== FAB ===== */
+.fab{position:fixed;bottom:22px;right:22px;width:52px;height:52px;border-radius:50%;background:var(--al);color:#FFF;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 14px rgba(251,114,153,.4);z-index:99;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.fab:hover{transform:scale(1.08)}.fab:active{transform:scale(.95)}
+
+/* ===== Modal ===== */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.mo.show{display:flex}
+@media(min-width:600px){.mo{align-items:center}.mo>.m{width:480px}}
+.m{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;animation:su .25s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:600px){@keyframes su{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}}
+.m-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px;position:sticky;top:0;background:var(--card);z-index:1;border-bottom:1px solid var(--bd)}
+.m-hd h2{font-size:15px}
+.m-hd button{width:28px;height:28px;border:none;background:var(--bg);border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.m-bd{padding:12px 16px 14px}
+.m-ft{padding:8px 16px 16px;display:flex;gap:10px}
+.m-ft button{flex:1;padding:10px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.m-ft .cancel{border:1.5px solid var(--bd);background:transparent;color:var(--txt)}
+.m-ft .ok{border:none;background:var(--al);color:#FFF}
+
+/* ===== Form ===== */
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--ts);margin-bottom:4px}
+.fg label .rq{color:var(--err)}
+.fg input,.fg textarea{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;background:var(--bg);transition:border-color .15s;font-family:inherit}
+.fg input:focus,.fg textarea:focus{outline:none;border-color:var(--p);background:#FFF}
+.fg textarea{resize:vertical;min-height:50px}
+.fg .hi{font-size:11px;color:var(--ts);margin-top:3px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* Autocomplete dropdown */
+.acw{position:relative}
+.acw input{width:100%}
+.acdl{position:absolute;left:0;right:0;top:100%;background:var(--card);border:1.5px solid var(--bd);border-top:none;border-radius:0 0 8px 8px;max-height:160px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.1);display:none}
+.acdl.show{display:block}
+.acdl .aci{padding:8px 11px;font-size:13px;cursor:pointer;transition:background .1s}
+.acdl .aci:hover,.acdl .aci.active{background:rgba(0,161,214,.08);color:var(--p)}
+.acdl .aci mark{background:rgba(0,161,214,.15);color:var(--p);font-weight:700;border-radius:2px;padding:0 1px}
+.acdl .empty-msg{padding:10px;font-size:12px;color:var(--ts);text-align:center}
+
+/* ===== History Modal ===== */
+.hist-item{background:var(--bg);border-radius:9px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.hist-item .mon{font-weight:700;font-size:14px}
+.hist-item .cnt{font-size:12px;color:var(--ts)}
+.hist-item button{padding:6px 12px;border-radius:7px;border:1.5px solid var(--p);background:transparent;color:var(--p);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* ===== Confirm ===== */
+.cd{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center}
+.cd.show{display:flex}
+.cx{background:var(--card);border-radius:14px;padding:22px 18px 14px;max-width:310px;width:calc(100% - 32px);text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.cx p{font-size:15px;font-weight:600;margin-bottom:16px}
+.cx-act{display:flex;gap:10px}
+.cx-act button{flex:1;padding:9px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:inherit}
+.cx-act .cc{border:1.5px solid var(--bd);background:transparent;color:var(--txt)}
+.cx-act .ck{background:var(--err);color:#FFF}
+
+/* ===== Toast ===== */
+.tc{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.to{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;color:#FFF;box-shadow:0 4px 12px rgba(0,0,0,.12);animation:ti .25s ease,to .25s ease 2.5s forwards;pointer-events:auto}
+.to.s{background:var(--ok)}.to.e{background:var(--err)}.to.i{background:var(--p)}
+@keyframes ti{from{opacity:0;transform:translateY(-14px)}to{opacity:1}}@keyframes to{from{opacity:1}to{opacity:0;transform:translateY(-14px)}}
+</style>
+</head>
+<body>
+
+<div class="tc" id="tc"></div>
+
+<!-- ===== Landing ===== -->
+<div class="landing" id="lp">
+  <div class="lp"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="lg"></div>
+  <div class="lc">
+    <div class="icon">⚓</div>
+    <h2>浮光-Luminos</h2>
+    <div class="sub">B站舰长信息登记</div>
+    <button class="btn-captain" onclick="doGuest()">填写舰长信息</button>
+    <div class="admin-link" onclick="openAdminLogin()">管理</div>
+  </div>
+</div>
+
+<!-- Admin Login Modal -->
+<div class="mo alogin" id="alm">
+  <div class="m">
+    <div class="m-hd"><h2>管理员登录</h2><button onclick="closeAdminLogin()">✕</button></div>
+    <div class="m-bd">
+      <div class="fg"><label>账号</label><input type="text" id="lu" placeholder="用户名" autocomplete="username"></div>
+      <div class="fg"><label>密码</label><input type="password" id="lpw" placeholder="密码" autocomplete="current-password"></div>
+      <div class="err" id="le">账号或密码错误</div>
+      <button class="ok" style="width:100%;padding:11px;border-radius:9px;border:none;background:var(--p);color:#FFF;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit" onclick="doLogin()">登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== App ===== -->
+<div class="app" id="app">
+  <!-- Header -->
+  <div class="hd">
+    <div class="hd-in">
+      <div class="hd-title">
+        <span class="ic">⚓</span>
+        <div>
+          <h1 id="hdTitle">舰长信息登记</h1>
+          <div class="sub" id="hdSub"></div>
+        </div>
+      </div>
+      <div class="hd-act">
+        <button class="btn-o" id="btnHist" onclick="openHistory()" style="display:none">📂 历史</button>
+        <button class="btn-o" id="btnExport" onclick="exportData()" style="display:none">📥 导出</button>
+        <button class="btn-o" onclick="doLogout()">退出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats (admin) -->
+  <div class="stats" id="statsRow"></div>
+
+  <!-- Guest banner -->
+  <div class="gb" id="gb" style="display:none">
+    <div class="gb-in">👀 游客模式 — 你好 <b id="guestName"></b>，以下是你的登记信息</div>
+  </div>
+
+  <!-- Search (admin) -->
+  <div class="srch" id="srch" style="display:none">
+    <input type="text" id="si" placeholder="搜索昵称 / 手机 / 地址..." oninput="render()">
+  </div>
+
+  <!-- List -->
+  <div class="main"><div class="gl" id="gl"></div></div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="openForm()" title="添加">＋</button>
+</div>
+
+<!-- ===== Form Modal ===== -->
+<div class="mo" id="fm">
+  <div class="m">
+    <div class="m-hd"><h2 id="ft">添加记录</h2><button onclick="closeForm()">✕</button></div>
+    <div class="m-bd">
+      <div class="fg">
+        <label>舰长昵称 <span class="rq">*</span></label>
+        <input type="text" id="fn" placeholder="B站昵称">
+      </div>
+      <div class="fg">
+        <label>手机号 <span class="rq">*</span></label>
+        <input type="tel" id="fph" placeholder="13800138000 或 18700000000-1234">
+        <div class="hi">虚拟号用「手机号-分机号」格式</div>
+      </div>
+      <div class="fr3">
+        <div class="fg"><label>省 <span class="rq">*</span></label><div class="acw"><input type="text" id="fp" placeholder="搜索省份..." autocomplete="off"><div class="acdl" id="dl-p"></div></div></div>
+        <div class="fg"><label>市 <span class="rq">*</span></label><div class="acw"><input type="text" id="fc" placeholder="先选省份" autocomplete="off" disabled><div class="acdl" id="dl-c"></div></div></div>
+        <div class="fg"><label>区 <span class="rq">*</span></label><div class="acw"><input type="text" id="fd" placeholder="先选城市" autocomplete="off" disabled><div class="acdl" id="dl-d"></div></div></div>
+      </div>
+      <div class="fg">
+        <label>详细地址 <span class="rq">*</span></label>
+        <textarea id="fa" placeholder="街道/门牌号/小区/楼栋等"></textarea>
+      </div>
+      <div class="fg">
+        <label>备注</label>
+        <textarea id="fnote" placeholder="选填" style="min-height:36px"></textarea>
+      </div>
+    </div>
+    <div class="m-ft">
+      <button class="cancel" onclick="closeForm()">取消</button>
+      <button class="ok" onclick="saveForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== History Modal ===== -->
+<div class="mo" id="hm">
+  <div class="m">
+    <div class="m-hd"><h2>📂 历史记录</h2><button onclick="closeHistory()">✕</button></div>
+    <div class="m-bd" id="hmBody" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ===== Confirm ===== -->
+<div class="cd" id="cd">
+  <div class="cx">
+    <p id="cm"></p>
+    <div class="cx-act">
+      <button class="cc" onclick="closeConfirm()">取消</button>
+      <button class="ck" id="cok">确定</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+/* ========= Config ========= */
+const ADMIN_U='fuguang', ADMIN_P='5099';
+const MUNI=['北京市','上海市','天津市','重庆市'];
+const SK='luminos_v5';
+
+/* ========= State ========= */
+let role=null, guestName='', editingId=null;
+
+/* ========= Storage ========= */
+function load(){try{return JSON.parse(localStorage.getItem(SK))||{}}catch(e){return{}}}
+function save(d){localStorage.setItem(SK,JSON.stringify(d))}
+function allData(){return load()}
+
+// Data structure: { records:{ '2026-05':[...], '2026-06':[...] }, historyMonths:['2026-05'] }
+function getData(){
+  const d=load();
+  if(!d.records)d.records={};
+  if(!d.historyMonths)d.historyMonths=[];
+  return d;
+}
+function getMonthKey(m){return m}
+function getCurMonth(){
+  const n=new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+}
+function getPrevMonth(){
+  const n=new Date();n.setDate(1);n.setMonth(n.getMonth()-1);
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+}
+function getRecords(m){
+  const d=getData();
+  return d.records[m]||[];
+}
+function setRecords(m,recs){
+  const d=getData();d.records[m]=recs;save(d);
+}
+
+/* ========= Month rollover ========= */
+function checkMonthRollover(){
+  const lm=localStorage.getItem(SK+'_lastMonth');
+  const cm=getCurMonth();
+  if(lm && lm!==cm){
+    // Month changed: move previous month to history
+    const d=getData();
+    if(!d.historyMonths)d.historyMonths=[];
+    if(!d.historyMonths.includes(lm))d.historyMonths.push(lm);
+    save(d);
+  }
+  localStorage.setItem(SK+'_lastMonth',cm);
+}
+
+/* ========= Auth ========= */
+function openAdminLogin(){document.getElementById('alm').classList.add('show');document.getElementById('le').style.display='none'}
+function closeAdminLogin(){document.getElementById('alm').classList.remove('show');document.getElementById('lu').value='';document.getElementById('lpw').value=''}
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lpw').value;
+  if(u===ADMIN_U && p===ADMIN_P){
+    role='admin';localStorage.setItem(SK+'_role','admin');
+    closeAdminLogin();enterApp();
+  }else{
+    const e=document.getElementById('le');e.style.display='block';
+    setTimeout(()=>e.style.display='none',3000);
+  }
+}
+function doGuest(){
+  const nm=prompt('请输入你的B站昵称：');
+  if(!nm||!nm.trim()){toast('请输入昵称','e');return}
+  role='guest';guestName=nm.trim();
+  localStorage.setItem(SK+'_role','guest');
+  localStorage.setItem(SK+'_gn',guestName);
+  enterApp();
+}
+function doLogout(){
+  role=null;guestName='';
+  localStorage.removeItem(SK+'_role');localStorage.removeItem(SK+'_gn');
+  document.getElementById('lp').style.display='';
+  document.getElementById('app').classList.remove('show');
+  closeAdminLogin();
+}
+function enterApp(){
+  checkMonthRollover();
+  document.getElementById('lp').style.display='none';
+  document.getElementById('app').classList.add('show');
+  const isA=role==='admin';
+  document.getElementById('btnHist').style.display=isA?'':'none';
+  document.getElementById('btnExport').style.display=isA?'':'none';
+  document.getElementById('statsRow').style.display=isA?'grid':'none';
+  document.getElementById('srch').style.display=isA?'':'none';
+  document.getElementById('gb').style.display=isA?'none':'';
+  if(!isA)document.getElementById('guestName').textContent=guestName;
+  document.getElementById('hdTitle').textContent=isA?'舰长信息管理':'我的登记信息';
+  document.getElementById('hdSub').textContent=isA?('管理员 · '+getCurMonth()):'舰长';
+  render();
+}
+
+/* ========= Render ========= */
+function render(){
+  if(role==='admin')renderStats();
+  const list=document.getElementById('gl');
+  const recs=getVisible();
+  if(recs.length===0){
+    const mg=role==='guest'?'你还没有登记信息，点击右下角 ＋ 添加':'本月暂无记录';
+    list.innerHTML='<div class="empty"><div class="ic">📋</div><p>'+mg+'</p></div>';
+    return;
+  }
+  recs.sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+  const isA=role==='admin';
+  list.innerHTML=recs.map(r=>{
+    const ad=fullAd(r);
+    return '<div class="gc" id="c-'+r.id+'">'+
+      '<div class="gc-hd" onclick="toggleD(\''+r.id+'\')">'+
+        '<div class="gc-av">'+(r.n||'?').charAt(0)+'</div>'+
+        '<div class="gc-info">'+
+          '<div class="gc-nm">'+esc(r.n)+'</div>'+
+          '<div class="gc-meta">📱 '+(r.ph||'未填')+'</div>'+
+        '</div>'+
+        (isA?'<div class="gc-act" onclick="event.stopPropagation()"><button onclick="editR(\''+r.id+'\')">✏️</button><button onclick="delR(\''+r.id+'\')">🗑️</button></div>':'')+
+      '</div>'+
+      '<div class="gc-dt" id="d-'+r.id+'">'+
+        '<p><strong>昵称：</strong>'+esc(r.n)+'</p>'+
+        '<p><strong>手机：</strong>'+(r.ph||'未填')+'</p>'+
+        '<p><strong>地址：</strong>'+(ad||'未填')+'</p>'+
+        (r.note?'<p><strong>备注：</strong>'+esc(r.note)+'</p>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+  if(role==='admin')renderStats();
+}
+
+function getVisible(){
+  let recs=getRecords(getCurMonth());
+  if(role==='guest')return recs.filter(r=>r.n===guestName);
+  const q=document.getElementById('si').value.trim().toLowerCase();
+  if(!q)return recs;
+  return recs.filter(r=>
+    r.n.toLowerCase().includes(q)||(r.ph||'').toLowerCase().includes(q)||fullAd(r).toLowerCase().includes(q)
+  );
+}
+
+function renderStats(){
+  const recs=getRecords(getCurMonth());
+  document.getElementById('statsRow').innerHTML=
+    '<div class="sc"><div class="num">'+recs.length+'</div><div class="lb">本月舰长</div></div>'+
+    '<div class="sc"><div class="num" style="color:var(--al)">'+recs.filter(r=>r.ph).length+'</div><div class="lb">已填手机</div></div>'+
+    '<div class="sc"><div class="num" style="color:var(--ok)">'+recs.filter(r=>r.p&&r.c&&r.d).length+'</div><div class="lb">地址完整</div></div>'+
+    '<div class="sc"><div class="num" style="color:var(--err)">'+getData().historyMonths.length+'</div><div class="lb">历史月份</div></div>';
+}
+
+function fullAd(r){
+  const ps=[];
+  const im=MUNI.includes(r.p);
+  if(r.p)ps.push(r.p);
+  if(r.c&&!(im&&r.c===r.p))ps.push(r.c);
+  if(r.d)ps.push(r.d);
+  if(r.ad)ps.push(r.ad);
+  return ps.join(' ');
+}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function toggleD(id){document.getElementById('d-'+id).classList.toggle('show')}
+
+/* ========= Form ========= */
+async function openForm(id){
+  editingId=id||null;
+  document.getElementById('ft').textContent=id?'编辑记录':'添加记录';
+  // Reset area state
+  selProvince=null;selCity=null;cItems=[];dItems=[];
+  document.getElementById('fc').disabled=true;document.getElementById('fc').placeholder='先选省份';
+  document.getElementById('fd').disabled=true;document.getElementById('fd').placeholder='先选城市';
+  if(id){
+    const r=getRecords(getCurMonth()).find(x=>x.id===id);
+    if(r){
+      document.getElementById('fn').value=r.n||'';
+      document.getElementById('fph').value=r.ph||'';
+      document.getElementById('fa').value=r.ad||'';
+      document.getElementById('fnote').value=r.note||'';
+      // Restore province
+      if(r.p){
+        if(!pItems.length)pItems=await fetchArea('100000');
+        const pm=pItems.find(it=>it.name===r.p);
+        if(pm){
+          selProvince=pm;
+          document.getElementById('fp').value=pm.name;
+          document.getElementById('fc').disabled=false;document.getElementById('fc').placeholder='搜索城市...';
+          // Restore city
+          cItems=await fetchArea(pm.adcode);
+          if(r.c){
+            const cm=cItems.find(it=>it.name===r.c);
+            if(cm){
+              selCity=cm;
+              document.getElementById('fc').value=cm.name;
+              document.getElementById('fd').disabled=false;document.getElementById('fd').placeholder='搜索区县...';
+              // Restore district
+              dItems=await fetchArea(cm.adcode);
+              document.getElementById('fd').value=r.d||'';
+            }else{document.getElementById('fc').value=r.c||'';document.getElementById('fd').value=r.d||''}
+          }else{document.getElementById('fc').value='';document.getElementById('fd').value=''}
+        }else{document.getElementById('fp').value=r.p||'';document.getElementById('fc').value=r.c||'';document.getElementById('fd').value=r.d||'';document.getElementById('fc').disabled=false;document.getElementById('fd').disabled=false}
+      }else{document.getElementById('fp').value='';document.getElementById('fc').value='';document.getElementById('fd').value=''}
+    }
+  }else{
+    document.getElementById('fn').value=role==='guest'?guestName:'';
+    document.getElementById('fph').value='';document.getElementById('fp').value='';document.getElementById('fc').value='';document.getElementById('fd').value='';document.getElementById('fa').value='';document.getElementById('fnote').value='';
+  }
+  document.getElementById('fm').classList.add('show');
+}
+function closeForm(){document.getElementById('fm').classList.remove('show');editingId=null;hideDl('dl-p');hideDl('dl-c');hideDl('dl-d')}
+function saveForm(){
+  const n=document.getElementById('fn').value.trim();
+  const ph=document.getElementById('fph').value.trim();
+  const fp=document.getElementById('fp').value.trim();
+  const fc=document.getElementById('fc').value.trim();
+  const fd=document.getElementById('fd').value.trim();
+  const fa=document.getElementById('fa').value.trim();
+  const fn=document.getElementById('fnote').value.trim();
+  if(!n){toast('请输入昵称','e');return}
+  if(ph&&!/^[\d\-]+$/.test(ph)){toast('手机号格式不正确','e');return}
+  const pac=selProvince?selProvince.adcode:'',cac=selCity?selCity.adcode:'';
+  const rec={id:editingId||Date.now().toString(36)+Math.random().toString(36).slice(2,6),n,ph,p:fp,c:fc,d:fd,ad:fa,pac,cac,note:fn,t:new Date().toISOString()};
+  if(editingId){rec.t=(getRecords(getCurMonth()).find(x=>x.id===editingId)||{}).t||rec.t}
+  const recs=getRecords(getCurMonth());
+  if(editingId){const i=recs.findIndex(x=>x.id===editingId);if(i>=0)recs[i]=rec}else{recs.push(rec)}
+  setRecords(getCurMonth(),recs);
+  closeForm();render();toast(editingId?'已更新 ✅':'已添加 ✅','s');
+}
+function editR(id){openForm(id)}
+
+/* ========= Delete ========= */
+function delR(id){
+  if(role!=='admin')return;
+  const r=getRecords(getCurMonth()).find(x=>x.id===id);
+  document.getElementById('cm').textContent='确定删除「'+(r?r.n:'此记录')+'」？';
+  document.getElementById('cd').classList.add('show');
+  document.getElementById('cok').onclick=()=>{
+    setRecords(getCurMonth(),getRecords(getCurMonth()).filter(x=>x.id!==id));
+    closeConfirm();render();toast('已删除','i');
+  };
+}
+function closeConfirm(){document.getElementById('cd').classList.remove('show')}
+
+/* ========= History (admin only) ========= */
+function openHistory(){
+  if(role!=='admin')return;
+  const d=getData();
+  const hm=d.historyMonths||[];
+  let html='';
+  if(hm.length===0){html='<div style="text-align:center;padding:24px;color:#61666D;font-size:13px">暂无历史记录</div>';}
+  hm.sort().reverse().forEach(m=>{
+    const recs=getRecords(m);
+    html+='<div class="hist-item"><div><div class="mon">'+m+'</div><div class="cnt">'+recs.length+' 条记录</div></div>'+
+      '<button onclick="exportHistory(\''+m+'\')">导出 xlsx</button></div>';
+  });
+  document.getElementById('hmBody').innerHTML=html;
+  document.getElementById('hm').classList.add('show');
+}
+function closeHistory(){document.getElementById('hm').classList.remove('show')}
+function exportHistory(m){
+  const recs=getRecords(m);
+  if(recs.length===0){toast('该月无数据','e');return}
+  doExport(recs,m);
+}
+
+/* ========= Export ========= */
+function exportData(){
+  if(role!=='admin')return;
+  const recs=getRecords(getCurMonth());
+  if(recs.length===0){toast('本月无数据','e');return}
+  const comp=recs.filter(r=>r.ph&&r.p&&r.c&&r.d);
+  if(comp.length<recs.length){
+    document.getElementById('cm').textContent=(recs.length-comp.length)+' 条信息不全，是否只导出 '+comp.length+' 条完整记录？';
+    document.getElementById('cd').classList.add('show');
+    document.getElementById('cok').onclick=()=>{closeConfirm();doExport(comp,getCurMonth())};
+    return;
+  }
+  doExport(comp,getCurMonth());
+}
+function doExport(recs,month){
+  month=month||getCurMonth();
+  if(typeof XLSX==='undefined'){genCSV(recs,month);return}
+  const wb=XLSX.utils.book_new();
+  const wd=[['导入说明','',''],['1.收件地址按【省 市 区 详细地址】填写，标红部分必填','',''],['2.直辖市省市均填市名，如北京市','',''],['3.虚拟号格式：18700000000-1234','',''],['4.单次最多200个地址，超出请分批','',''],['5.导入说明行可保留','',''],['','',''],['收件人','收件人手机号','收件地址']];
+  recs.forEach(r=>wd.push([r.n,r.ph||'',fullAd(r)]));
+  const ws=XLSX.utils.aoa_to_sheet(wd);
+  ws['!cols']=[{wch:16},{wch:20},{wch:60}];
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}}];
+  XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  const blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/octet-stream'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='柔造发货_'+month+'.xlsx';a.click();URL.revokeObjectURL(a.href);
+  toast('已导出 '+recs.length+' 条（柔造 xlsx）','s');
+}
+function genCSV(recs,month){
+  month=month||getCurMonth();
+  const hd=['收件人','收件人手机号','收件地址'];
+  const rows=recs.map(r=>[r.n,r.ph||'',fullAd(r)]);
+  const ce=v=>{v=String(v);return(v.includes(',')||v.includes('"')||v.includes('\n'))?'"'+v.replace(/"/g,'""')+'"':v};
+  const lines=[hd.map(ce).join(','),...rows.map(r=>r.map(ce).join(','))];
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='柔造发货_'+month+'.csv';a.click();URL.revokeObjectURL(a.href);
+  toast('已导出 '+recs.length+' 条（CSV）','s');
+}
+
+/* ========= Toast ========= */
+function toast(msg,t){
+  t=t||'i';const c=document.getElementById('tc');const d=document.createElement('div');
+  d.className='to '+(t==='s'?'s':t==='e'?'e':'i');d.textContent=msg;
+  c.appendChild(d);setTimeout(()=>d.remove(),3000);
+}
+
+/* ========= Enter key ========= */
+document.getElementById('lpw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lpw').focus()});
+
+/* ========= Area API (DataV Aliyun) ========= */
+const AREA_API='https://geo.datav.aliyun.com/areas_v3/bound/';
+let areaCache={}; // adcode -> [{name,adcode}]
+let selProvince=null,selCity=null; // {name,adcode}
+
+async function fetchArea(adcode){
+  if(areaCache[adcode])return areaCache[adcode];
+  try{
+    const r=await fetch(AREA_API+adcode+'_full.json');
+    const d=await r.json();
+    const list=(d.features||[]).map(f=>({name:f.properties.name,adcode:String(f.properties.adcode)}));
+    areaCache[adcode]=list;
+    return list;
+  }catch(e){console.error('Area API error',e);return[]}
+}
+
+function hlMatch(text,kw){
+  if(!kw)return text;
+  const i=text.toLowerCase().indexOf(kw.toLowerCase());
+  if(i<0)return text;
+  return text.slice(0,i)+'<mark>'+text.slice(i,i+kw.length)+'</mark>'+text.slice(i+kw.length);
+}
+
+function showDl(id,items,kw){
+  const dl=document.getElementById(id);
+  if(!items.length){dl.innerHTML='<div class="empty-msg">无匹配结果</div>';dl.classList.add('show');return}
+  dl.innerHTML=items.map((it,i)=>'<div class="aci" data-i="'+i+'" data-name="'+it.name+'" data-adcode="'+it.adcode+'">'+hlMatch(it.name,kw)+'</div>').join('');
+  dl.classList.add('show');
+}
+function hideDl(id){document.getElementById(id).classList.remove('show')}
+
+// Province input
+let pItems=[],cItems=[],dItems=[];
+(async()=>{pItems=await fetchArea('100000')})();
+
+document.getElementById('fp').addEventListener('focus',async function(){
+  if(!pItems.length)pItems=await fetchArea('100000');
+  const kw=this.value.trim();
+  const filtered=kw?pItems.filter(it=>it.name.includes(kw)):pItems;
+  showDl('dl-p',filtered,kw);
+});
+document.getElementById('fp').addEventListener('input',async function(){
+  if(!pItems.length)pItems=await fetchArea('100000');
+  const kw=this.value.trim();
+  const filtered=kw?pItems.filter(it=>it.name.includes(kw)):pItems;
+  showDl('dl-p',filtered,kw);
+});
+document.getElementById('dl-p').addEventListener('click',async function(e){
+  const ci=e.target.closest('.aci');if(!ci)return;
+  const name=ci.dataset.name,adcode=ci.dataset.adcode;
+  selProvince={name,adcode};
+  document.getElementById('fp').value=name;
+  hideDl('dl-p');
+  // Reset city & district
+  document.getElementById('fc').value='';document.getElementById('fc').disabled=false;document.getElementById('fc').placeholder='搜索城市...';
+  document.getElementById('fd').value='';document.getElementById('fd').disabled=true;document.getElementById('fd').placeholder='先选城市';
+  selCity=null;cItems=[];dItems=[];
+  // Prefetch cities
+  cItems=await fetchArea(adcode);
+});
+
+// City input
+document.getElementById('fc').addEventListener('focus',async function(){
+  if(this.disabled)return;
+  if(!selProvince)return;
+  if(!cItems.length)cItems=await fetchArea(selProvince.adcode);
+  const kw=this.value.trim();
+  const filtered=kw?cItems.filter(it=>it.name.includes(kw)):cItems;
+  showDl('dl-c',filtered,kw);
+});
+document.getElementById('fc').addEventListener('input',async function(){
+  if(!selProvince)return;
+  if(!cItems.length)cItems=await fetchArea(selProvince.adcode);
+  const kw=this.value.trim();
+  const filtered=kw?cItems.filter(it=>it.name.includes(kw)):cItems;
+  showDl('dl-c',filtered,kw);
+});
+document.getElementById('dl-c').addEventListener('click',async function(e){
+  const ci=e.target.closest('.aci');if(!ci)return;
+  const name=ci.dataset.name,adcode=ci.dataset.adcode;
+  selCity={name,adcode};
+  document.getElementById('fc').value=name;
+  hideDl('dl-c');
+  // Reset district
+  document.getElementById('fd').value='';document.getElementById('fd').disabled=false;document.getElementById('fd').placeholder='搜索区县...';
+  dItems=[];
+  // Prefetch districts
+  dItems=await fetchArea(adcode);
+});
+
+// District input
+document.getElementById('fd').addEventListener('focus',async function(){
+  if(this.disabled)return;
+  if(!selCity)return;
+  if(!dItems.length)dItems=await fetchArea(selCity.adcode);
+  const kw=this.value.trim();
+  const filtered=kw?dItems.filter(it=>it.name.includes(kw)):dItems;
+  showDl('dl-d',filtered,kw);
+});
+document.getElementById('fd').addEventListener('input',async function(){
+  if(!selCity)return;
+  if(!dItems.length)dItems=await fetchArea(selCity.adcode);
+  const kw=this.value.trim();
+  const filtered=kw?dItems.filter(it=>it.name.includes(kw)):dItems;
+  showDl('dl-d',filtered,kw);
+});
+document.getElementById('dl-d').addEventListener('click',function(e){
+  const ci=e.target.closest('.aci');if(!ci)return;
+  const name=ci.dataset.name;
+  document.getElementById('fd').value=name;
+  hideDl('dl-d');
+});
+
+// Close dropdowns on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.acw')){hideDl('dl-p');hideDl('dl-c');hideDl('dl-d')}
+});
+
+/* ========= Init ========= */
+(function(){
+  const r=localStorage.getItem(SK+'_role');
+  if(r==='admin'){role='admin';enterApp()}
+  else if(r==='guest'){role='guest';guestName=localStorage.getItem(SK+'_gn')||'';if(guestName)enterApp();else localStorage.removeItem(SK+'_role')}
+})();
+</script>
+</body>
+</html>
