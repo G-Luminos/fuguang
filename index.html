@@ -129,8 +129,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .fg{margin-bottom:12px}
 .fg label{display:block;font-size:12px;font-weight:600;color:var(--ts);margin-bottom:4px}
 .fg label .rq{color:var(--err)}
-.fg input,.fg textarea{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:16px;background:var(--bg);transition:border-color .15s;font-family:inherit;-webkit-appearance:none;appearance:none}
-.fg input:focus,.fg textarea:focus{outline:none;border-color:var(--p);background:#FFF}
+.fg input,.fg textarea,.fg select{width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:16px;background:var(--bg);transition:border-color .15s;font-family:inherit;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg textarea:focus,.fg select:focus{outline:none;border-color:var(--p);background:#FFF}
 .fg textarea{resize:vertical;min-height:50px}
 .fg .hi{font-size:11px;color:var(--ts);margin-top:3px}
 
@@ -139,31 +139,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 @media(min-width:600px){.addr-row{flex-direction:row;gap:8px}}
 .addr-row .fg{flex:1}
 
-/* Autocomplete dropdown — FIXED position for mobile keyboard compatibility */
-.acw{position:relative}
-.acw input{width:100%}
-.acdl{
-  position:fixed;
-  left:16px;right:16px;
-  background:var(--card);
-  border:1.5px solid var(--bd);
-  border-radius:0 0 12px 12px;
-  max-height:45vh;
-  overflow-y:auto;
-  z-index:9999;
-  box-shadow:0 8px 24px rgba(0,0,0,.15);
-  display:none;
-  -webkit-overflow-scrolling:touch;
-}
-@media(min-width:600px){
-  .acdl{position:absolute;left:0;right:0;max-height:200px;z-index:50;border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-}
-.acdl.show{display:block}
-.acdl .aci{padding:12px 14px;font-size:15px;cursor:pointer;transition:background .1s;-webkit-tap-highlight-color:transparent;border-bottom:1px solid #f0f0f0}
-.acdl .aci:last-child{border-bottom:none}
-.acdl .aci:hover,.acdl .aci.active{background:rgba(0,161,214,.08);color:var(--p)}
-.acdl .aci mark{background:rgba(0,161,214,.15);color:var(--p);font-weight:700;border-radius:2px;padding:0 1px}
-.acdl .empty-msg{padding:14px;font-size:13px;color:var(--ts);text-align:center}
+.fg select{cursor:pointer;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%2361666D'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:12px}
+.fg select:disabled{opacity:.5;cursor:not-allowed}
 
 /* ===== History Modal ===== */
 .hist-item{background:var(--bg);border-radius:9px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
@@ -287,24 +264,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
       <div class="addr-row">
         <div class="fg">
           <label>省 <span class="rq">*</span></label>
-          <div class="acw">
-            <input type="text" id="fp" placeholder="搜索省份..." autocomplete="off" readonly>
-            <div class="acdl" id="dl-p"></div>
-          </div>
+          <select id="fp"><option value="">请选择省份</option></select>
         </div>
         <div class="fg">
           <label>市 <span class="rq">*</span></label>
-          <div class="acw">
-            <input type="text" id="fc" placeholder="先选省份" autocomplete="off" disabled readonly>
-            <div class="acdl" id="dl-c"></div>
-          </div>
+          <select id="fc" disabled><option value="">请先选省份</option></select>
         </div>
         <div class="fg">
           <label>区 <span class="rq">*</span></label>
-          <div class="acw">
-            <input type="text" id="fd" placeholder="先选城市" autocomplete="off" disabled readonly>
-            <div class="acdl" id="dl-d"></div>
-          </div>
+          <select id="fd" disabled><option value="">请先选城市</option></select>
         </div>
       </div>
 
@@ -516,9 +484,9 @@ function toggleD(id){document.getElementById('d-'+id).classList.toggle('show')}
 async function openForm(id){
   editingId=id||null;
   document.getElementById('ft').textContent=id?'编辑记录':'添加记录';
-  selProvince=null;selCity=null;cItems=[];dItems=[];
-  document.getElementById('fc').disabled=true;document.getElementById('fc').placeholder='先选省份';
-  document.getElementById('fd').disabled=true;document.getElementById('fd').placeholder='先选城市';
+  selProvince=null;selCity=null;
+  document.getElementById('fc').innerHTML='<option value="">请先选省份</option>';document.getElementById('fc').disabled=true;
+  document.getElementById('fd').innerHTML='<option value="">请先选城市</option>';document.getElementById('fd').disabled=true;
   if(id){
     const r=getRecords(getCurMonth()).find(x=>x.id===id);
     if(r){
@@ -527,39 +495,46 @@ async function openForm(id){
       document.getElementById('fa').value=r.ad||'';
       document.getElementById('fnote').value=r.note||'';
       if(r.p){
-        if(!pItems.length)pItems=await fetchArea('100000');
-        const pm=pItems.find(it=>it.name===r.p);
-        if(pm){
-          selProvince=pm;
-          document.getElementById('fp').value=pm.name;
-          document.getElementById('fc').disabled=false;document.getElementById('fc').placeholder='搜索城市...';
-          cItems=await fetchArea(pm.adcode);
+        const provinces=areaCache['100000']||await fetchArea('100000');
+        fillSelect('fp',provinces,'请选择省份');
+        document.getElementById('fp').value=r.p;
+        const popt=Array.from(document.getElementById('fp').options).find(o=>o.value===r.p);
+        if(popt){
+          selProvince={name:r.p,adcode:popt.dataset.adcode};
+          const cities=await fetchArea(popt.dataset.adcode);
+          fillSelect('fc',cities,'请选择城市');
+          document.getElementById('fc').disabled=false;
           if(r.c){
-            const cm=cItems.find(it=>it.name===r.c);
-            if(cm){
-              selCity=cm;
-              document.getElementById('fc').value=cm.name;
-              document.getElementById('fd').disabled=false;document.getElementById('fd').placeholder='搜索区县...';
-              dItems=await fetchArea(cm.adcode);
-              document.getElementById('fd').value=r.d||'';
-            }else{document.getElementById('fc').value=r.c||'';document.getElementById('fd').value=r.d||''}
-          }else{document.getElementById('fc').value='';document.getElementById('fd').value=''}
-        }else{document.getElementById('fp').value=r.p||'';document.getElementById('fc').value=r.c||'';document.getElementById('fd').value=r.d||'';document.getElementById('fc').disabled=false;document.getElementById('fd').disabled=false}
-      }else{document.getElementById('fp').value='';document.getElementById('fc').value='';document.getElementById('fd').value=''}
+            document.getElementById('fc').value=r.c;
+            const copt=Array.from(document.getElementById('fc').options).find(o=>o.value===r.c);
+            if(copt){
+              selCity={name:r.c,adcode:copt.dataset.adcode};
+              const districts=await fetchArea(copt.dataset.adcode);
+              fillSelect('fd',districts,'请选择区县');
+              document.getElementById('fd').disabled=false;
+              if(r.d)document.getElementById('fd').value=r.d;
+            }
+          }
+        }
+      }else{
+        document.getElementById('fp').value='';
+        document.getElementById('fc').innerHTML='<option value="">请先选省份</option>';document.getElementById('fc').disabled=true;
+        document.getElementById('fd').innerHTML='<option value="">请先选城市</option>';document.getElementById('fd').disabled=true;
+      }
     }
   }else{
     document.getElementById('fn').value=role==='guest'?guestName:'';
-    document.getElementById('fph').value='';document.getElementById('fp').value='';document.getElementById('fc').value='';document.getElementById('fd').value='';document.getElementById('fa').value='';document.getElementById('fnote').value='';
+    document.getElementById('fph').value='';document.getElementById('fp').value='';document.getElementById('fc').innerHTML='<option value="">请先选省份</option>';document.getElementById('fc').disabled=true;document.getElementById('fd').innerHTML='<option value="">请先选城市</option>';document.getElementById('fd').disabled=true;document.getElementById('fa').value='';document.getElementById('fnote').value='';
   }
   document.getElementById('fm').classList.add('show');
 }
-function closeForm(){document.getElementById('fm').classList.remove('show');editingId=null;hideAllDl()}
+function closeForm(){document.getElementById('fm').classList.remove('show');editingId=null}
 function saveForm(){
   const n=document.getElementById('fn').value.trim();
   const ph=document.getElementById('fph').value.trim();
-  const fp=document.getElementById('fp').value.trim();
-  const fc=document.getElementById('fc').value.trim();
-  const fd=document.getElementById('fd').value.trim();
+  const fp=document.getElementById('fp').value;
+  const fc=document.getElementById('fc').value;
+  const fd=document.getElementById('fd').value;
   const fa=document.getElementById('fa').value.trim();
   const fn=document.getElementById('fnote').value.trim();
   if(!n){toast('请输入昵称','e');return}
@@ -661,13 +636,12 @@ document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')
 document.getElementById('gnInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitGuestNick()});
 
 /* ================================================================
-   Area API + Autocomplete (Mobile-friendly)
+   /* ================================================================
+   Area API + Native Select (Mobile-friendly)
    ================================================================ */
 const AREA_API='https://geo.datav.aliyun.com/areas_v3/bound/';
 let areaCache={};
 let selProvince=null,selCity=null;
-let pItems=[],cItems=[],dItems=[];
-let activeDropdown=null; // track which dropdown is open
 
 async function fetchArea(adcode){
   if(areaCache[adcode])return areaCache[adcode];
@@ -680,173 +654,66 @@ async function fetchArea(adcode){
   }catch(e){console.error('Area API error',e);return[]}
 }
 
-function hlMatch(text,kw){
-  if(!kw)return text;
-  const i=text.toLowerCase().indexOf(kw.toLowerCase());
-  if(i<0)return text;
-  return text.slice(0,i)+'<mark>'+text.slice(i,i+kw.length)+'</mark>'+text.slice(i+kw.length);
-}
-
-/* Position the dropdown below the input on mobile */
-function positionDropdown(dlId, inputId){
-  const isMobile=window.innerWidth<600;
-  if(!isMobile)return; // desktop uses position:absolute, no manual positioning
-  const dl=document.getElementById(dlId);
-  const input=document.getElementById(inputId);
-  const rect=input.getBoundingClientRect();
-  dl.style.top=(rect.bottom+2)+'px';
-}
-
-function showDl(id,items,kw, inputId){
-  const dl=document.getElementById(id);
-  activeDropdown=id;
-  if(!items.length){dl.innerHTML='<div class="empty-msg">无匹配结果</div>';dl.classList.add('show');positionDropdown(id,inputId);return}
-  dl.innerHTML=items.map((it,i)=>'<div class="aci" data-i="'+i+'" data-name="'+it.name+'" data-adcode="'+(it.adcode||'')+'">'+hlMatch(it.name,kw)+'</div>').join('');
-  dl.classList.add('show');
-  positionDropdown(id,inputId);
-}
-function hideDl(id){document.getElementById(id).classList.remove('show');if(activeDropdown===id)activeDropdown=null}
-function hideAllDl(){hideDl('dl-p');hideDl('dl-c');hideDl('dl-d')}
-
-/* Helper: blur input and hide keyboard on mobile */
-function blurInput(inputId){
-  const el=document.getElementById(inputId);
-  if(el)el.blur();
+function fillSelect(selId,items,placeholder){
+  const sel=document.getElementById(selId);
+  sel.innerHTML='<option value="">'+placeholder+'</option>';
+  items.forEach(it=>{
+    const opt=document.createElement('option');
+    opt.value=it.name;
+    opt.textContent=it.name;
+    opt.dataset.adcode=it.adcode||'';
+    sel.appendChild(opt);
+  });
 }
 
 /* Prefetch provinces on load */
-(async()=>{pItems=await fetchArea('100000')})();
+(async()=>{
+  const provinces=await fetchArea('100000');
+  fillSelect('fp',provinces,'请选择省份');
+})();
 
-/* ========= Province ========= */
-document.getElementById('fp').addEventListener('click',async function(e){
-  e.preventDefault();
-  if(this.disabled)return;
-  if(!pItems.length)pItems=await fetchArea('100000');
-  hideAllDl();
-  this.readOnly=false;
-  this.focus();
-  const kw=this.value.trim();
-  const filtered=kw?pItems.filter(it=>it.name.includes(kw)):pItems;
-  showDl('dl-p',filtered,kw,'fp');
-  // On mobile, clear input so user can search
-  if(window.innerWidth<600 && selProvince){
-    this.value='';
-    this.placeholder='搜索省份...';
+/* Province change */
+document.getElementById('fp').addEventListener('change',async function(){
+  const name=this.value;
+  if(!name){
+    selProvince=null;
+    document.getElementById('fc').innerHTML='<option value="">请先选省份</option>';
+    document.getElementById('fc').disabled=true;
+    document.getElementById('fd').innerHTML='<option value="">请先选城市</option>';
+    document.getElementById('fd').disabled=true;
+    selCity=null;
+    return;
   }
-});
-document.getElementById('fp').addEventListener('input',async function(){
-  if(!pItems.length)pItems=await fetchArea('100000');
-  const kw=this.value.trim();
-  const filtered=kw?pItems.filter(it=>it.name.includes(kw)):pItems;
-  showDl('dl-p',filtered,kw,'fp');
-});
-document.getElementById('dl-p').addEventListener('click',async function(e){
-  const ci=e.target.closest('.aci');if(!ci)return;
-  const name=ci.dataset.name,adcode=ci.dataset.adcode;
+  const opt=this.selectedOptions[0];
+  const adcode=opt.dataset.adcode;
   selProvince={name,adcode};
-  document.getElementById('fp').value=name;
-  document.getElementById('fp').readOnly=true;
-  hideDl('dl-p');
-  blurInput('fp');
-  // Reset city & district
-  document.getElementById('fc').value='';document.getElementById('fc').disabled=false;document.getElementById('fc').placeholder='搜索城市...';document.getElementById('fc').readOnly=false;
-  document.getElementById('fd').value='';document.getElementById('fd').disabled=true;document.getElementById('fd').placeholder='先选城市';document.getElementById('fd').readOnly=true;
-  selCity=null;cItems=[];dItems=[];
-  // Prefetch cities
-  cItems=await fetchArea(adcode);
+  const cities=await fetchArea(adcode);
+  fillSelect('fc',cities,'请选择城市');
+  document.getElementById('fc').disabled=false;
+  document.getElementById('fd').innerHTML='<option value="">请先选城市</option>';
+  document.getElementById('fd').disabled=true;
+  selCity=null;
 });
 
-/* ========= City ========= */
-document.getElementById('fc').addEventListener('click',async function(e){
-  e.preventDefault();
-  if(this.disabled)return;
-  if(!selProvince)return;
-  if(!cItems.length)cItems=await fetchArea(selProvince.adcode);
-  hideAllDl();
-  this.readOnly=false;
-  this.focus();
-  const kw=this.value.trim();
-  const filtered=kw?cItems.filter(it=>it.name.includes(kw)):cItems;
-  showDl('dl-c',filtered,kw,'fc');
-  if(window.innerWidth<600 && selCity){
-    this.value='';
-    this.placeholder='搜索城市...';
+/* City change */
+document.getElementById('fc').addEventListener('change',async function(){
+  const name=this.value;
+  if(!name){
+    selCity=null;
+    document.getElementById('fd').innerHTML='<option value="">请先选城市</option>';
+    document.getElementById('fd').disabled=true;
+    return;
   }
-});
-document.getElementById('fc').addEventListener('input',async function(){
-  if(!selProvince)return;
-  if(!cItems.length)cItems=await fetchArea(selProvince.adcode);
-  const kw=this.value.trim();
-  const filtered=kw?cItems.filter(it=>it.name.includes(kw)):cItems;
-  showDl('dl-c',filtered,kw,'fc');
-});
-document.getElementById('dl-c').addEventListener('click',async function(e){
-  const ci=e.target.closest('.aci');if(!ci)return;
-  const name=ci.dataset.name,adcode=ci.dataset.adcode;
+  const opt=this.selectedOptions[0];
+  const adcode=opt.dataset.adcode;
   selCity={name,adcode};
-  document.getElementById('fc').value=name;
-  document.getElementById('fc').readOnly=true;
-  hideDl('dl-c');
-  blurInput('fc');
-  // Reset district
-  document.getElementById('fd').value='';document.getElementById('fd').disabled=false;document.getElementById('fd').placeholder='搜索区县...';document.getElementById('fd').readOnly=false;
-  dItems=[];
-  dItems=await fetchArea(adcode);
+  const districts=await fetchArea(adcode);
+  fillSelect('fd',districts,'请选择区县');
+  document.getElementById('fd').disabled=false;
 });
 
-/* ========= District ========= */
-document.getElementById('fd').addEventListener('click',async function(e){
-  e.preventDefault();
-  if(this.disabled)return;
-  if(!selCity)return;
-  if(!dItems.length)dItems=await fetchArea(selCity.adcode);
-  hideAllDl();
-  this.readOnly=false;
-  this.focus();
-  const kw=this.value.trim();
-  const filtered=kw?dItems.filter(it=>it.name.includes(kw)):dItems;
-  showDl('dl-d',filtered,kw,'fd');
-  if(window.innerWidth<600 && this.value){
-    this.value='';
-    this.placeholder='搜索区县...';
-  }
-});
-document.getElementById('fd').addEventListener('input',async function(){
-  if(!selCity)return;
-  if(!dItems.length)dItems=await fetchArea(selCity.adcode);
-  const kw=this.value.trim();
-  const filtered=kw?dItems.filter(it=>it.name.includes(kw)):dItems;
-  showDl('dl-d',filtered,kw,'fd');
-});
-document.getElementById('dl-d').addEventListener('click',function(e){
-  const ci=e.target.closest('.aci');if(!ci)return;
-  const name=ci.dataset.name;
-  document.getElementById('fd').value=name;
-  document.getElementById('fd').readOnly=true;
-  hideDl('dl-d');
-  blurInput('fd');
-});
-
-// Close dropdowns on outside click/tap
-document.addEventListener('click',function(e){
-  if(!e.target.closest('.acw')){hideAllDl()}
-});
-
-// Handle viewport resize (keyboard open/close on mobile)
-let resizeTimer;
-window.addEventListener('resize',function(){
-  clearTimeout(resizeTimer);
-  resizeTimer=setTimeout(function(){
-    if(activeDropdown){
-      const inputMap={'dl-p':'fp','dl-c':'fc','dl-d':'fd'};
-      const inputId=inputMap[activeDropdown];
-      if(inputId)positionDropdown(activeDropdown,inputId);
-    }
-  },100);
-});
-
-// Scroll the active dropdown item into view on touch
-document.addEventListener('touchstart',function(){},{passive:true});
+/* District change */
+document.getElementById('fd').addEventListener('change',function(){});
 
 /* ========= Init ========= */
 (function(){
