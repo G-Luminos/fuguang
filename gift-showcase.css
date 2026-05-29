@@ -368,6 +368,24 @@
   border-radius: 12px;
 }
 
+/* 上传提示 */
+.gift-upload-hint {
+  margin-top: 8px;
+  background: rgba(0, 161, 214, 0.9);
+  color: #FFF;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gift-upload-hint:hover {
+  background: rgba(0, 161, 214, 1);
+  transform: scale(1.05);
+}
+
 /* ===== 2.0 版本区域 ===== */
 .gift-v2-section {
   margin-top: 24px;
@@ -551,6 +569,7 @@
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 .gift-image-item:hover {
@@ -562,6 +581,129 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* 管理员操作区 */
+.gift-admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.gift-edit-btn,
+.gift-upload-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gift-edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFF;
+}
+
+.gift-edit-btn:hover,
+.gift-edit-btn.active {
+  background: #00A1D6;
+}
+
+.gift-upload-btn {
+  background: #FB7299;
+  color: #FFF;
+}
+
+.gift-upload-btn:hover {
+  background: #ff85a7;
+  transform: translateY(-2px);
+}
+
+/* 拖拽排序 */
+.gift-image-item.draggable {
+  cursor: move;
+}
+
+.gift-image-item.dragging {
+  opacity: 0.5;
+  transform: scale(1.1);
+}
+
+.gift-image-item.drag-over {
+  border: 2px dashed #00A1D6;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #FFF;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: move;
+}
+
+/* 删除按钮 */
+.gift-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(240, 72, 100, 0.9);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.gift-image-item:hover .gift-delete-btn {
+  opacity: 1;
+}
+
+.gift-delete-btn:hover {
+  background: #F04864;
+  transform: scale(1.1);
+}
+
+/* 空状态 */
+.gift-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.gift-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.gift-upload-btn-large {
+  margin-top: 20px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #FB7299, #ff85a7);
+  color: #FFF;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gift-upload-btn-large:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(251, 114, 153, 0.4);
 }
 
 /* ===== 全屏图片查看器 ===== */

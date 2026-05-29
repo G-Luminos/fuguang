@@ -1,7 +1,7 @@
 /**
- * 往期舰礼展示模块
- * 使用 File System Access API 读取本地文件夹
- * 展示星座立牌、吧唧等舰长礼物
+ * 往期舰礼展示模块 v2
+ * 使用 Supabase Storage 存储图片
+ * 支持水印、排序、上传管理
  */
 
 // 礼物展示数据
@@ -43,15 +43,22 @@ const THEME_COLORS = {
   leo: { bg: 'linear-gradient(135deg, #F0E0D0, #E8C080)', accent: '#D09030' }
 };
 
-let giftDirectoryHandle = null;
-let giftFiles = {};
+// 全局状态
+let giftImages = {}; // { monthId: [{id, url, sort_order}, ...] }
+let currentMonthId = null;
+let isEditMode = false;
+let draggedItem = null;
+
+// Supabase Storage bucket 名称
+const GIFT_BUCKET = 'gifts';
 
 /**
  * 打开往期舰礼弹窗
  */
-function openGiftShowcase() {
+async function openGiftShowcase() {
   const modal = document.getElementById('giftModal');
   modal.classList.add('show');
+  await loadGiftImages();
   renderGiftShowcase();
 }
 
@@ -61,100 +68,69 @@ function openGiftShowcase() {
 function closeGiftShowcase() {
   const modal = document.getElementById('giftModal');
   modal.classList.remove('show');
+  currentMonthId = null;
+  isEditMode = false;
 }
 
 /**
- * 选择本地文件夹
+ * 从 Supabase 加载礼物图片
  */
-async function selectGiftFolder() {
+async function loadGiftImages() {
+  giftImages = {};
+  
   try {
-    // 检查浏览器是否支持 File System Access API
-    if ('showDirectoryPicker' in window) {
-      giftDirectoryHandle = await window.showDirectoryPicker();
-      await scanGiftFiles();
-      renderGiftShowcase();
-      showToast('已加载礼物文件夹', 's');
-    } else {
-      // 降级方案：使用 input file
-      document.getElementById('giftFolderInput').click();
+    // 尝试从数据库获取图片列表
+    const { data, error } = await sb
+      .from('gift_images')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    
+    if (error) {
+      console.error('加载礼物图片失败:', error);
+      // 如果表不存在，尝试创建
+      if (error.code === '42P01') {
+        await createGiftImagesTable();
+      }
+      return;
+    }
+    
+    // 按月份分组
+    data.forEach(img => {
+      if (!giftImages[img.month_id]) {
+        giftImages[img.month_id] = [];
+      }
+      giftImages[img.month_id].push(img);
+    });
+  } catch (err) {
+    console.error('加载礼物图片出错:', err);
+  }
+}
+
+/**
+ * 创建 gift_images 表
+ */
+async function createGiftImagesTable() {
+  try {
+    const { error } = await sb.rpc('exec_sql', {
+      sql: `
+        CREATE TABLE IF NOT EXISTS gift_images (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          month_id TEXT NOT NULL,
+          storage_path TEXT NOT NULL,
+          public_url TEXT NOT NULL,
+          sort_order INTEGER DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        CREATE INDEX IF NOT EXISTS idx_gift_images_month ON gift_images(month_id);
+      `
+    });
+    
+    if (error) {
+      console.error('创建表失败:', error);
     }
   } catch (err) {
-    if (err.name !== 'AbortError') {
-      console.error('选择文件夹失败:', err);
-      showToast('选择文件夹失败', 'e');
-    }
+    console.error('创建表出错:', err);
   }
-}
-
-/**
- * 处理文件夹选择（降级方案）
- */
-function handleGiftFolderSelect(event) {
-  const files = event.target.files;
-  giftFiles = {};
-  
-  for (const file of files) {
-    const path = file.webkitRelativePath || file.name;
-    const parts = path.split('/');
-    
-    if (parts.length >= 2) {
-      const monthFolder = parts[0];
-      const monthMatch = monthFolder.match(/(\d+)/);
-      
-      if (monthMatch) {
-        const monthId = monthMatch[1];
-        if (!giftFiles[monthId]) {
-          giftFiles[monthId] = [];
-        }
-        giftFiles[monthId].push({
-          name: file.name,
-          path: path,
-          file: file,
-          url: URL.createObjectURL(file)
-        });
-      }
-    }
-  }
-  
-  renderGiftShowcase();
-  showToast(`已加载 ${Object.keys(giftFiles).length} 个月份的礼物`, 's');
-}
-
-/**
- * 扫描礼物文件（File System Access API）
- */
-async function scanGiftFiles() {
-  giftFiles = {};
-  
-  for await (const entry of giftDirectoryHandle.values()) {
-    if (entry.kind === 'directory') {
-      const monthMatch = entry.name.match(/(\d+)/);
-      if (monthMatch) {
-        const monthId = monthMatch[1];
-        giftFiles[monthId] = [];
-        
-        for await (const fileEntry of entry.values()) {
-          if (fileEntry.kind === 'file' && isImageFile(fileEntry.name)) {
-            const file = await fileEntry.getFile();
-            giftFiles[monthId].push({
-              name: fileEntry.name,
-              path: entry.name + '/' + fileEntry.name,
-              file: file,
-              url: URL.createObjectURL(file)
-            });
-          }
-        }
-      }
-    }
-  }
-}
-
-/**
- * 检查是否为图片文件
- */
-function isImageFile(filename) {
-  const ext = filename.toLowerCase().split('.').pop();
-  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
 }
 
 /**
@@ -162,7 +138,7 @@ function isImageFile(filename) {
  */
 function renderGiftShowcase() {
   const container = document.getElementById('giftContainer');
-  const hasFiles = Object.keys(giftFiles).length > 0;
+  const isAdmin = role === 'admin';
   
   let html = `
     <div class="gift-header">
@@ -170,28 +146,17 @@ function renderGiftShowcase() {
       <p class="gift-subtitle">1.0 浮光舰礼物 · 星座立牌系列</p>
     </div>
     
-    <div class="gift-folder-section">
-      <button class="gift-folder-btn" onclick="selectGiftFolder()">
-        <span class="folder-icon">📁</span>
-        <span>${hasFiles ? '更换礼物文件夹' : '选择礼物文件夹'}</span>
-      </button>
-      ${hasFiles ? '<span class="gift-folder-status">✓ 已加载</span>' : ''}
-    </div>
-    
-    <input type="file" id="giftFolderInput" webkitdirectory directory multiple 
-           style="display:none" onchange="handleGiftFolderSelect(event)">
-    
     <div class="gift-timeline">
   `;
   
   // 渲染月份卡片
   GIFT_DATA.months.forEach((month, index) => {
-    const monthFiles = giftFiles[month.id] || [];
-    const hasMonthFiles = monthFiles.length > 0;
+    const monthImages = giftImages[month.id] || [];
+    const hasImages = monthImages.length > 0;
     const theme = THEME_COLORS[month.theme];
     
     html += `
-      <div class="gift-card ${month.missing ? 'missing' : ''} ${hasMonthFiles ? 'has-files' : ''}" 
+      <div class="gift-card ${month.missing ? 'missing' : ''} ${hasImages ? 'has-files' : ''}" 
            style="--card-bg: ${theme.bg}; --card-accent: ${theme.accent}; animation-delay: ${index * 0.1}s"
            onclick="openMonthDetail('${month.id}')">
         <div class="gift-card-inner">
@@ -201,11 +166,12 @@ function renderGiftShowcase() {
             <div class="gift-title">${month.title}</div>
             <div class="gift-desc">${month.desc}</div>
             ${month.missing ? '<div class="gift-missing-badge">🚧 暂缺</div>' : ''}
-            ${hasMonthFiles ? `<div class="gift-count">${monthFiles.length} 张照片</div>` : ''}
+            ${hasImages ? `<div class="gift-count">${monthImages.length} 张照片</div>` : ''}
+            ${isAdmin ? `<div class="gift-upload-hint" onclick="event.stopPropagation(); openMonthUpload('${month.id}')">+ 上传图片</div>` : ''}
           </div>
-          ${hasMonthFiles ? `
+          ${hasImages ? `
             <div class="gift-preview">
-              <img src="${monthFiles[0].url}" alt="${month.name}礼物" loading="lazy">
+              <img src="${monthImages[0].public_url}" alt="${month.name}礼物" loading="lazy">
             </div>
           ` : ''}
         </div>
@@ -242,50 +208,342 @@ function renderGiftShowcase() {
  */
 function openMonthDetail(monthId) {
   const month = GIFT_DATA.months.find(m => m.id === monthId);
-  const files = giftFiles[monthId] || [];
+  const images = giftImages[monthId] || [];
+  const isAdmin = role === 'admin';
   
   if (month.missing) {
     showToast('3月礼物暂时缺货，敬请期待补发~', 'i');
     return;
   }
   
-  if (files.length === 0) {
-    showToast('该月份暂无照片，请先选择礼物文件夹', 'i');
-    return;
-  }
+  currentMonthId = monthId;
   
   // 创建图片预览弹窗
   const modal = document.createElement('div');
   modal.className = 'gift-image-modal show';
-  modal.id = 'imageModal';
-  modal.innerHTML = `
-    <div class="gift-image-overlay" onclick="closeImageModal()"></div>
+  modal.id = 'monthDetailModal';
+  
+  let html = `
+    <div class="gift-image-overlay" onclick="closeMonthDetail()"></div>
     <div class="gift-image-container">
-      <button class="gift-image-close" onclick="closeImageModal()">✕</button>
+      <button class="gift-image-close" onclick="closeMonthDetail()">✕</button>
       <div class="gift-image-header">
         <h3>${month.title}</h3>
         <p>${month.desc}</p>
-      </div>
-      <div class="gift-image-grid">
-        ${files.map((file, idx) => `
-          <div class="gift-image-item" onclick="showFullImage('${file.url}', '${file.name}')">
-            <img src="${file.url}" alt="${file.name}" loading="lazy">
+        ${isAdmin ? `
+          <div class="gift-admin-actions">
+            <button class="gift-edit-btn ${isEditMode ? 'active' : ''}" onclick="toggleEditMode()">
+              ${isEditMode ? '完成' : '排序'}
+            </button>
+            <button class="gift-upload-btn" onclick="openUploadDialog()">+ 上传图片</button>
           </div>
-        `).join('')}
+        ` : ''}
+      </div>
+      <div class="gift-image-grid ${isEditMode ? 'edit-mode' : ''}" id="monthImageGrid">
+  `;
+  
+  if (images.length === 0) {
+    html += `
+      <div class="gift-empty">
+        <div class="gift-empty-icon">📷</div>
+        <p>暂无图片</p>
+        ${isAdmin ? '<button class="gift-upload-btn-large" onclick="openUploadDialog()">上传第一张图片</button>' : ''}
+      </div>
+    `;
+  } else {
+    images.forEach((img, idx) => {
+      html += `
+        <div class="gift-image-item ${isEditMode ? 'draggable' : ''}" 
+             data-id="${img.id}" 
+             data-index="${idx}"
+             draggable="${isEditMode}"
+             ondragstart="handleDragStart(event, '${img.id}')"
+             ondragover="handleDragOver(event)"
+             ondrop="handleDrop(event, '${img.id}')"
+             ondragend="handleDragEnd()">
+          <img src="${img.public_url}" alt="图片${idx + 1}" loading="lazy">
+          ${isEditMode ? '<div class="drag-handle">⋮⋮</div>' : ''}
+          ${isAdmin ? `<button class="gift-delete-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')">🗑️</button>` : ''}
+        </div>
+      `;
+    });
+  }
+  
+  html += `
       </div>
     </div>
   `;
   
+  modal.innerHTML = html;
   document.body.appendChild(modal);
 }
 
 /**
- * 关闭图片弹窗
+ * 关闭月份详情
  */
-function closeImageModal() {
-  const modal = document.getElementById('imageModal');
+function closeMonthDetail() {
+  const modal = document.getElementById('monthDetailModal');
   if (modal) {
     modal.remove();
+  }
+  currentMonthId = null;
+  isEditMode = false;
+}
+
+/**
+ * 切换编辑模式（排序）
+ */
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  openMonthDetail(currentMonthId);
+}
+
+/**
+ * 拖拽排序处理
+ */
+function handleDragStart(e, id) {
+  draggedItem = id;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+async function handleDrop(e, targetId) {
+  e.preventDefault();
+  if (!draggedItem || draggedItem === targetId) return;
+  
+  const images = giftImages[currentMonthId];
+  const fromIndex = images.findIndex(img => img.id === draggedItem);
+  const toIndex = images.findIndex(img => img.id === targetId);
+  
+  if (fromIndex === -1 || toIndex === -1) return;
+  
+  // 重新排序数组
+  const [moved] = images.splice(fromIndex, 1);
+  images.splice(toIndex, 0, moved);
+  
+  // 更新 sort_order
+  images.forEach((img, idx) => {
+    img.sort_order = idx;
+  });
+  
+  // 保存到数据库
+  await saveSortOrder();
+  
+  // 重新渲染
+  openMonthDetail(currentMonthId);
+}
+
+function handleDragEnd() {
+  draggedItem = null;
+  document.querySelectorAll('.gift-image-item.dragging').forEach(el => {
+    el.classList.remove('dragging');
+  });
+}
+
+/**
+ * 保存排序到数据库
+ */
+async function saveSortOrder() {
+  const images = giftImages[currentMonthId];
+  
+  try {
+    for (const img of images) {
+      await sb
+        .from('gift_images')
+        .update({ sort_order: img.sort_order })
+        .eq('id', img.id);
+    }
+    showToast('排序已保存', 's');
+  } catch (err) {
+    console.error('保存排序失败:', err);
+    showToast('保存排序失败', 'e');
+  }
+}
+
+/**
+ * 打开上传对话框
+ */
+function openUploadDialog() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.onchange = (e) => handleImageUpload(e.target.files);
+  input.click();
+}
+
+/**
+ * 处理图片上传
+ */
+async function handleImageUpload(files) {
+  if (!files || files.length === 0) return;
+  if (!currentMonthId) return;
+  
+  showToast(`正在处理 ${files.length} 张图片...`, 'i');
+  
+  for (const file of files) {
+    try {
+      // 1. 添加水印
+      const watermarkedBlob = await addWatermark(file);
+      
+      // 2. 上传到 Supabase Storage
+      const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
+      const storagePath = `${currentMonthId}/${fileName}`;
+      
+      const { data: uploadData, error: uploadError } = await sb
+        .storage
+        .from(GIFT_BUCKET)
+        .upload(storagePath, watermarkedBlob, {
+          contentType: 'image/jpeg',
+          upsert: false
+        });
+      
+      if (uploadError) {
+        console.error('上传失败:', uploadError);
+        continue;
+      }
+      
+      // 3. 获取公共 URL
+      const { data: urlData } = sb
+        .storage
+        .from(GIFT_BUCKET)
+        .getPublicUrl(storagePath);
+      
+      // 4. 保存到数据库
+      const currentImages = giftImages[currentMonthId] || [];
+      const { data: dbData, error: dbError } = await sb
+        .from('gift_images')
+        .insert({
+          month_id: currentMonthId,
+          storage_path: storagePath,
+          public_url: urlData.publicUrl,
+          sort_order: currentImages.length
+        })
+        .select()
+        .single();
+      
+      if (dbError) {
+        console.error('保存到数据库失败:', dbError);
+        continue;
+      }
+      
+      // 5. 更新本地数据
+      if (!giftImages[currentMonthId]) {
+        giftImages[currentMonthId] = [];
+      }
+      giftImages[currentMonthId].push(dbData);
+      
+    } catch (err) {
+      console.error('处理图片失败:', err);
+    }
+  }
+  
+  showToast('上传完成', 's');
+  
+  // 重新渲染
+  renderGiftShowcase();
+  openMonthDetail(currentMonthId);
+}
+
+/**
+ * 添加水印
+ */
+function addWatermark(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // 设置画布尺寸
+      canvas.width = img.width;
+      canvas.height = img.height;
+      
+      // 绘制原图
+      ctx.drawImage(img, 0, 0);
+      
+      // 添加水印
+      const watermarkText = '浮光';
+      const fontSize = Math.max(24, Math.floor(img.width / 15));
+      
+      ctx.save();
+      ctx.font = `bold ${fontSize}px "Microsoft YaHei", "PingFang SC", sans-serif`;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = fontSize / 20;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      
+      // 右下角位置
+      const x = img.width - fontSize;
+      const y = img.height - fontSize / 2;
+      
+      ctx.strokeText(watermarkText, x, y);
+      ctx.fillText(watermarkText, x, y);
+      ctx.restore();
+      
+      // 转换为 blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Canvas toBlob failed'));
+        }
+      }, 'image/jpeg', 0.9);
+    };
+    
+    img.onerror = () => reject(new Error('Image load failed'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/**
+ * 删除图片
+ */
+async function deleteImage(imageId) {
+  if (!confirm('确定要删除这张图片吗？')) return;
+  
+  try {
+    const image = giftImages[currentMonthId].find(img => img.id === imageId);
+    if (!image) return;
+    
+    // 1. 从 Storage 删除
+    const { error: storageError } = await sb
+      .storage
+      .from(GIFT_BUCKET)
+      .remove([image.storage_path]);
+    
+    if (storageError) {
+      console.error('删除存储文件失败:', storageError);
+    }
+    
+    // 2. 从数据库删除
+    const { error: dbError } = await sb
+      .from('gift_images')
+      .delete()
+      .eq('id', imageId);
+    
+    if (dbError) {
+      console.error('删除数据库记录失败:', dbError);
+      showToast('删除失败', 'e');
+      return;
+    }
+    
+    // 3. 更新本地数据
+    giftImages[currentMonthId] = giftImages[currentMonthId].filter(img => img.id !== imageId);
+    
+    showToast('已删除', 's');
+    openMonthDetail(currentMonthId);
+    renderGiftShowcase();
+    
+  } catch (err) {
+    console.error('删除图片失败:', err);
+    showToast('删除失败', 'e');
   }
 }
 
@@ -359,10 +617,15 @@ function showToast(msg, type) {
 // 导出函数供全局使用
 window.openGiftShowcase = openGiftShowcase;
 window.closeGiftShowcase = closeGiftShowcase;
-window.selectGiftFolder = selectGiftFolder;
-window.handleGiftFolderSelect = handleGiftFolderSelect;
 window.openMonthDetail = openMonthDetail;
-window.closeImageModal = closeImageModal;
+window.closeMonthDetail = closeMonthDetail;
+window.toggleEditMode = toggleEditMode;
+window.handleDragStart = handleDragStart;
+window.handleDragOver = handleDragOver;
+window.handleDrop = handleDrop;
+window.handleDragEnd = handleDragEnd;
+window.openUploadDialog = openUploadDialog;
+window.deleteImage = deleteImage;
 window.showFullImage = showFullImage;
 window.showV2Preview = showV2Preview;
 window.closeV2Modal = closeV2Modal;
