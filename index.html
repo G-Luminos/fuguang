@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>浮光舰长信息登记</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="gift-showcase.css">
 <style>
 
 
@@ -189,6 +190,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
     <h2>舰长信息登记</h2>
     <p class="sub">Luminos · Captain Gift Registry</p>
     <button class="btn-captain" onclick="openGuestNick()">📝 填写舰长礼物</button>
+    <button class="btn-gift" onclick="openGiftShowcase()">🎁 往期舰礼</button>
     <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>
   </div>
 </div>
@@ -289,6 +291,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 <!-- Toast -->
 <div id="tc" class="tc"></div>
 
+<!-- 往期舰礼弹窗 -->
+<div class="gift-modal-overlay" id="giftModal">
+  <div class="gift-modal">
+    <div class="gift-modal-header">
+      <h2>往期舰礼</h2>
+      <button class="gift-modal-close" onclick="closeGiftShowcase()">✕</button>
+    </div>
+    <div class="gift-modal-body" id="giftContainer">
+      <!-- 动态内容 -->
+    </div>
+  </div>
+</div>
+
+<script src="gift-showcase.js"></script>
 <script>
 
 /* ================================================================
