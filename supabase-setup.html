@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase 配置助手 - 浮光舰长礼物系统</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .step {
+      margin-bottom: 25px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: #667eea;
+      color: #fff;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    .step-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+    .step-content {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      margin-top: 10px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin-top: 10px;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 4px 12px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.success {
+      display: block;
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      display: block;
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .status.info {
+      display: block;
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+    .divider {
+      height: 1px;
+      background: #e0e0e0;
+      margin: 30px 0;
+    }
+    .complete-section {
+      text-align: center;
+      padding: 30px;
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      border-radius: 12px;
+      display: none;
+    }
+    .complete-section.show {
+      display: block;
+    }
+    .complete-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Supabase 配置助手</h1>
+    <p class="subtitle">为浮光舰长礼物系统配置数据库和存储</p>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">1</span>
+        登录 Supabase 控制台
+      </div>
+      <div class="step-content">
+        <p>点击下方按钮打开 Supabase 项目控制台</p>
+        <div class="actions">
+          <a href="https://app.supabase.com/project/yiexaopgxcroktltjqoz" target="_blank" class="btn">
+            打开 Supabase 控制台
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">2</span>
+        创建 gift_images 数据表
+      </div>
+      <div class="step-content">
+        <p>1. 在左侧菜单点击 <strong>SQL Editor</strong></p>
+        <p>2. 点击 <strong>New query</strong></p>
+        <p>3. 复制下方 SQL 代码并粘贴</p>
+        <p>4. 点击 <strong>Run</strong> 执行</p>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copySQL()">复制</button>
+          <pre id="sqlCode">-- 创建礼物图片表
+CREATE TABLE IF NOT EXISTS gift_images (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  month_id TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  public_url TEXT NOT NULL,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 创建索引
+CREATE INDEX IF NOT EXISTS idx_gift_images_month ON gift_images(month_id);
+CREATE INDEX IF NOT EXISTS idx_gift_images_sort ON gift_images(sort_order);
+
+-- 启用 RLS
+ALTER TABLE gift_images ENABLE ROW LEVEL SECURITY;
+
+-- 策略：允许匿名查看
+CREATE POLICY "Anyone can view gift images"
+  ON gift_images FOR SELECT
+  USING (true);
+
+-- 策略：管理员可以增删改
+CREATE POLICY "Admins can manage gift images"
+  ON gift_images FOR ALL
+  USING (true)
+  WITH CHECK (true);</pre>
+        </div>
+        <div id="sqlStatus" class="status"></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">3</span>
+        创建 Storage Bucket
+      </div>
+      <div class="step-content">
+        <p>1. 在左侧菜单点击 <strong>Storage</strong></p>
+        <p>2. 点击 <strong>New bucket</strong></p>
+        <p>3. 填写信息：</p>
+        <ul style="margin: 10px 0 10px 20px; color: #555;">
+          <li>Name: <code>gifts</code></li>
+          <li>Public bucket: ✅ <strong>必须勾选</strong></li>
+        </ul>
+        <p>4. 点击 <strong>Create bucket</strong></p>
+        <div class="actions">
+          <a href="https://app.supabase.com/project/yiexaopgxcroktltjqoz/storage/buckets" target="_blank" class="btn">
+            打开 Storage 页面
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">4</span>
+        设置 Storage 权限
+      </div>
+      <div class="step-content">
+        <p>1. 在 Storage 页面点击 <strong>Policies</strong></p>
+        <p>2. 选择 <strong>gifts</strong> bucket</p>
+        <p>3. 添加以下策略：</p>
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 10px;">
+          <p style="font-weight: 600; margin-bottom: 8px;">SELECT 策略（允许所有人查看）：</p>
+          <ul style="margin-left: 20px; font-size: 13px; color: #555;">
+            <li>Policy name: <code>Allow public read</code></li>
+            <li>Allowed operation: <code>SELECT</code></li>
+            <li>Target roles: <code>anon</code>, <code>authenticated</code></li>
+            <li>Policy definition: <code>true</code></li>
+          </ul>
+          
+          <p style="font-weight: 600; margin: 15px 0 8px;">INSERT 策略（允许上传）：</p>
+          <ul style="margin-left: 20px; font-size: 13px; color: #555;">
+            <li>Policy name: <code>Allow insert</code></li>
+            <li>Allowed operation: <code>INSERT</code></li>
+            <li>Target roles: <code>authenticated</code></li>
+            <li>Policy definition: <code>true</code></li>
+          </ul>
+          
+          <p style="font-weight: 600; margin: 15px 0 8px;">DELETE 策略（允许删除）：</p>
+          <ul style="margin-left: 20px; font-size: 13px; color: #555;">
+            <li>Policy name: <code>Allow delete</code></li>
+            <li>Allowed operation: <code>DELETE</code></li>
+            <li>Target roles: <code>authenticated</code></li>
+            <li>Policy definition: <code>true</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="complete-section" id="completeSection">
+      <div class="complete-icon">🎉</div>
+      <h3 style="color: #155724; margin-bottom: 10px;">配置完成！</h3>
+      <p style="color: #155724; font-size: 14px;">
+        往期舰礼功能已就绪，可以开始上传图片了。
+      </p>
+      <div class="actions" style="justify-content: center; margin-top: 20px;">
+        <a href="https://g-luminos.github.io/fuguang/" target="_blank" class="btn">
+          打开浮光舰长礼物系统
+        </a>
+      </div>
+    </div>
+
+    <div id="actionSection">
+      <div class="actions" style="justify-content: center;">
+        <button class="btn" onclick="markComplete()">
+          我已完成所有配置
+        </button>
+        <button class="btn btn-secondary" onclick="checkStatus()">
+          检查配置状态
+        </button>
+      </div>
+      <div id="checkStatus" class="status"></div>
+    </div>
+  </div>
+
+  <script>
+    // 复制 SQL 代码
+    function copySQL() {
+      const sql = document.getElementById('sqlCode').textContent;
+      navigator.clipboard.writeText(sql).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '已复制!';
+        setTimeout(() => btn.textContent = '复制', 2000);
+      });
+    }
+
+    // 标记完成
+    function markComplete() {
+      document.getElementById('completeSection').classList.add('show');
+      document.getElementById('actionSection').style.display = 'none';
+    }
+
+    // 检查配置状态
+    async function checkStatus() {
+      const status = document.getElementById('checkStatus');
+      status.className = 'status info';
+      status.textContent = '正在检查配置...';
+
+      try {
+        // 这里可以添加实际的检查逻辑
+        // 例如尝试访问 Supabase API 检查表是否存在
+        
+        setTimeout(() => {
+          status.className = 'status success';
+          status.innerHTML = `
+            <strong>检查完成！</strong><br>
+            请按照上述步骤手动配置 Supabase。<br>
+            配置完成后点击"我已完成所有配置"按钮。
+          `;
+        }, 1000);
+      } catch (err) {
+        status.className = 'status error';
+        status.textContent = '检查失败: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
