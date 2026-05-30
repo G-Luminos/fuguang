@@ -94,6 +94,7 @@ async function loadGiftImages() {
   // 检查 sb 是否可用
   if (typeof window.sb === 'undefined' || !window.sb) {
     console.warn('Supabase 客户端未初始化');
+    showToast('数据库连接失败，请刷新页面', 'e');
     return;
   }
   
@@ -106,12 +107,15 @@ async function loadGiftImages() {
     
     if (error) {
       console.error('加载礼物图片失败:', error);
+      showToast('加载图片失败: ' + error.message, 'e');
       // 如果表不存在，尝试创建
       if (error.code === '42P01') {
         await createGiftImagesTable();
       }
       return;
     }
+    
+    console.log('加载到图片数据:', data);
     
     // 按月份分组
     data.forEach(img => {
@@ -172,7 +176,7 @@ function renderGiftShowcase() {
           </div>
           ${hasImages ? `
             <div class="gift-preview">
-              <img src="${monthImages[0].public_url}" alt="${month.name}礼物" loading="lazy">
+              <img src="${monthImages[0].public_url}" alt="${month.name}礼物" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败</div>';">
             </div>
           ` : ''}
         </div>
@@ -264,7 +268,7 @@ function openMonthDetail(monthId) {
              ondragover="handleDragOver(event)"
              ondrop="handleDrop(event, '${img.id}')"
              ondragend="handleDragEnd()">
-          <img src="${img.public_url}" alt="图片${idx + 1}" loading="lazy">
+          <img src="${img.public_url}" alt="图片${idx + 1}" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败<br><small>请检查Storage配置</small></div>';">
           ${isEditMode ? '<div class="drag-handle">⋮⋮</div>' : ''}
           ${isAdmin ? `<button class="gift-delete-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')">🗑️</button>` : ''}
         </div>
@@ -426,11 +430,9 @@ async function handleImageUpload(files) {
         continue;
       }
       
-      // 3. 获取公共 URL
-      const { data: urlData } = window.sb
-        .storage
-        .from(GIFT_BUCKET)
-        .getPublicUrl(storagePath);
+      // 3. 获取公共 URL - 使用 Supabase 项目 URL 构建
+      const SB_URL = 'https://yiexaopgxcroktltjqoz.supabase.co';
+      const publicUrl = `${SB_URL}/storage/v1/object/public/${GIFT_BUCKET}/${storagePath}`;
       
       // 4. 保存到数据库
       const currentImages = giftImages[currentMonthId] || [];
@@ -439,7 +441,7 @@ async function handleImageUpload(files) {
         .insert({
           month_id: currentMonthId,
           storage_path: storagePath,
-          public_url: urlData.publicUrl,
+          public_url: publicUrl,
           sort_order: currentImages.length
         })
         .select()

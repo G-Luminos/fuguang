@@ -934,3 +934,34 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+/* ===== 图片加载错误提示 ===== */
+.gift-img-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #FFF5F5, #FFEBEB);
+  border: 2px dashed #F56565;
+  border-radius: 12px;
+  color: #C53030;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  min-height: 100px;
+}
+
+.gift-img-error small {
+  color: #9B2C2C;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.gift-preview .gift-img-error {
+  min-height: 80px;
+  padding: 12px;
+  font-size: 12px;
+}
