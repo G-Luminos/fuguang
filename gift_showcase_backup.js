@@ -9,7 +9,7 @@ const GIFT_DATA = {
   months: [
     { id: '1', name: '1月', title: '摩羯座 ♑', theme: 'capricorn', desc: '坚韧踏实的摩羯座立牌' },
     { id: '2', name: '2月', title: '水瓶座 ♒', theme: 'aquarius', desc: '独立创新的水瓶座立牌' },
-    { id: '3', name: '3月', title: '双鱼座 ♓', theme: 'pisces', desc: '梦幻浪漫的双鱼座立牌' },
+    { id: '3', name: '3月', title: '双鱼座 ♓', theme: 'pisces', desc: '梦幻浪漫的双鱼座立牌（暂缺）', missing: true },
     { id: '4', name: '4月', title: '白羊座 ♈', theme: 'aries', desc: '热情勇敢的白羊座立牌' },
     { id: '5', name: '5月', title: '金牛座 ♉', theme: 'taurus', desc: '稳重务实的金牛座立牌' },
     { id: '6', name: '6月', title: '双子座 ♊', theme: 'gemini', desc: '机智多变的双子座立牌' },
@@ -46,6 +46,8 @@ const THEME_COLORS = {
 // 全局状态
 let giftImages = {}; // { monthId: [{id, url, sort_order}, ...] }
 let currentMonthId = null;
+let isEditMode = false;
+let draggedItem = null;
 
 // 暴露到全局以便调试
 window.giftImages = giftImages;
@@ -84,6 +86,7 @@ function closeGiftShowcase() {
   const modal = document.getElementById('giftModal');
   modal.classList.remove('show');
   currentMonthId = null;
+  isEditMode = false;
 }
 
 /**
@@ -223,6 +226,11 @@ function openMonthDetail(monthId) {
   const images = giftImages[monthId] || [];
   const isAdmin = checkIsAdmin();
   
+  if (month.missing) {
+    showToast('3月礼物暂时缺货，敬请期待补发~', 'i');
+    return;
+  }
+  
   currentMonthId = monthId;
   
   // 创建图片预览弹窗
@@ -239,11 +247,14 @@ function openMonthDetail(monthId) {
         <p>${month.desc}</p>
         ${isAdmin ? `
           <div class="gift-admin-actions">
+            <button class="gift-edit-btn ${isEditMode ? 'active' : ''}" onclick="toggleEditMode()">
+              ${isEditMode ? '完成' : '排序'}
+            </button>
             <button class="gift-upload-btn" onclick="openUploadDialog()">+ 上传图片</button>
           </div>
         ` : ''}
       </div>
-      <div class="gift-image-grid" id="monthImageGrid">
+      <div class="gift-image-grid ${isEditMode ? 'edit-mode' : ''}" id="monthImageGrid">
   `;
   
   if (images.length === 0) {
@@ -257,8 +268,16 @@ function openMonthDetail(monthId) {
   } else {
     images.forEach((img, idx) => {
       html += `
-        <div class="gift-image-item" data-id="${img.id}" data-index="${idx}">
+        <div class="gift-image-item ${isEditMode ? 'draggable' : ''}" 
+             data-id="${img.id}" 
+             data-index="${idx}"
+             draggable="${isEditMode}"
+             ondragstart="handleDragStart(event, '${img.id}')"
+             ondragover="handleDragOver(event)"
+             ondrop="handleDrop(event, '${img.id}')"
+             ondragend="handleDragEnd()">
           <img src="${img.public_url}" alt="图片${idx + 1}" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败<br><small>请检查Storage配置</small></div>';">
+          ${isEditMode ? '<div class="drag-handle">⋮⋮</div>' : ''}
           ${isAdmin ? `<button class="gift-delete-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')">🗑️</button>` : ''}
         </div>
       `;
@@ -283,9 +302,92 @@ function closeMonthDetail() {
     modal.remove();
   }
   currentMonthId = null;
+  isEditMode = false;
 }
 
+/**
+ * 切换编辑模式（排序）
+ */
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  openMonthDetail(currentMonthId);
+}
 
+/**
+ * 拖拽排序处理
+ */
+function handleDragStart(e, id) {
+  draggedItem = id;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+async function handleDrop(e, targetId) {
+  e.preventDefault();
+  if (!draggedItem || draggedItem === targetId) return;
+  
+  const images = giftImages[currentMonthId];
+  if (!images) return;
+  
+  const fromIndex = images.findIndex(img => img.id === draggedItem);
+  const toIndex = images.findIndex(img => img.id === targetId);
+  
+  if (fromIndex === -1 || toIndex === -1) return;
+  
+  // 重新排序数组
+  const [moved] = images.splice(fromIndex, 1);
+  images.splice(toIndex, 0, moved);
+  
+  // 更新 sort_order
+  images.forEach((img, idx) => {
+    img.sort_order = idx;
+  });
+  
+  // 保存到数据库
+  await saveSortOrder();
+  
+  // 重新渲染
+  openMonthDetail(currentMonthId);
+}
+
+function handleDragEnd() {
+  draggedItem = null;
+  document.querySelectorAll('.gift-image-item.dragging').forEach(el => {
+    el.classList.remove('dragging');
+  });
+}
+
+/**
+ * 保存排序到数据库
+ */
+async function saveSortOrder() {
+  const images = giftImages[currentMonthId];
+  if (!images || images.length === 0) return;
+  
+  // 检查 sb 是否可用
+  if (typeof window.sb === 'undefined' || !window.sb) {
+    showToast('数据库连接失败', 'e');
+    return;
+  }
+  
+  try {
+    for (const img of images) {
+      await window.sb
+        .from('gift_images')
+        .update({ sort_order: img.sort_order })
+        .eq('id', img.id);
+    }
+    showToast('排序已保存', 's');
+  } catch (err) {
+    console.error('保存排序失败:', err);
+    showToast('保存排序失败', 'e');
+  }
+}
 
 /**
  * 打开上传对话框
@@ -327,7 +429,7 @@ async function handleImageUpload(files) {
         .storage
         .from(GIFT_BUCKET)
         .upload(storagePath, watermarkedBlob, {
-          contentType: 'image/png',
+          contentType: 'image/jpeg',
           upsert: false
         });
       
@@ -393,47 +495,34 @@ function addWatermark(file) {
       // 绘制原图
       ctx.drawImage(img, 0, 0);
       
-      // 添加全图平铺水印
+      // 添加水印
       const watermarkText = '浮光';
-      const fontSize = Math.max(32, Math.floor(img.width / 8));
+      const fontSize = Math.max(24, Math.floor(img.width / 15));
       
       ctx.save();
       ctx.font = `bold ${fontSize}px "Microsoft YaHei", "PingFang SC", sans-serif`;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-      ctx.lineWidth = fontSize / 30;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = fontSize / 20;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
       
-      // 平铺水印 - 斜向排列
-      ctx.save();
-      ctx.rotate(-Math.PI / 6);
+      // 右下角位置
+      const x = img.width - fontSize;
+      const y = img.height - fontSize / 2;
       
-      const spacingX = fontSize * 2.5;
-      const spacingY = fontSize * 1.8;
-      const cols = Math.ceil(img.width / spacingX) + 2;
-      const rows = Math.ceil(img.height / spacingY) + 2;
-      
-      for (let row = -1; row < rows; row++) {
-        for (let col = -1; col < cols; col++) {
-          const x = col * spacingX + (row % 2) * (spacingX / 2);
-          const y = row * spacingY;
-          ctx.strokeText(watermarkText, x, y);
-          ctx.fillText(watermarkText, x, y);
-        }
-      }
-      
-      ctx.restore();
+      ctx.strokeText(watermarkText, x, y);
+      ctx.fillText(watermarkText, x, y);
       ctx.restore();
       
-      // 转换为 blob - 使用 PNG 保持透明背景
+      // 转换为 blob
       canvas.toBlob((blob) => {
         if (blob) {
           resolve(blob);
         } else {
           reject(new Error('Canvas toBlob failed'));
         }
-      }, 'image/png');
+      }, 'image/jpeg', 0.9);
     };
     
     img.onerror = () => reject(new Error('Image load failed'));

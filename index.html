@@ -382,7 +382,7 @@ window.sb = null;
 function initSB() {
   if (typeof supabase === 'undefined') {
     console.error('Supabase SDK not loaded');
-    toast('数据库连接失败，请刷新重试', 'e');
+    // 静默失败，不弹窗提示，避免新人进入页面时看到错误
     return false;
   }
   window.sb = supabase.createClient(SB_URL, SB_KEY);

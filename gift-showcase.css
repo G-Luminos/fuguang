@@ -354,19 +354,7 @@
   opacity: 0.7;
 }
 
-.gift-card.missing .gift-card-inner {
-  background: linear-gradient(135deg, #E8E8E8, #D0D0D0);
-}
 
-.gift-missing-badge {
-  margin-top: auto;
-  background: rgba(240, 72, 100, 0.9);
-  color: #FFF;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
-}
 
 /* 上传提示 */
 .gift-upload-hint {
@@ -570,6 +558,7 @@
   transition: all 0.3s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   position: relative;
+  background: transparent;
 }
 
 .gift-image-item:hover {
@@ -580,7 +569,8 @@
 .gift-image-item img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: transparent;
 }
 
 /* 管理员操作区 */
@@ -590,7 +580,6 @@
   margin-top: 12px;
 }
 
-.gift-edit-btn,
 .gift-upload-btn {
   padding: 8px 16px;
   border: none;
@@ -606,11 +595,6 @@
   color: #FFF;
 }
 
-.gift-edit-btn:hover,
-.gift-edit-btn.active {
-  background: #00A1D6;
-}
-
 .gift-upload-btn {
   background: #FB7299;
   color: #FFF;
@@ -622,30 +606,7 @@
 }
 
 /* 拖拽排序 */
-.gift-image-item.draggable {
-  cursor: move;
-}
 
-.gift-image-item.dragging {
-  opacity: 0.5;
-  transform: scale(1.1);
-}
-
-.gift-image-item.drag-over {
-  border: 2px dashed #00A1D6;
-}
-
-.drag-handle {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  color: #FFF;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: move;
-}
 
 /* 删除按钮 */
 .gift-delete-btn {
