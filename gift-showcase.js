@@ -198,21 +198,24 @@ function renderGiftShowcase() {
         <div class="gift-flower-intro">
           <p>以十二个月令花卉为主题，每一朵花都承载着独特的祝福与寓意</p>
         </div>
-        <div class="gift-flower-grid">
+        <div class="gift-timeline">
   `;
   
-  // 渲染2.0花语卡片
+  // 渲染2.0花语卡片 - 使用与1.0相同的结构
   GIFT_V2_DATA.months.forEach((month, index) => {
     const theme = FLOWER_COLORS[month.theme];
     html += `
-      <div class="gift-flower-card" 
-           style="--flower-bg: ${theme.bg}; --flower-accent: ${theme.accent}; --flower-color: ${theme.flower}; animation-delay: ${index * 0.05}s">
-        <div class="flower-month">${month.name}</div>
-        <div class="flower-icon">${month.title.split(' ')[1]}</div>
-        <div class="flower-name">${month.flower}</div>
-        <div class="flower-meaning">${month.meaning}</div>
-        <div class="flower-desc">${month.desc}</div>
-        <div class="flower-coming-soon">敬请期待 ✨</div>
+      <div class="gift-card gift-flower-card-v2" 
+           style="--card-bg: ${theme.bg}; --card-accent: ${theme.accent}; animation-delay: ${index * 0.05}s">
+        <div class="gift-card-inner">
+          <div class="gift-card-front">
+            <div class="gift-month-badge">${month.name}</div>
+            <div class="gift-zodiac flower-zodiac">${month.title.split(' ')[1]}</div>
+            <div class="gift-title">${month.title}</div>
+            <div class="gift-desc flower-desc-short">${month.flower} · ${month.meaning}</div>
+            <div class="flower-coming-soon">敬请期待 ✨</div>
+          </div>
+        </div>
       </div>
     `;
   });
