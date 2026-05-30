@@ -31,7 +31,7 @@ const GIFT_V2_DATA = {
     { id: 'v2-3', name: '3月', title: '桃花 🍑', theme: 'peach', desc: '人面桃花，春风十里', flower: '桃花', meaning: '爱情、美好、桃李满天下' },
     { id: 'v2-4', name: '4月', title: '牡丹 🌺', theme: 'peony', desc: '国色天香，富贵吉祥', flower: '牡丹', meaning: '富贵、圆满、雍容华贵' },
     { id: 'v2-5', name: '5月', title: '石榴花 🌹', theme: 'pomegranate', desc: '热情似火，多子多福', flower: '石榴花', meaning: '成熟、美丽、子孙满堂' },
-    { id: 'v2-6', name: '6月', title: '荷花 🪷', theme: 'lotus', desc: '出淤泥而不染，濯清涟而不妖', flower: '荷花', meaning: '纯洁、高雅、清廉' },
+    { id: 'v2-6', name: '6月', title: '荷花 🌺', theme: 'lotus', desc: '出淤泥而不染，濯清涟而不妖', flower: '荷花', meaning: '纯洁、高雅、清廉' },
     { id: 'v2-7', name: '7月', title: '茉莉花 🌼', theme: 'jasmine', desc: '清香淡雅，芬芳袭人', flower: '茉莉花', meaning: '清纯、质朴、忠贞' },
     { id: 'v2-8', name: '8月', title: '桂花 🌾', theme: 'osmanthus', desc: '金桂飘香，月圆人团圆', flower: '桂花', meaning: '吉祥、美好、蟾宫折桂' },
     { id: 'v2-9', name: '9月', title: '菊花 🌻', theme: 'chrysanthemum', desc: '采菊东篱下，悠然见南山', flower: '菊花', meaning: '长寿、高洁、隐逸' },
@@ -738,61 +738,6 @@ async function deleteImage(imageId) {
 }
 
 /**
- * 显示全尺寸图片
- */
-function showFullImage(url, name) {
-  const viewer = document.createElement('div');
-  viewer.className = 'gift-fullscreen-viewer show';
-  viewer.innerHTML = `
-    <div class="gift-fullscreen-overlay" onclick="this.parentElement.remove()"></div>
-    <img src="${url}" alt="${name}">
-    <button class="gift-fullscreen-close" onclick="this.parentElement.remove()">✕</button>
-  `;
-  document.body.appendChild(viewer);
-}
-
-/**
- * 显示 2.0 预览
- */
-function showV2Preview() {
-  const modal = document.createElement('div');
-  modal.className = 'gift-v2-modal show';
-  modal.id = 'v2Modal';
-  modal.innerHTML = `
-    <div class="gift-v2-overlay" onclick="closeV2Modal()"></div>
-    <div class="gift-v2-container">
-      <button class="gift-v2-close" onclick="closeV2Modal()">✕</button>
-      <div class="gift-v2-animation">
-        <div class="construction-icon">🏗️</div>
-        <div class="construction-crane">🪝</div>
-        <div class="construction-dots">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
-      <h3>2.0 浮光舰礼物</h3>
-      <p>全新升级，更多惊喜筹备中...</p>
-      <div class="gift-v2-features">
-        <div class="feature-item">✨ 更精美的设计</div>
-        <div class="feature-item">🎨 更多款式选择</div>
-        <div class="feature-item">💝 更丰富的周边</div>
-      </div>
-      <div class="gift-v2-coming">Coming Soon...</div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-}
-
-/**
- * 关闭 2.0 预览弹窗
- */
-function closeV2Modal() {
-  const modal = document.getElementById('v2Modal');
-  if (modal) {
-    modal.remove();
-  }
-}
-
-/**
  * 显示提示
  */
 function showToast(msg, type) {
@@ -814,13 +759,6 @@ window.openGiftShowcase = openGiftShowcase;
 window.closeGiftShowcase = closeGiftShowcase;
 window.openMonthDetail = openMonthDetail;
 window.closeMonthDetail = closeMonthDetail;
-window.toggleEditMode = toggleEditMode;
-window.handleDragStart = handleDragStart;
-window.handleDragOver = handleDragOver;
-window.handleDrop = handleDrop;
-window.handleDragEnd = handleDragEnd;
 window.openUploadDialog = openUploadDialog;
 window.deleteImage = deleteImage;
-window.showFullImage = showFullImage;
-window.showV2Preview = showV2Preview;
-window.closeV2Modal = closeV2Modal;
+window.toggleSection = toggleSection;
