@@ -14,8 +14,8 @@ const GIFT_DATA = {
     { id: '5', name: '5月', title: '金牛座 ♉', theme: 'taurus', desc: '稳重务实的金牛座立牌' },
     { id: '6', name: '6月', title: '双子座 ♊', theme: 'gemini', desc: '机智多变的双子座立牌' },
     { id: '7', name: '7月', title: '巨蟹座 ♋', theme: 'cancer', desc: '温柔体贴的巨蟹座立牌' },
-    { id: '8', name: '8月', title: '狮子座 ♌', theme: 'leo', desc: '自信耀眼的狮子座立牌' },
-    { id: '9', name: '9月', title: '处女座 ♍', theme: 'virgo', desc: '细腻温柔的处女座立牌' },
+    { id: '8', name: '8月', title: '狮子座 ♌', theme: 'leo', desc: '自信耀眼的狮子座立牌', special: true, specialGift: '🎁 冰箱贴 + 鼠标垫', specialIcon: '🦁' },
+    { id: '9', name: '9月', title: '处女座 ♍', theme: 'virgo', desc: '细腻温柔的处女座立牌', special: true, specialGift: '🎁 打卡棒', specialIcon: '✨' },
     { id: '10', name: '10月', title: '天秤座 ♎', theme: 'libra', desc: '优雅平衡的天秤座立牌' },
     { id: '11', name: '11月', title: '天蝎座 ♏', theme: 'scorpio', desc: '神秘深邃的天蝎座立牌' },
     { id: '12', name: '12月', title: '射手座 ♐', theme: 'sagittarius', desc: '自由奔放的射手座立牌' }
@@ -178,6 +178,8 @@ function renderGiftShowcase() {
             <div class="gift-title">${month.title}</div>
             <div class="gift-desc">${month.desc}</div>
             ${month.missing ? '<div class="gift-missing-badge">🚧 暂缺</div>' : ''}
+            ${month.special ? `<div class="gift-special-badge">${month.specialIcon} 特殊礼物</div>` : ''}
+            ${month.special ? `<div class="gift-special-gift">${month.specialGift}</div>` : ''}
             ${hasImages ? `<div class="gift-count">${monthImages.length} 张照片</div>` : ''}
             ${isAdmin ? `<div class="gift-upload-hint" onclick="event.stopPropagation(); openMonthUpload('${month.id}')">+ 上传图片</div>` : ''}
           </div>
@@ -239,6 +241,7 @@ function openMonthDetail(monthId) {
       <div class="gift-image-header">
         <h3>${month.title}</h3>
         <p>${month.desc}</p>
+        ${month.special ? `<div class="gift-detail-special">${month.specialIcon} ${month.specialGift}</div>` : ''}
         ${isAdmin ? `
           <div class="gift-admin-actions">
             <button class="gift-upload-btn" onclick="openUploadDialog()">+ 上传图片</button>

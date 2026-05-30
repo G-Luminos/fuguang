@@ -1125,3 +1125,79 @@
     padding: 8px 16px;
   }
 }
+
+/* ===== 特殊礼物标记样式 ===== */
+.gift-special-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #FB7299, #FF8FA3);
+  color: #FFF;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 12px;
+  margin-top: 6px;
+  box-shadow: 0 2px 8px rgba(251, 114, 153, 0.4);
+  animation: specialBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes specialBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.gift-special-gift {
+  font-size: 12px;
+  color: #FB7299;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: rgba(251, 114, 153, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(251, 114, 153, 0.2);
+}
+
+.gift-detail-special {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #FB7299, #FF8FA3);
+  color: #FFF;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 20px;
+  margin: 8px 0;
+  box-shadow: 0 4px 12px rgba(251, 114, 153, 0.3);
+}
+
+/* 特殊礼物卡片高亮效果 */
+.gift-card:has(.gift-special-badge) {
+  box-shadow: 
+    0 8px 32px rgba(251, 114, 153, 0.25),
+    0 0 0 2px rgba(251, 114, 153, 0.3);
+}
+
+.gift-card:has(.gift-special-badge):hover {
+  box-shadow: 
+    0 12px 40px rgba(251, 114, 153, 0.35),
+    0 0 0 3px rgba(251, 114, 153, 0.4);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .gift-special-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+  
+  .gift-special-gift {
+    font-size: 11px;
+  }
+  
+  .gift-detail-special {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+}
