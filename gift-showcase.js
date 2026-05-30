@@ -13,7 +13,7 @@ const GIFT_DATA = {
     { id: '4', name: '4月', title: '白羊座 ♈', theme: 'aries', desc: '热情勇敢的白羊座立牌' },
     { id: '5', name: '5月', title: '金牛座 ♉', theme: 'taurus', desc: '稳重务实的金牛座立牌' },
     { id: '6', name: '6月', title: '双子座 ♊', theme: 'gemini', desc: '机智多变的双子座立牌' },
-    { id: '7', name: '7月', title: '巨蟹座 ♋', theme: 'cancer', desc: '温柔体贴的巨蟹座立牌' },
+    { id: '7', name: '7月', title: '巨蟹座 ♋', theme: 'cancer', desc: '温柔体贴的巨蟹座立牌', special: true, specialGift: '🎁 旋转小人 + 首月吧唧 + 透卡', specialIcon: '🦀' },
     { id: '8', name: '8月', title: '狮子座 ♌', theme: 'leo', desc: '自信耀眼的狮子座立牌', special: true, specialGift: '🎁 冰箱贴 + 鼠标垫', specialIcon: '🦁' },
     { id: '9', name: '9月', title: '处女座 ♍', theme: 'virgo', desc: '细腻温柔的处女座立牌', special: true, specialGift: '🎁 打卡棒', specialIcon: '✨' },
     { id: '10', name: '10月', title: '天秤座 ♎', theme: 'libra', desc: '优雅平衡的天秤座立牌' },
