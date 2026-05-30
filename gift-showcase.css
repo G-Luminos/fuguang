@@ -1515,3 +1515,29 @@
     display: none;
   }
 }
+
+
+/* ===== 移动端适配优化 ===== */
+@media (max-width: 768px) {
+  .gift-modal-overlay { padding: 10px; }
+  .gift-modal { border-radius: 16px; max-height: 95vh; }
+  .gift-modal-header { padding: 16px 20px; }
+  .gift-modal-header h2 { font-size: 18px; }
+  .gift-modal-body { padding: 16px; }
+  .gift-timeline { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gift-card { min-height: 140px; }
+  .gift-card-front { padding: 10px 8px; }
+  .gift-month-badge { font-size: 10px; padding: 3px 8px; }
+  .gift-zodiac { font-size: 24px; }
+  .gift-title { font-size: 12px; }
+  .gift-desc { font-size: 9px; -webkit-line-clamp: 2; }
+  .gift-preview { height: 60px; }
+  .gift-image-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+@media (max-width: 480px) {
+  .gift-timeline { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .gift-card { min-height: 160px; }
+  .gift-modal-overlay { padding: 0; }
+  .gift-modal { border-radius: 0; max-height: 100vh; max-width: 100%; }
+}
+
