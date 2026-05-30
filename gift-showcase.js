@@ -201,20 +201,30 @@ function renderGiftShowcase() {
         <div class="gift-timeline">
   `;
   
-  // 渲染2.0花语卡片 - 使用与1.0相同的结构
+  // 渲染2.0花语卡片 - 使用与1.0相同的结构，支持图片上传
   GIFT_V2_DATA.months.forEach((month, index) => {
+    const monthImages = giftImages[month.id] || [];
+    const hasImages = monthImages.length > 0;
     const theme = FLOWER_COLORS[month.theme];
+    
     html += `
-      <div class="gift-card gift-flower-card-v2" 
-           style="--card-bg: ${theme.bg}; --card-accent: ${theme.accent}; animation-delay: ${index * 0.05}s">
+      <div class="gift-card gift-flower-card-v2 ${hasImages ? 'has-files' : ''}" 
+           style="--card-bg: ${theme.bg}; --card-accent: ${theme.accent}; animation-delay: ${index * 0.05}s"
+           onclick="openMonthDetail('${month.id}')">
         <div class="gift-card-inner">
           <div class="gift-card-front">
             <div class="gift-month-badge">${month.name}</div>
             <div class="gift-zodiac flower-zodiac">${month.title.split(' ')[1]}</div>
             <div class="gift-title">${month.title}</div>
             <div class="gift-desc flower-desc-short">${month.flower} · ${month.meaning}</div>
-            <div class="flower-coming-soon">敬请期待 ✨</div>
+            ${hasImages ? `<div class="gift-count">${monthImages.length} 张照片</div>` : ''}
+            ${isAdmin ? `<div class="gift-upload-hint" onclick="event.stopPropagation(); openMonthUpload('${month.id}')">+ 上传图片</div>` : ''}
           </div>
+          ${hasImages ? `
+            <div class="gift-preview">
+              <img src="${monthImages[0].public_url}" alt="${month.name}礼物" loading="lazy" decoding="async" fetchpriority="${index < 3 ? 'high' : 'auto'}" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败</div>';">
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -296,7 +306,11 @@ function toggleSection(section) {
  * 打开月份详情
  */
 function openMonthDetail(monthId) {
-  const month = GIFT_DATA.months.find(m => m.id === monthId);
+  // 支持1.0和2.0的月份ID
+  let month = GIFT_V1_DATA.months.find(m => m.id === monthId);
+  if (!month) {
+    month = GIFT_V2_DATA.months.find(m => m.id === monthId);
+  }
   if (!month) return;
   
   const images = giftImages[monthId] || [];
