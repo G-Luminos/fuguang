@@ -73,22 +73,6 @@ const FLOWER_COLORS = {
   narcissus: { bg: 'linear-gradient(135deg, #F0F8FF, #E0F0F8)', accent: '#6090B0', flower: '#E6E6FA' }
 };
 
-// 星座主题配色
-const THEME_COLORS = {
-  capricorn: { bg: 'linear-gradient(135deg, #D5D8E0, #A0A8B8)', accent: '#5B6B7E' },
-  aquarius: { bg: 'linear-gradient(135deg, #D5E8F0, #90C8E0)', accent: '#4B90B0' },
-  pisces: { bg: 'linear-gradient(135deg, #E8E0F0, #C8B8E0)', accent: '#8B7BB0' },
-  aries: { bg: 'linear-gradient(135deg, #F0D5D5, #E09090)', accent: '#B05050' },
-  taurus: { bg: 'linear-gradient(135deg, #F0E8D0, #E0C880)', accent: '#B09040' },
-  gemini: { bg: 'linear-gradient(135deg, #F0F0D5, #E0E080)', accent: '#B0B040' },
-  cancer: { bg: 'linear-gradient(135deg, #E8D5D8, #D0A0A8)', accent: '#A07078' },
-  leo: { bg: 'linear-gradient(135deg, #F0E0D0, #E8C080)', accent: '#D09030' },
-  virgo: { bg: 'linear-gradient(135deg, #E8D5E0, #D4A5C7)', accent: '#9B7B8E' },
-  libra: { bg: 'linear-gradient(135deg, #E0E5F0, #B8C5E0)', accent: '#7B8CB0' },
-  scorpio: { bg: 'linear-gradient(135deg, #E0D5E8, #B8A0C8)', accent: '#6B5B8E' },
-  sagittarius: { bg: 'linear-gradient(135deg, #F0E8D5, #E0C890)', accent: '#B09050' }
-};
-
 // 全局状态
 let giftImages = {}; // { monthId: [{id, url, sort_order}, ...] }
 let currentMonthId = null;
