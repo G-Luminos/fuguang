@@ -95,7 +95,7 @@ async function loadGiftImages() {
   // 检查 sb 是否可用
   if (typeof window.sb === 'undefined' || !window.sb) {
     console.warn('Supabase 客户端未初始化');
-    showToast('数据库连接失败，请刷新页面', 'e');
+    // 静默处理，不显示错误提示
     return;
   }
   
@@ -108,11 +108,7 @@ async function loadGiftImages() {
     
     if (error) {
       console.error('加载礼物图片失败:', error);
-      showToast('加载图片失败: ' + error.message, 'e');
-      // 如果表不存在，尝试创建
-      if (error.code === '42P01') {
-        await createGiftImagesTable();
-      }
+      // 静默处理错误，不显示弹窗，游客和管理员都能正常浏览
       return;
     }
     
@@ -140,7 +136,7 @@ async function loadGiftImages() {
  */
 async function createGiftImagesTable() {
   console.log('请手动在 Supabase SQL Editor 中执行 supabase-schema.sql 中的建表语句');
-  showToast('数据库表不存在，请联系管理员初始化', 'e');
+  // 静默处理，不显示错误提示
 }
 
 /**
@@ -291,6 +287,11 @@ function closeMonthDetail() {
  * 打开上传对话框
  */
 function openUploadDialog() {
+  // 检查管理员权限
+  if (!checkIsAdmin()) {
+    showToast('只有管理员可以上传图片', 'e');
+    return;
+  }
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -305,6 +306,12 @@ function openUploadDialog() {
 async function handleImageUpload(files) {
   if (!files || files.length === 0) return;
   if (!currentMonthId) return;
+  
+  // 检查管理员权限
+  if (!checkIsAdmin()) {
+    showToast('只有管理员可以上传图片', 'e');
+    return;
+  }
   
   // 检查 sb 是否可用
   if (typeof window.sb === 'undefined' || !window.sb) {
@@ -445,6 +452,12 @@ function addWatermark(file) {
  * 删除图片
  */
 async function deleteImage(imageId) {
+  // 检查管理员权限
+  if (!checkIsAdmin()) {
+    showToast('只有管理员可以删除图片', 'e');
+    return;
+  }
+  
   if (!confirm('确定要删除这张图片吗？')) return;
   
   // 检查 sb 是否可用
