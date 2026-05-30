@@ -49,6 +49,10 @@ let currentMonthId = null;
 let isEditMode = false;
 let draggedItem = null;
 
+// 暴露到全局以便调试
+window.giftImages = giftImages;
+window.loadGiftImages = loadGiftImages;
+
 // Supabase Storage bucket 名称
 const GIFT_BUCKET = 'gifts';
 
@@ -124,6 +128,10 @@ async function loadGiftImages() {
       }
       giftImages[img.month_id].push(img);
     });
+    
+    // 同步到全局变量以便调试
+    window.giftImages = giftImages;
+    console.log('giftImages 已加载:', Object.keys(giftImages).length, '个月份有图片');
   } catch (err) {
     console.error('加载礼物图片出错:', err);
   }
