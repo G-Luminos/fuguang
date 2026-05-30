@@ -5,7 +5,8 @@
  */
 
 // 礼物展示数据 - 按1月到12月顺序排列
-const GIFT_DATA = {
+// 1.0 浮光舰礼物数据 - 星座立牌
+const GIFT_V1_DATA = {
   months: [
     { id: '1', name: '1月', title: '摩羯座 ♑', theme: 'capricorn', desc: '坚韧踏实的摩羯座立牌' },
     { id: '2', name: '2月', title: '水瓶座 ♒', theme: 'aquarius', desc: '独立创新的水瓶座立牌' },
@@ -19,12 +20,57 @@ const GIFT_DATA = {
     { id: '10', name: '10月', title: '天秤座 ♎', theme: 'libra', desc: '优雅平衡的天秤座立牌' },
     { id: '11', name: '11月', title: '天蝎座 ♏', theme: 'scorpio', desc: '神秘深邃的天蝎座立牌' },
     { id: '12', name: '12月', title: '射手座 ♐', theme: 'sagittarius', desc: '自由奔放的射手座立牌' }
-  ],
-  v2: {
-    title: '2.0 浮光舰礼物',
-    status: 'renovating',
-    desc: '全新升级，更多惊喜筹备中...'
-  }
+  ]
+};
+
+// 2.0 浮光舰礼物数据 - 十二花语
+const GIFT_V2_DATA = {
+  months: [
+    { id: 'v2-1', name: '1月', title: '梅花 ♣', theme: 'plum', desc: '傲雪凌霜，坚韧不拔', flower: '梅花', meaning: '坚强、高洁、忠贞' },
+    { id: 'v2-2', name: '2月', title: '杏花 🌸', theme: 'apricot', desc: '春意盎然，娇羞可爱', flower: '杏花', meaning: '娇羞、疑惑、少女情怀' },
+    { id: 'v2-3', name: '3月', title: '桃花 🍑', theme: 'peach', desc: '人面桃花，春风十里', flower: '桃花', meaning: '爱情、美好、桃李满天下' },
+    { id: 'v2-4', name: '4月', title: '牡丹 🌺', theme: 'peony', desc: '国色天香，富贵吉祥', flower: '牡丹', meaning: '富贵、圆满、雍容华贵' },
+    { id: 'v2-5', name: '5月', title: '石榴花 🌹', theme: 'pomegranate', desc: '热情似火，多子多福', flower: '石榴花', meaning: '成熟、美丽、子孙满堂' },
+    { id: 'v2-6', name: '6月', title: '荷花 🪷', theme: 'lotus', desc: '出淤泥而不染，濯清涟而不妖', flower: '荷花', meaning: '纯洁、高雅、清廉' },
+    { id: 'v2-7', name: '7月', title: '茉莉花 🌼', theme: 'jasmine', desc: '清香淡雅，芬芳袭人', flower: '茉莉花', meaning: '清纯、质朴、忠贞' },
+    { id: 'v2-8', name: '8月', title: '桂花 🌾', theme: 'osmanthus', desc: '金桂飘香，月圆人团圆', flower: '桂花', meaning: '吉祥、美好、蟾宫折桂' },
+    { id: 'v2-9', name: '9月', title: '菊花 🌻', theme: 'chrysanthemum', desc: '采菊东篱下，悠然见南山', flower: '菊花', meaning: '长寿、高洁、隐逸' },
+    { id: 'v2-10', name: '10月', title: '芙蓉花 🌷', theme: 'hibiscus', desc: '清水出芙蓉，天然去雕饰', flower: '芙蓉花', meaning: '纤细之美、贞操、富贵' },
+    { id: 'v2-11', name: '11月', title: '山茶花 🌿', theme: 'camellia', desc: '凌霜怒放，耐久不衰', flower: '山茶花', meaning: '理想的爱、谦让、美德' },
+    { id: 'v2-12', name: '12月', title: '水仙花 💐', theme: 'narcissus', desc: '凌波仙子，清香淡雅', flower: '水仙花', meaning: '思念、团圆、纯洁' }
+  ]
+};
+
+// 星座主题配色（1.0）
+const THEME_COLORS = {
+  capricorn: { bg: 'linear-gradient(135deg, #D5D8E0, #A0A8B8)', accent: '#5B6B7E' },
+  aquarius: { bg: 'linear-gradient(135deg, #D5E8F0, #90C8E0)', accent: '#4B90B0' },
+  pisces: { bg: 'linear-gradient(135deg, #E8E0F0, #C8B8E0)', accent: '#8B7BB0' },
+  aries: { bg: 'linear-gradient(135deg, #F0D5D5, #E09090)', accent: '#B05050' },
+  taurus: { bg: 'linear-gradient(135deg, #F0E8D0, #E0C880)', accent: '#B09040' },
+  gemini: { bg: 'linear-gradient(135deg, #F0F0D5, #E0E080)', accent: '#B0B040' },
+  cancer: { bg: 'linear-gradient(135deg, #E8D5D8, #D0A0A8)', accent: '#A07078' },
+  leo: { bg: 'linear-gradient(135deg, #F0E0D0, #E8C080)', accent: '#D09030' },
+  virgo: { bg: 'linear-gradient(135deg, #E8D5E0, #D4A5C7)', accent: '#9B7B8E' },
+  libra: { bg: 'linear-gradient(135deg, #E0E5F0, #B8C5E0)', accent: '#7B8CB0' },
+  scorpio: { bg: 'linear-gradient(135deg, #E0D5E8, #B8A0C8)', accent: '#6B5B8E' },
+  sagittarius: { bg: 'linear-gradient(135deg, #F0E8D5, #E0C890)', accent: '#B09050' }
+};
+
+// 花语主题配色（2.0）
+const FLOWER_COLORS = {
+  plum: { bg: 'linear-gradient(135deg, #F5E6F0, #E8C8E0)', accent: '#C080B0', flower: '#FFB6C1' },
+  apricot: { bg: 'linear-gradient(135deg, #FFF0F5, #FFD4E5)', accent: '#E080A0', flower: '#FFC0CB' },
+  peach: { bg: 'linear-gradient(135deg, #FFE4E1, #FFB6C1)', accent: '#D06080', flower: '#FF69B4' },
+  peony: { bg: 'linear-gradient(135deg, #FFF0F8, #FFD0E8)', accent: '#E060A0', flower: '#FF1493' },
+  pomegranate: { bg: 'linear-gradient(135deg, #FFE4E8, #FFA0B0)', accent: '#D04060', flower: '#DC143C' },
+  lotus: { bg: 'linear-gradient(135deg, #F0FFF0, #D0F0D8)', accent: '#60B080', flower: '#FFB6C1' },
+  jasmine: { bg: 'linear-gradient(135deg, #F8FFF8, #E8F5E8)', accent: '#80C080', flower: '#FFFFFF' },
+  osmanthus: { bg: 'linear-gradient(135deg, #FFF8E8, #FFE4A0)', accent: '#D4A020', flower: '#FFD700' },
+  chrysanthemum: { bg: 'linear-gradient(135deg, #FFF8E0, #FFE4B0)', accent: '#E0A030', flower: '#FFA500' },
+  hibiscus: { bg: 'linear-gradient(135deg, #FFF0F5, #FFD0E0)', accent: '#C06080', flower: '#FF6347' },
+  camellia: { bg: 'linear-gradient(135deg, #FFF5F0, #FFE0D0)', accent: '#B05060', flower: '#FA8072' },
+  narcissus: { bg: 'linear-gradient(135deg, #F0F8FF, #E0F0F8)', accent: '#6090B0', flower: '#E6E6FA' }
 };
 
 // 星座主题配色
@@ -155,20 +201,61 @@ function renderGiftShowcase() {
   let html = `
     <div class="gift-header">
       <h3>✨ 往期舰长礼物回顾</h3>
-      <p class="gift-subtitle">1.0 浮光舰礼物 · 星座立牌系列</p>
+      <p class="gift-subtitle">浮光舰长礼物系列</p>
     </div>
     
-    <div class="gift-timeline">
+    <!-- 2.0 十二花语 - 默认展开 -->
+    <div class="gift-section gift-v2-section-main">
+      <div class="gift-section-header" onclick="toggleSection('v2')">
+        <h4>🌸 2.0 浮光舰礼物 · 十二花语</h4>
+        <span class="toggle-icon" id="v2-toggle">▼</span>
+      </div>
+      <div class="gift-section-content" id="v2-content">
+        <div class="gift-flower-intro">
+          <p>以十二个月令花卉为主题，每一朵花都承载着独特的祝福与寓意</p>
+        </div>
+        <div class="gift-flower-grid">
   `;
   
-  // 渲染月份卡片 - 按1-12月顺序
-  GIFT_DATA.months.forEach((month, index) => {
+  // 渲染2.0花语卡片
+  GIFT_V2_DATA.months.forEach((month, index) => {
+    const theme = FLOWER_COLORS[month.theme];
+    html += `
+      <div class="gift-flower-card" 
+           style="--flower-bg: ${theme.bg}; --flower-accent: ${theme.accent}; --flower-color: ${theme.flower}; animation-delay: ${index * 0.05}s">
+        <div class="flower-month">${month.name}</div>
+        <div class="flower-icon">${month.title.split(' ')[1]}</div>
+        <div class="flower-name">${month.flower}</div>
+        <div class="flower-meaning">${month.meaning}</div>
+        <div class="flower-desc">${month.desc}</div>
+        <div class="flower-coming-soon">敬请期待 ✨</div>
+      </div>
+    `;
+  });
+  
+  html += `
+        </div>
+      </div>
+    </div>
+    
+    <!-- 1.0 星座立牌 - 默认折叠 -->
+    <div class="gift-section gift-v1-section">
+      <div class="gift-section-header" onclick="toggleSection('v1')">
+        <h4>⭐ 1.0 浮光舰礼物 · 星座立牌系列</h4>
+        <span class="toggle-icon" id="v1-toggle">▶</span>
+      </div>
+      <div class="gift-section-content collapsed" id="v1-content">
+        <div class="gift-timeline">
+  `;
+  
+  // 渲染1.0月份卡片 - 按1-12月顺序
+  GIFT_V1_DATA.months.forEach((month, index) => {
     const monthImages = giftImages[month.id] || [];
     const hasImages = monthImages.length > 0;
     const theme = THEME_COLORS[month.theme];
     
     html += `
-      <div class="gift-card ${month.missing ? 'missing' : ''} ${hasImages ? 'has-files' : ''}" 
+      <div class="gift-card ${month.missing ? 'missing' : ''} ${hasImages ? 'has-files' : ''} ${month.special ? 'special-month' : ''}" 
            style="--card-bg: ${theme.bg}; --card-accent: ${theme.accent}; animation-delay: ${index * 0.1}s"
            onclick="openMonthDetail('${month.id}')">
         <div class="gift-card-inner">
@@ -193,28 +280,29 @@ function renderGiftShowcase() {
     `;
   });
   
-  // 2.0 版本画饼卡片
   html += `
-    </div>
-    
-    <div class="gift-v2-section">
-      <div class="gift-v2-card" onclick="showV2Preview()">
-        <div class="gift-v2-icon">🚧</div>
-        <div class="gift-v2-content">
-          <h4>${GIFT_DATA.v2.title}</h4>
-          <p>${GIFT_DATA.v2.desc}</p>
-        </div>
-        <div class="gift-v2-status">
-          <span class="renovating-badge">
-            <span class="dot"></span>
-            正在修缮中
-          </span>
         </div>
       </div>
     </div>
   `;
   
   container.innerHTML = html;
+}
+
+/**
+ * 切换折叠面板
+ */
+function toggleSection(section) {
+  const content = document.getElementById(section + '-content');
+  const toggle = document.getElementById(section + '-toggle');
+  
+  if (content.classList.contains('collapsed')) {
+    content.classList.remove('collapsed');
+    toggle.textContent = '▼';
+  } else {
+    content.classList.add('collapsed');
+    toggle.textContent = '▶';
+  }
 }
 
 /**
