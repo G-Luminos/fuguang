@@ -73,6 +73,12 @@ function checkIsAdmin() {
 async function openGiftShowcase() {
   const modal = document.getElementById('giftModal');
   modal.classList.add('show');
+  
+  // 确保 Supabase 客户端已初始化（游客模式也需要）
+  if (typeof window.initSB === 'function') {
+    window.initSB();
+  }
+  
   await loadGiftImages();
   renderGiftShowcase();
 }
