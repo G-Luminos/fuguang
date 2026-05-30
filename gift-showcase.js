@@ -183,7 +183,7 @@ function renderGiftShowcase() {
           </div>
           ${hasImages ? `
             <div class="gift-preview">
-              <img src="${monthImages[0].public_url}" alt="${month.name}礼物" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败</div>';">
+              <img src="${monthImages[0].public_url}" alt="${month.name}礼物" loading="lazy" decoding="async" fetchpriority="${index < 3 ? 'high' : 'auto'}" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败</div>';">
             </div>
           ` : ''}
         </div>
@@ -259,9 +259,10 @@ function openMonthDetail(monthId) {
   } else {
     images.forEach((img, idx) => {
       html += `
-        <div class="gift-image-item" data-id="${img.id}" data-index="${idx}">
-          <img src="${img.public_url}" alt="图片${idx + 1}" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败<br><small>请检查Storage配置</small></div>';">
+        <div class="gift-image-item" data-id="${img.id}" data-index="${idx}" onclick="openImageLightbox('${img.public_url}', ${idx}, '${month.title}')">
+          <img src="${img.public_url}" alt="图片${idx + 1}" loading="lazy" decoding="async" onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img-error\\'>图片加载失败<br><small>请检查Storage配置</small></div>';">
           ${isAdmin ? `<button class="gift-delete-btn" onclick="event.stopPropagation(); deleteImage('${img.id}')">🗑️</button>` : ''}
+          <div class="gift-image-zoom-hint">🔍 点击查看大图</div>
         </div>
       `;
     });
@@ -285,6 +286,136 @@ function closeMonthDetail() {
     modal.remove();
   }
   currentMonthId = null;
+}
+
+// 灯箱当前图片索引
+let lightboxCurrentIndex = 0;
+let lightboxImages = [];
+
+/**
+ * 打开图片灯箱查看大图
+ */
+function openImageLightbox(imageUrl, index, monthTitle) {
+  // 获取当前月份的所有图片
+  const monthId = currentMonthId;
+  lightboxImages = giftImages[monthId] || [];
+  lightboxCurrentIndex = index;
+  
+  // 创建灯箱
+  const lightbox = document.createElement('div');
+  lightbox.className = 'image-lightbox show';
+  lightbox.id = 'imageLightbox';
+  
+  const currentImg = lightboxImages[index];
+  
+  lightbox.innerHTML = `
+    <div class="lightbox-overlay" onclick="closeImageLightbox()"></div>
+    <button class="lightbox-close" onclick="closeImageLightbox()">✕</button>
+    <button class="lightbox-nav lightbox-prev" onclick="navigateLightbox(-1)">‹</button>
+    <button class="lightbox-nav lightbox-next" onclick="navigateLightbox(1)">›</button>
+    <div class="lightbox-content">
+      <img src="${imageUrl}" alt="图片 ${index + 1}" class="lightbox-img" id="lightboxImg" decoding="async">
+      <div class="lightbox-loading" id="lightboxLoading">加载中...</div>
+    </div>
+    <div class="lightbox-info">
+      <span class="lightbox-title">${monthTitle}</span>
+      <span class="lightbox-counter">${index + 1} / ${lightboxImages.length}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(lightbox);
+  
+  // 图片加载完成后隐藏 loading
+  const img = lightbox.querySelector('#lightboxImg');
+  const loading = lightbox.querySelector('#lightboxLoading');
+  img.onload = () => {
+    loading.style.display = 'none';
+  };
+  
+  // 键盘导航
+  document.addEventListener('keydown', handleLightboxKeydown);
+  
+  // 触摸滑动支持
+  let touchStartX = 0;
+  let touchEndX = 0;
+  lightbox.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  lightbox.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleLightboxSwipe();
+  }, { passive: true });
+  
+  function handleLightboxSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        navigateLightbox(1); // 左滑，下一张
+      } else {
+        navigateLightbox(-1); // 右滑，上一张
+      }
+    }
+  }
+}
+
+/**
+ * 关闭图片灯箱
+ */
+function closeImageLightbox() {
+  const lightbox = document.getElementById('imageLightbox');
+  if (lightbox) {
+    lightbox.remove();
+  }
+  document.removeEventListener('keydown', handleLightboxKeydown);
+  lightboxImages = [];
+  lightboxCurrentIndex = 0;
+}
+
+/**
+ * 灯箱键盘导航
+ */
+function handleLightboxKeydown(e) {
+  if (e.key === 'Escape') {
+    closeImageLightbox();
+  } else if (e.key === 'ArrowLeft') {
+    navigateLightbox(-1);
+  } else if (e.key === 'ArrowRight') {
+    navigateLightbox(1);
+  }
+}
+
+/**
+ * 导航到上一张/下一张图片
+ */
+function navigateLightbox(direction) {
+  if (lightboxImages.length === 0) return;
+  
+  lightboxCurrentIndex += direction;
+  
+  // 循环导航
+  if (lightboxCurrentIndex < 0) {
+    lightboxCurrentIndex = lightboxImages.length - 1;
+  } else if (lightboxCurrentIndex >= lightboxImages.length) {
+    lightboxCurrentIndex = 0;
+  }
+  
+  const newImg = lightboxImages[lightboxCurrentIndex];
+  const imgEl = document.getElementById('lightboxImg');
+  const loadingEl = document.getElementById('lightboxLoading');
+  const counterEl = document.querySelector('.lightbox-counter');
+  
+  if (imgEl && newImg) {
+    loadingEl.style.display = 'block';
+    imgEl.src = newImg.public_url;
+    imgEl.onload = () => {
+      loadingEl.style.display = 'none';
+    };
+  }
+  
+  if (counterEl) {
+    counterEl.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
+  }
 }
 
 
