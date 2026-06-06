@@ -969,11 +969,39 @@ initProvinces();
   </div>
 </div>
 
-<!-- 棉花糖灯箱 -->
-<div class="cc-lightbox" id="ccLightbox" onclick="ccCloseLightbox()">
-  <button class="cc-lightbox-close" onclick="ccCloseLightbox()">✕</button>
-  <img src="" alt="大图">
+<!-- 棉花糖 Loading -->
+<div class="cc-loading-overlay" id="ccLoading">
+  <div class="cc-loading-box">
+    <img src="https://webcdn.m.qq.com/qclaw/loading-cat.gif" class="cc-loading-gif" alt="loading">
+    <p>小光正在努力...</p>
+  </div>
 </div>
+
+<!-- 棉花糖媒体查看器 -->
+<div class="cc-mv-overlay" id="ccMediaView" onclick="ccCloseMediaView()">
+  <button class="cc-mv-close" onclick="ccCloseMediaView()">✕</button>
+  <div class="cc-mv-content"></div>
+</div>
+
+<!-- 棉花糖投屏演示模式 -->
+<div class="cc-present" id="ccPresent">
+  <div class="cc-present-header">
+    <div class="cc-present-title">🍬 粉丝投稿</div>
+    <span class="cc-present-counter" id="ccPresentCounter">1 / 1</span>
+    <button class="cc-present-exit" onclick="ccExitPresent()">退出演示</button>
+  </div>
+  <div class="cc-present-body">
+    <div id="ccPresentContent"></div>
+  </div>
+  <div class="cc-present-footer">
+    <button class="cc-present-nav" onclick="ccPrevSlide()">⬆ 上一条</button>
+    <span class="cc-present-hint">键盘 ↑↓ 切换</span>
+    <button class="cc-present-nav" onclick="ccNextSlide()">下一条 ⬇</button>
+  </div>
+</div>
+
+<!-- 投屏捕获区域（隐藏，供OBS捕获） -->
+<div class="cc-capture-area" id="ccCapture"></div>
 
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>

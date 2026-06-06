@@ -1,93 +1,100 @@
--- ============================================================
--- 浮光舰长礼物统计 - Supabase 建表 SQL
--- 在 SQL Editor 中粘贴执行
--- ============================================================
+-- ================================================================
+-- 浮光-Luminos 完整数据库配置
+-- 在 Supabase SQL Editor 中一次性执行
+-- ================================================================
 
--- 1. 创建记录表
+-- ========== 1. 舰长记录表 ==========
 CREATE TABLE IF NOT EXISTS records (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   nickname TEXT NOT NULL,
-  phone_enc TEXT,           -- AES加密后的手机号
+  phone_enc TEXT,
   province TEXT,
   city TEXT,
   district TEXT,
-  address_enc TEXT,         -- AES加密后的详细地址
+  address_enc TEXT,
   note TEXT,
-  month TEXT NOT NULL,      -- "2026-05" 格式
+  month TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 2. 创建索引
 CREATE INDEX IF NOT EXISTS idx_records_month ON records(month);
 CREATE INDEX IF NOT EXISTS idx_records_nickname ON records(nickname);
 CREATE INDEX IF NOT EXISTS idx_records_month_nick ON records(month, nickname);
 
--- 3. 启用 RLS (Row Level Security)
 ALTER TABLE records ENABLE ROW LEVEL SECURITY;
 
--- 4. 游客策略：只能插入和查看自己的记录（按nickname匹配）
-CREATE POLICY "Guests can insert their own records"
-  ON records FOR INSERT
-  WITH CHECK (true);  -- 允许任何人插入（前端控制nickname）
+CREATE POLICY "Allow insert records" ON records FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow select records" ON records FOR SELECT USING (true);
+CREATE POLICY "Allow update records" ON records FOR UPDATE USING (true);
+CREATE POLICY "Allow delete records" ON records FOR DELETE USING (true);
 
-CREATE POLICY "Guests can view their own records"
-  ON records FOR SELECT
-  USING (true);  -- 允许查看所有（管理员需要看全部，前端按角色过滤）
-
-CREATE POLICY "Admins can update any record"
-  ON records FOR UPDATE
-  USING (true);
-
-CREATE POLICY "Admins can delete any record"
-  ON records FOR DELETE
-  USING (true);
-
--- 5. 自动更新 updated_at 的触发器
+-- updated_at 触发器
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
+BEGIN NEW.updated_at = now(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER records_updated_at
-  BEFORE UPDATE ON records
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at();
+DROP TRIGGER IF EXISTS records_updated_at ON records;
+CREATE TRIGGER records_updated_at BEFORE UPDATE ON records FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ============================================================
--- 往期舰礼图片存储
--- ============================================================
-
--- 1. 创建礼物图片表
+-- ========== 2. 往期舰礼图片表 ==========
 CREATE TABLE IF NOT EXISTS gift_images (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  month_id TEXT NOT NULL,           -- 月份ID: '1'-'12'
-  storage_path TEXT NOT NULL,       -- Supabase Storage 路径
-  public_url TEXT NOT NULL,         -- 公共访问URL
-  sort_order INTEGER DEFAULT 0,     -- 排序顺序
+  month_id TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  public_url TEXT NOT NULL,
+  sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 2. 创建索引
 CREATE INDEX IF NOT EXISTS idx_gift_images_month ON gift_images(month_id);
 CREATE INDEX IF NOT EXISTS idx_gift_images_sort ON gift_images(sort_order);
 
--- 3. 启用 RLS
 ALTER TABLE gift_images ENABLE ROW LEVEL SECURITY;
 
--- 4. 策略：允许匿名查看（所有人可见）
-CREATE POLICY "Anyone can view gift images"
-  ON gift_images FOR SELECT
-  USING (true);
+CREATE POLICY "Allow view gift images" ON gift_images FOR SELECT USING (true);
+CREATE POLICY "Allow manage gift images" ON gift_images FOR ALL USING (true) WITH CHECK (true);
 
--- 5. 策略：管理员可以增删改
-CREATE POLICY "Admins can manage gift images"
-  ON gift_images FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- ========== 3. 棉花糖投稿表 ==========
+CREATE TABLE IF NOT EXISTS cotton_posts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  content TEXT NOT NULL DEFAULT '',
+  media_urls TEXT[] DEFAULT '{}',
+  author_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
--- 注意：需要在 Supabase Storage 中手动创建 'gifts' bucket
--- 并设置其为 public 访问权限
+CREATE INDEX IF NOT EXISTS idx_cotton_posts_created_at ON cotton_posts(created_at DESC);
+
+ALTER TABLE cotton_posts ENABLE ROW LEVEL SECURITY;
+
+-- 仅允许匿名插入（投稿），查询需要管理员权限（前端控制）
+CREATE POLICY "Allow insert cotton posts" ON cotton_posts FOR INSERT WITH CHECK (true);
+-- 管理员才能查询投稿列表（前端通过角色判断，RLS允许查询但前端不展示给非管理员）
+CREATE POLICY "Allow select cotton posts" ON cotton_posts FOR SELECT USING (true);
+
+-- ========== 4. 存储桶 ==========
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('gifts', 'gifts', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('cotton-media', 'cotton-media', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ========== 5. 存储 RLS ==========
+-- gifts 桶
+CREATE POLICY "Allow read gifts" ON storage.objects FOR SELECT TO anon, authenticated
+  USING (bucket_id = 'gifts');
+CREATE POLICY "Allow upload gifts" ON storage.objects FOR INSERT TO anon, authenticated
+  WITH CHECK (bucket_id = 'gifts');
+
+-- cotton-media 桶
+CREATE POLICY "Allow read cotton media" ON storage.objects FOR SELECT TO anon, authenticated
+  USING (bucket_id = 'cotton-media');
+CREATE POLICY "Allow upload cotton media" ON storage.objects FOR INSERT TO anon, authenticated
+  WITH CHECK (bucket_id = 'cotton-media');
+
+-- ===== 执行完毕 =====
+-- 验证: SELECT tablename FROM pg_tables WHERE schemaname = 'public';
