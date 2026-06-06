@@ -110,6 +110,63 @@ DROP POLICY IF EXISTS "Allow upload cotton media" ON storage.objects;
 CREATE POLICY "Allow upload cotton media" ON storage.objects FOR INSERT TO anon, authenticated
   WITH CHECK (bucket_id = 'cotton-media');
 
+-- ========== 5. 歌单表 ==========
+CREATE TABLE IF NOT EXISTS playlists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  cover_url TEXT DEFAULT '',
+  source_url TEXT DEFAULT '',
+  song_count INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_playlists_sort ON playlists(sort_order);
+
+ALTER TABLE playlists ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow select playlists" ON playlists;
+CREATE POLICY "Allow select playlists" ON playlists FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow insert playlists" ON playlists;
+CREATE POLICY "Allow insert playlists" ON playlists FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow update playlists" ON playlists;
+CREATE POLICY "Allow update playlists" ON playlists FOR UPDATE USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow delete playlists" ON playlists;
+CREATE POLICY "Allow delete playlists" ON playlists FOR DELETE USING (true);
+
+-- ========== 6. 歌单歌曲表 ==========
+CREATE TABLE IF NOT EXISTS playlist_songs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+  song_name TEXT NOT NULL DEFAULT '',
+  author_name TEXT NOT NULL DEFAULT '',
+  album_name TEXT DEFAULT '',
+  album_id TEXT DEFAULT '',
+  hash TEXT DEFAULT '',
+  duration INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_playlist_songs_pl ON playlist_songs(playlist_id);
+CREATE INDEX IF NOT EXISTS idx_playlist_songs_sort ON playlist_songs(sort_order);
+
+ALTER TABLE playlist_songs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow select playlist songs" ON playlist_songs;
+CREATE POLICY "Allow select playlist songs" ON playlist_songs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow insert playlist songs" ON playlist_songs;
+CREATE POLICY "Allow insert playlist songs" ON playlist_songs FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow update playlist songs" ON playlist_songs;
+CREATE POLICY "Allow update playlist songs" ON playlist_songs FOR UPDATE USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow delete playlist songs" ON playlist_songs;
+CREATE POLICY "Allow delete playlist songs" ON playlist_songs FOR DELETE USING (true);
+
+-- playlists updated_at 触发器
+DROP TRIGGER IF EXISTS playlists_updated_at ON playlists;
+CREATE TRIGGER playlists_updated_at BEFORE UPDATE ON playlists FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- ===== 执行完毕 =====
 -- 验证表: SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 -- 验证桶: SELECT * FROM storage.buckets;
