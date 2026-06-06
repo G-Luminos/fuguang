@@ -498,15 +498,15 @@
   display: block;
   width: 100%; max-width: 320px;
   margin: 10px auto 0;
-  padding: 13px 24px;
+  padding: 15px 24px;
   border: none; border-radius: 12px;
   background: linear-gradient(135deg, #FB7299, #FF8FA3);
-  color: #FFF; font-size: 16px; font-weight: 700;
+  color: #FFF; font-size: 17px; font-weight: 800;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(251,114,153,.3), inset 0 1px 0 rgba(255,255,255,.2);
   transition: all .18s;
   font-family: inherit;
-  letter-spacing: .5px;
+  letter-spacing: 1px;
 }
 .landing .btn-cotton:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(251,114,153,.4) }
 .landing .btn-cotton:active { transform: translateY(0) scale(.97) }

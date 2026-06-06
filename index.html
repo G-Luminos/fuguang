@@ -919,16 +919,16 @@ document.getElementById('gnInput').addEventListener('keydown', e => { if(e.key==
 initProvinces();
 
 (function() {
+  // 始终初始化 Supabase，匿名投稿等非登录功能也需要
+  initSB();
   const r = localStorage.getItem(SK+'_role');
   if (r === 'admin') {
     window.role = 'admin';
-    if (!initSB()) return;
     enterApp();
   } else if (r === 'guest') {
     window.role = 'guest';
     guestName = localStorage.getItem(SK+'_gn') || '';
     if (guestName) {
-      if (!initSB()) return;
       enterApp();
     } else {
       localStorage.removeItem(SK+'_role');

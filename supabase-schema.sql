@@ -73,6 +73,8 @@ ALTER TABLE cotton_posts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow insert cotton posts" ON cotton_posts FOR INSERT WITH CHECK (true);
 -- 管理员才能查询投稿列表（前端通过角色判断，RLS允许查询但前端不展示给非管理员）
 CREATE POLICY "Allow select cotton posts" ON cotton_posts FOR SELECT USING (true);
+-- 允许更新投稿（上传媒体后回写 media_urls）
+CREATE POLICY "Allow update cotton posts" ON cotton_posts FOR UPDATE USING (true) WITH CHECK (true);
 
 -- ========== 4. 存储桶 ==========
 INSERT INTO storage.buckets (id, name, public)
