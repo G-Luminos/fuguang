@@ -4,6 +4,7 @@
    - 匿名投稿 + 管理员查看
    - 全屏演示 + 投屏捕获区
    - 媒体放大 + 键盘导航
+   - 周筛选 + 自定义演示起始位置
    ================================================================ */
 
 /* ===== 棉花糖弹窗 ===== */
@@ -183,9 +184,7 @@
   text-align: center;
   box-shadow: 0 8px 32px rgba(0,0,0,.15);
 }
-.cc-loading-gif { width: 64px; height: 64px; border-radius: 12px; margin-bottom: 8px }
 .cc-loading-box p { font-size: 14px; color: var(--ts); margin: 0 }
-.cc-loading-gif-sm { width: 20px; height: 20px; vertical-align: middle; border-radius: 4px; margin-right: 4px }
 .cc-loading-inline { display: inline-flex; align-items: center; gap: 4px }
 .cc-loading-spinner { text-align: center; padding: 30px }
 .cc-loading-spinner p { font-size: 14px; color: var(--ts); margin-top: 8px }
@@ -198,7 +197,22 @@
   border-bottom: 1px solid var(--bd);
   position: sticky; top: 0; z-index: 2;
 }
+.cc-admin-left {
+  display: flex; align-items: center; gap: 8px;
+}
 .cc-admin-count { font-size: 13px; color: var(--ts) }
+.cc-week-select {
+  padding: 4px 8px;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--txt);
+  background: var(--card);
+  cursor: pointer;
+  max-width: 160px;
+  font-family: inherit;
+}
+.cc-week-select:focus { outline: none; border-color: var(--al) }
 .cc-present-btn {
   padding: 6px 14px;
   border: none; border-radius: 8px;
@@ -207,6 +221,7 @@
   cursor: pointer;
   transition: all .15s;
   font-family: inherit;
+  white-space: nowrap;
 }
 .cc-present-btn:hover { opacity: .9; transform: translateY(-1px) }
 
@@ -250,6 +265,7 @@
   width: 100px; height: 100px;
   object-fit: cover; border-radius: 8px;
   cursor: pointer; transition: transform .15s;
+  background: var(--bg);
 }
 .cc-card-media img:hover,
 .cc-card-media video:hover { transform: scale(1.03) }
@@ -276,6 +292,69 @@
 .cc-mv-content {
   display: flex; align-items: center; justify-content: center;
 }
+
+/* ===== 演示起始对话框 ===== */
+.cc-present-dialog {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 600;
+  display: none;
+  align-items: center; justify-content: center;
+}
+.cc-present-dialog.show { display: flex }
+.cc-present-dialog-box {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%; max-width: 420px;
+  box-shadow: 0 12px 48px rgba(0,0,0,.2);
+}
+.cc-present-dialog-box h3 {
+  font-size: 16px; font-weight: 700;
+  margin: 0 0 12px;
+}
+.cc-present-dialog-box p {
+  font-size: 13px; color: var(--ts);
+  margin: 0 0 12px;
+}
+.cc-present-dialog-box .cc-start-select {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid var(--bd);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--bg);
+  max-height: 200px;
+  font-family: inherit;
+  margin-bottom: 16px;
+}
+.cc-present-dialog-box .cc-start-select:focus {
+  outline: none; border-color: var(--al);
+}
+.cc-present-dialog-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+.cc-present-dialog-actions button {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+.cc-present-dialog-cancel {
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  color: var(--txt);
+}
+.cc-present-dialog-cancel:hover { background: var(--bd) }
+.cc-present-dialog-confirm {
+  background: linear-gradient(135deg, #FB7299, #FF8FA3);
+  border: none;
+  color: #FFF;
+}
+.cc-present-dialog-confirm:hover { opacity: .9 }
 
 /* ===== 投屏演示模式 ===== */
 .cc-present {
@@ -360,6 +439,7 @@
   max-height: 240px; border-radius: 12px;
   cursor: pointer; transition: transform .15s;
   object-fit: cover;
+  background: rgba(255,255,255,.05);
 }
 .cc-present-media video {
   max-height: 240px; border-radius: 12px;
@@ -454,6 +534,8 @@
   .cc-present-card { padding: 24px 20px }
   .cc-present-text { font-size: 18px }
   .cc-present-media img { max-height: 180px }
+  .cc-admin-bar { flex-wrap: wrap; gap: 6px }
+  .cc-week-select { max-width: 120px; font-size: 11px }
 }
 @media(max-width:480px) {
   .cc-header h2 { font-size: 15px }
@@ -465,4 +547,6 @@
   .cc-present-text { font-size: 16px }
   .cc-present-header { padding: 12px 16px }
   .cc-present-title { font-size: 15px }
+  .cc-present-dialog-box { padding: 16px }
+  .cc-admin-left { flex-wrap: wrap }
 }

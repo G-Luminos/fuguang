@@ -3,7 +3,7 @@
    每周四粉丝念投稿功能
    独立模块，不影响其他功能
    - 匿名投稿（游客可投，仅管理员可看）
-   - 全屏演示模式（上下箭头切换，投屏区域）
+   - 全屏演示模式（自定义起始位置，周筛选，投屏区域）
    - 图片/视频点击放大
    - Loading 动画
    ================================================================ */
@@ -22,9 +22,12 @@
   /* ===== 状态 ===== */
   var ccFiles = [];
   var ccSubmitting = false;
-  var ccPosts = [];
+  var ccPosts = [];       // 当前筛选后的投稿列表
+  var ccAllPosts = [];    // 全部投稿
   var ccCurrentIdx = 0;
   var ccPresentMode = false;
+  var ccPresentStartIdx = 0; // 自定义起始位置
+  var ccWeekFilter = '';     // 周筛选
 
   /* ===== Loading ===== */
   function showLoading() {
@@ -91,7 +94,7 @@
     cleanupPreviews();
     renderPreview();
     var btn = $('ccSubmit');
-    if (btn) { btn.disabled = false; btn.textContent = '✉️ 投稿'; }
+    if (btn) { btn.disabled = false; btn.textContent = '\u{1F48E} 投稿'; }
     ccSubmitting = false;
   }
 
@@ -142,9 +145,9 @@
       var div = document.createElement('div');
       div.className = 'cc-preview-item';
       if (item.type === 'image') {
-        div.innerHTML = '<img src="' + item.previewUrl + '" alt="预览"><button class="cc-remove" onclick="ccRemoveFile(' + idx + ')">✕</button>';
+        div.innerHTML = '<img src="' + item.previewUrl + '" alt="预览"><button class="cc-remove" onclick="ccRemoveFile(' + idx + ')">\u2715</button>';
       } else {
-        div.innerHTML = '<video src="' + item.previewUrl + '" muted></video><span class="cc-video-badge">视频</span><button class="cc-remove" onclick="ccRemoveFile(' + idx + ')">✕</button>';
+        div.innerHTML = '<video src="' + item.previewUrl + '" muted></video><span class="cc-video-badge">视频</span><button class="cc-remove" onclick="ccRemoveFile(' + idx + ')">\u2715</button>';
       }
       c.appendChild(div);
     });
@@ -179,7 +182,7 @@
     ccSubmitting = true;
     var btn = $('ccSubmit');
     btn.disabled = true;
-    btn.innerHTML = '<span class="cc-loading-inline"><img src="https://webcdn.m.qq.com/qclaw/loading-cat.gif" class="cc-loading-gif-sm">小光正在努力...</span>';
+    btn.innerHTML = '<span class="cc-loading-inline">\u23F3 小光正在努力...</span>';
 
     showLoading();
     try {
@@ -199,7 +202,7 @@
         await window.sb.from(TABLE_NAME).update({ media_urls: mediaUrls }).eq('id', insertResult.data.id);
       }
 
-      showToast('投稿成功 ✨', 's');
+      showToast('投稿成功 \u2728', 's');
       resetForm();
       if (window.role === 'admin') switchTab('list');
     } catch (err) {
@@ -208,7 +211,7 @@
       ccSubmitting = false;
       hideLoading();
       btn.disabled = false;
-      btn.textContent = '✉️ 投稿';
+      btn.textContent = '\u{1F48E} 投稿';
     }
   };
 
@@ -222,27 +225,73 @@
     return hash;
   }
 
+  /* ===== 周筛选工具 ===== */
+  function getWeekRange(dateStr) {
+    var d = new Date(dateStr);
+    var day = d.getDay();
+    var diff = d.getDate() - day + (day === 0 ? -6 : 1); // 周一为起始
+    var mon = new Date(d.setDate(diff));
+    var sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    return {
+      start: new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()),
+      end: new Date(sun.getFullYear(), sun.getMonth(), sun.getDate(), 23, 59, 59),
+      label: formatDate(mon) + ' ~ ' + formatDate(sun)
+    };
+  }
+
+  function formatDate(d) {
+    return (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
+  function getDistinctWeeks(posts) {
+    var seen = {};
+    var weeks = [];
+    for (var i = 0; i < posts.length; i++) {
+      var w = getWeekRange(posts[i].created_at);
+      if (!seen[w.label]) {
+        seen[w.label] = true;
+        weeks.push(w);
+      }
+    }
+    return weeks;
+  }
+
+  function filterByWeek(posts, weekLabel) {
+    if (!weekLabel) return posts;
+    return posts.filter(function(p) {
+      var w = getWeekRange(p.created_at);
+      return w.label === weekLabel;
+    });
+  }
+
   /* ===== 加载投稿（仅管理员） ===== */
   async function loadPosts() {
     var container = $('ccContentList');
     if (!container) return;
-    container.innerHTML = '<div class="cc-empty"><div class="cc-loading-spinner"><img src="https://webcdn.m.qq.com/qclaw/loading-cat.gif" class="cc-loading-gif"><p>小光正在努力...</p></div></div>';
+    container.innerHTML = '<div class="cc-empty"><div class="cc-loading-spinner"><p>\u23F3 小光正在努力...</p></div></div>';
 
     try {
       var result = await window.sb.from(TABLE_NAME).select('*').order('created_at', { ascending: false }).limit(200);
       if (result.error) {
-        container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">😔</div><p>加载失败，请重试</p></div>';
+        container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">\uD83D\uDE14</div><p>加载失败，请重试</p></div>';
         return;
       }
-      ccPosts = result.data || [];
-      if (ccPosts.length === 0) {
-        container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">✉️</div><p>还没有投稿</p></div>';
+      ccAllPosts = result.data || [];
+      if (ccAllPosts.length === 0) {
+        container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">\u2709\uFE0F</div><p>还没有投稿</p></div>';
         return;
       }
-      renderPostList();
+      applyWeekFilter();
     } catch (err) {
-      container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">😔</div><p>加载失败</p></div>';
+      container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">\uD83D\uDE14</div><p>加载失败</p></div>';
     }
+  }
+
+  /* ===== 应用周筛选 ===== */
+  function applyWeekFilter() {
+    ccPosts = filterByWeek(ccAllPosts, ccWeekFilter);
+    renderPostList();
   }
 
   /* ===== 渲染投稿列表 ===== */
@@ -252,18 +301,38 @@
     var html = '';
 
     if (isAdmin) {
+      // 管理员栏：周筛选 + 计数 + 演示按钮
+      var weeks = getDistinctWeeks(ccAllPosts);
+      var weekOptions = '<option value="">全部时间</option>';
+      for (var w = 0; w < weeks.length; w++) {
+        var sel = ccWeekFilter === weeks[w].label ? ' selected' : '';
+        weekOptions += '<option value="' + escHtml(weeks[w].label) + '"' + sel + '>第' + (w + 1) + '周 (' + escHtml(weeks[w].label) + ')</option>';
+      }
+
       html += '<div class="cc-admin-bar">' +
-        '<span class="cc-admin-count">共 ' + ccPosts.length + ' 条投稿</span>' +
-        '<button class="cc-present-btn" onclick="ccEnterPresent()">🖥️ 投屏演示</button>' +
+        '<div class="cc-admin-left">' +
+          '<select class="cc-week-select" onchange="ccChangeWeek(this.value)">' + weekOptions + '</select>' +
+          '<span class="cc-admin-count">' + ccPosts.length + ' 条</span>' +
+        '</div>' +
+        '<button class="cc-present-btn" onclick="ccShowPresentDialog()">\uD83D\uDDA5\uFE0F 投屏演示</button>' +
       '</div>';
     }
 
-    html += ccPosts.map(function(post, idx) {
-      return renderPostCard(post, idx);
-    }).join('');
+    if (ccPosts.length === 0) {
+      html += '<div class="cc-empty"><div class="cc-empty-icon">\u2709\uFE0F</div><p>该时间段暂无投稿</p></div>';
+    } else {
+      html += ccPosts.map(function(post, idx) {
+        return renderPostCard(post, idx);
+      }).join('');
+    }
 
     container.innerHTML = html;
   }
+
+  window.ccChangeWeek = function(val) {
+    ccWeekFilter = val;
+    applyWeekFilter();
+  };
 
   /* ===== 渲染单条投稿 ===== */
   function renderPostCard(post, idx) {
@@ -272,10 +341,11 @@
     if (post.media_urls && post.media_urls.length > 0) {
       mediaHtml = '<div class="cc-card-media">' +
         post.media_urls.map(function(url) {
-          if (url.match(/\.(mp4|webm|mov)(\?|$)/i)) {
+          var isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url);
+          if (isVideo) {
             return '<video src="' + escHtml(url) + '" controls preload="metadata" onclick="ccMediaFullscreen(this)"></video>';
           }
-          return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="ccMediaFullscreen(this)" loading="lazy">';
+          return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="ccMediaFullscreen(this)" loading="lazy" onerror="this.style.display=\'none\'">';
         }).join('') +
       '</div>';
     }
@@ -283,7 +353,7 @@
     return '<div class="cc-card" data-idx="' + (idx !== undefined ? idx : '') + '">' +
       '<div class="cc-card-meta">' +
         '<div class="cc-card-author">' +
-          '<div class="cc-card-avatar">✉️</div>' +
+          '<div class="cc-card-avatar">\u2709\uFE0F</div>' +
           '<span class="cc-card-name">匿名棉花糖</span>' +
         '</div>' +
         '<span class="cc-card-time">' + time + '</span>' +
@@ -301,7 +371,7 @@
     if (el.tagName === 'VIDEO') {
       container.innerHTML = '<video src="' + el.src + '" controls autoplay style="max-width:90vw;max-height:80vh;border-radius:8px"></video>';
     } else {
-      container.innerHTML = '<img src="' + el.src + '" alt="大图" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px">';
+      container.innerHTML = '<img src="' + el.src + '" alt="大图" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;cursor:zoom-out" onclick="ccCloseMediaView()">';
     }
     lb.classList.add('show');
   };
@@ -316,15 +386,62 @@
     container.innerHTML = '';
   };
 
-  /* ===== 投屏演示模式 ===== */
-  window.ccEnterPresent = function() {
+  /* ===== 投屏演示 - 自定义起始位置 ===== */
+  window.ccShowPresentDialog = function() {
     if (ccPosts.length === 0) { showToast('没有投稿可演示', 'e'); return; }
-    ccCurrentIdx = 0;
+
+    // 如果只有少量投稿，直接开始
+    if (ccPosts.length <= 5) {
+      ccPresentStartIdx = 0;
+      ccEnterPresent();
+      return;
+    }
+
+    // 显示起始位置选择对话框
+    var dialog = $('ccPresentDialog');
+    if (!dialog) return;
+
+    var select = dialog.querySelector('.cc-start-select');
+    if (select) {
+      select.innerHTML = '';
+      for (var i = 0; i < ccPosts.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        var p = ccPosts[i];
+        var preview = (p.content || '').substring(0, 20);
+        if (preview.length < (p.content || '').length) preview += '...';
+        var t = formatTime(p.created_at);
+        opt.textContent = '#' + (i + 1) + ' ' + t + ' - ' + preview;
+        select.appendChild(opt);
+      }
+      select.value = '0';
+    }
+    dialog.classList.add('show');
+  };
+
+  window.ccConfirmPresent = function() {
+    var dialog = $('ccPresentDialog');
+    var select = dialog ? dialog.querySelector('.cc-start-select') : null;
+    ccPresentStartIdx = select ? parseInt(select.value, 10) : 0;
+    dialog.classList.remove('show');
+    ccEnterPresent();
+  };
+
+  window.ccCancelPresentDialog = function() {
+    var dialog = $('ccPresentDialog');
+    if (dialog) dialog.classList.remove('show');
+  };
+
+  /* ===== 投屏演示模式 ===== */
+  function ccEnterPresent() {
+    ccCurrentIdx = ccPresentStartIdx;
     ccPresentMode = true;
     var el = $('ccPresent');
     el.classList.add('show');
     renderPresentSlide();
-  };
+  }
+
+  window.ccEnterPresent = ccEnterPresent;
 
   window.exitPresent = exitPresent;
   function exitPresent() {
@@ -355,10 +472,11 @@
     if (post.media_urls && post.media_urls.length > 0) {
       mediaHtml = '<div class="cc-present-media">' +
         post.media_urls.map(function(url) {
-          if (url.match(/\.(mp4|webm|mov)(\?|$)/i)) {
+          var isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url);
+          if (isVideo) {
             return '<video src="' + escHtml(url) + '" controls preload="metadata" onclick="ccPresentMediaFull(this)"></video>';
           }
-          return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="ccPresentMediaFull(this)" loading="lazy">';
+          return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="ccPresentMediaFull(this)" loading="lazy" onerror="this.style.display=\'none\'">';
         }).join('') +
       '</div>';
     }
@@ -366,7 +484,7 @@
     content.innerHTML =
       '<div class="cc-present-card">' +
         '<div class="cc-present-meta">' +
-          '<span class="cc-present-author">✉️ 匿名棉花糖</span>' +
+          '<span class="cc-present-author">\u2709\uFE0F 匿名棉花糖</span>' +
           '<span class="cc-present-time">' + time + '</span>' +
         '</div>' +
         (post.content ? '<div class="cc-present-text">' + escHtml(post.content) + '</div>' : '') +

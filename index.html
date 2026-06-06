@@ -194,8 +194,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   <div class="lc">
     <div class="icon">⚓</div>
     <h2>浮光-Luminos</h2>
-    <p class="sub">✨ 你的温暖，我们都记得 ✨</p>
-    <button class="btn-captain" onclick="openGuestNick()">📝 填写舰长礼物</button>
+    <p class="sub">✨ 万物皆有裂痕，那是光照进的地方 ✨</p>
+    <button class="btn-captain" onclick="openGuestNick()">⚓ 舰长礼物</button>
     <button class="btn-gift" onclick="openGiftShowcase()">往期舰礼</button>
     <button class="btn-cotton" onclick="openCottonCandy()">🍬 匿名投稿</button>
     <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>
@@ -972,8 +972,7 @@ initProvinces();
 <!-- 棉花糖 Loading -->
 <div class="cc-loading-overlay" id="ccLoading">
   <div class="cc-loading-box">
-    <img src="https://webcdn.m.qq.com/qclaw/loading-cat.gif" class="cc-loading-gif" alt="loading">
-    <p>小光正在努力...</p>
+    <p>⏳ 小光正在努力...</p>
   </div>
 </div>
 
@@ -1002,6 +1001,19 @@ initProvinces();
 
 <!-- 投屏捕获区域（隐藏，供OBS捕获） -->
 <div class="cc-capture-area" id="ccCapture"></div>
+
+<!-- 演示起始位置选择对话框 -->
+<div class="cc-present-dialog" id="ccPresentDialog">
+  <div class="cc-present-dialog-box">
+    <h3>🖥️ 投屏演示</h3>
+    <p>选择从哪一条投稿开始演示：</p>
+    <select class="cc-start-select" size="8"></select>
+    <div class="cc-present-dialog-actions">
+      <button class="cc-present-dialog-cancel" onclick="ccCancelPresentDialog()">取消</button>
+      <button class="cc-present-dialog-confirm" onclick="ccConfirmPresent()">开始演示</button>
+    </div>
+  </div>
+</div>
 
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>
