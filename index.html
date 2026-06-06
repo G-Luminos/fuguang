@@ -25,8 +25,8 @@
     <div class="icon">⚓</div>
     <h2>浮光-Luminos</h2>
     <p class="sub">✨ 万物皆有裂痕，那是光照进的地方 ✨</p>
+    <button class="btn-song" onclick="openPlaylist()">🎵 浮光歌单</button>
     <button class="btn-captain" onclick="openGuestNick()">⚓ 舰长礼物</button>
-    <button class="btn-song" onclick="openPlaylist()">🎵 歌单</button>
     <button class="btn-gift" onclick="openGiftShowcase()">往期舰礼</button>
     <button class="btn-cotton" onclick="openCottonCandy()">🍬 匿名投稿</button>
     <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>
@@ -229,7 +229,7 @@
 <div class="pl-overlay" id="plOverlay">
   <div class="pl-modal">
     <div class="pl-header">
-      <h2>🎵 歌单</h2>
+      <h2>🎵 浮光歌单</h2>
       <div class="pl-header-actions">
         <button onclick="closePlaylist()">✕</button>
       </div>
@@ -253,6 +253,7 @@
   </div>
 </div>
 
+<script src="songs_data.js"></script>
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>
 <script src="playlist.js"></script>

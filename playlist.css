@@ -1,6 +1,6 @@
 /* ================================================================
-   歌单展示 - Playlist Viewer (V2 - 静态数据版)
-   本地歌曲数据 + 分类展示 + 随机歌曲 + 搜索 + 分页
+   浮光歌单 - Playlist Viewer (V3 - 歌手分组版)
+   按歌手分组展示 + 搜索 + 随机选歌
    ================================================================ */
 
 /* ===== 歌单弹窗 ===== */
@@ -58,7 +58,7 @@
 
 /* ===== 统计栏 ===== */
 .pl-stats-bar {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 8px;
   margin-bottom: 12px;
   font-size: 13px; color: var(--ts);
 }
@@ -76,9 +76,9 @@
   outline: none; transition: border-color .15s;
   background: var(--bg);
 }
-.pl-search input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(0,161,214,.1) }
+.pl-search input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(251,114,153,.12) }
 
-/* ===== 分类标签 ===== */
+/* ===== 歌手标签 ===== */
 .pl-tags {
   display: flex; gap: 6px; flex-wrap: wrap;
   margin-bottom: 12px;
@@ -101,11 +101,10 @@
   border-color: var(--p);
 }
 
-/* ===== 排序栏 ===== */
-.pl-sort-bar {
+/* ===== 操作栏 ===== */
+.pl-action-bar {
   display: flex; align-items: center; gap: 6px;
   margin-bottom: 14px;
-  font-size: 12px; color: var(--ts);
 }
 .pl-sort-btn {
   padding: 4px 10px;
@@ -132,12 +131,36 @@
 .pl-random-btn-inline:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(251,114,153,.3) }
 .pl-random-btn-inline:active { transform: scale(.95) }
 
+/* ===== 歌手分组 ===== */
+.pl-group {
+  margin-bottom: 16px;
+}
+.pl-group-featured {
+  /* 知名歌手分组样式 */
+}
+.pl-group-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 4px 6px;
+  border-bottom: 2px solid var(--bd);
+  margin-bottom: 4px;
+}
+.pl-group-name {
+  font-size: 14px; font-weight: 700;
+  color: var(--txt);
+}
+.pl-group-count {
+  font-size: 11px; color: var(--ts);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
 /* ===== 歌曲列表 ===== */
 .pl-song-list { list-style: none; padding: 0 }
 
 .pl-song-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-radius: 10px;
   transition: background .12s;
   cursor: default;
@@ -145,17 +168,17 @@
 .pl-song-item:hover { background: var(--bg) }
 
 .pl-song-index {
-  width: 28px; text-align: center;
-  font-size: 13px; color: var(--ts); font-weight: 600;
+  width: 24px; text-align: center;
+  font-size: 12px; color: var(--ts); font-weight: 600;
   flex-shrink: 0;
 }
 
 .pl-song-cover {
-  width: 44px; height: 44px;
+  width: 40px; height: 40px;
   border-radius: 8px;
   background: linear-gradient(135deg, var(--p), var(--al));
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -170,45 +193,12 @@
   font-size: 14px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.pl-song-suffix {
-  font-size: 11px; color: var(--al); font-weight: 400;
-  margin-left: 4px;
-}
 .pl-song-meta {
-  font-size: 12px; color: var(--ts); margin-top: 3px;
+  font-size: 12px; color: var(--ts); margin-top: 2px;
   display: flex; gap: 8px; flex-wrap: wrap;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pl-song-meta span { display: inline-flex; align-items: center; gap: 2px }
-.pl-song-tags {
-  display: flex; gap: 4px; margin-top: 3px;
-}
-.pl-song-lang, .pl-song-genre {
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-size: 10px; font-weight: 600;
-  background: var(--bg);
-  color: var(--ts);
-}
-.pl-song-genre { background: rgba(0,161,214,.08); color: var(--p) }
-
-/* ===== 分页 ===== */
-.pl-pagination {
-  display: flex; align-items: center; justify-content: center;
-  gap: 16px;
-  padding: 16px 0 8px;
-}
-.pl-page-btn {
-  padding: 6px 16px;
-  border: 1px solid var(--bd); border-radius: 8px;
-  background: var(--card); font-size: 13px;
-  cursor: pointer; transition: all .12s;
-  font-family: inherit; color: var(--ts);
-}
-.pl-page-btn:hover { border-color: var(--p); color: var(--p) }
-.pl-page-info {
-  font-size: 13px; color: var(--ts); font-weight: 600;
-}
 
 /* ===== 随机歌曲弹窗 ===== */
 .pl-random-overlay {
@@ -242,9 +232,6 @@
 .pl-random-artist {
   font-size: 14px; color: var(--ts);
   margin-bottom: 4px;
-}
-.pl-random-suffix {
-  font-size: 12px; color: var(--al); margin-bottom: 4px;
 }
 .pl-random-meta {
   display: flex; gap: 8px; justify-content: center;
@@ -307,11 +294,14 @@
   .pl-modal { border-radius: 14px 14px 0 0 }
   .pl-header { padding: 14px 12px 10px }
   .pl-body { padding: 10px 12px }
-  .pl-song-item { padding: 8px 8px; gap: 8px }
-  .pl-song-cover { width: 38px; height: 38px; font-size: 16px }
-  .pl-song-meta { gap: 6px }
+  .pl-song-item { padding: 6px 6px; gap: 8px }
+  .pl-song-cover { width: 34px; height: 34px; font-size: 14px }
+  .pl-song-name { font-size: 13px }
+  .pl-song-meta { gap: 4px; font-size: 11px }
   .pl-random-card { padding: 24px 20px }
   .pl-random-song { font-size: 18px }
   .pl-tags { gap: 4px }
   .pl-tag { padding: 4px 8px; font-size: 11px }
+  .pl-group-header { padding: 6px 2px 4px }
+  .pl-group-name { font-size: 13px }
 }
