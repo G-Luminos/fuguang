@@ -500,16 +500,17 @@
   margin: 0 auto 10px;
   padding: 13px 20px;
   border: none; border-radius: 12px;
-  background: linear-gradient(135deg, #FB7299, #FF8FA3);
+  background: linear-gradient(135deg, #F59E0B, #FBBF24);
   color: #FFF; font-size: 16px; font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(251,114,153,.3), inset 0 1px 0 rgba(255,255,255,.2);
+  box-shadow: 0 6px 24px rgba(245,158,11,.35), inset 0 1px 0 rgba(255,255,255,.2);
   transition: all .18s;
   font-family: inherit;
   letter-spacing: 1px;
+  transform-style: preserve-3d;
 }
-.landing .btn-cotton:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(251,114,153,.4) }
-.landing .btn-cotton:active { transform: translateY(0) scale(.97) }
+.landing .btn-cotton:hover { transform: translateY(-3px) translateZ(8px); box-shadow: 0 12px 36px rgba(245,158,11,.45) }
+.landing .btn-cotton:active { transform: translateY(0) translateZ(0) scale(.97) }
 
 /* ===== Header 按钮 ===== */
 .hd-act .btn-cotton-hd {
