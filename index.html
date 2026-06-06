@@ -9,7 +9,7 @@
 <link rel="dns-prefetch" href="https://yiexaopgxcroktltjqoz.supabase.co">
 <link rel="preload" href="gift-showcase.css" as="style">
 <link rel="preload" href="cotton-candy.css" as="style">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="gift-showcase.css">
 <link rel="stylesheet" href="cotton-candy.css">
 <style>
@@ -54,9 +54,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 @keyframes iconFloat{0%{transform:translateY(0)}100%{transform:translateY(-8px)}}
 .landing h2{font-size:26px;font-weight:800;color:#FFF;letter-spacing:1px;text-shadow:0 0 30px rgba(0,161,214,.3)}
 .landing .sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:6px;margin-bottom:36px}
-.landing .btn-captain{display:block;width:100%;max-width:320px;margin:0 auto;padding:15px 24px;border:none;border-radius:12px;background:linear-gradient(135deg,#00A1D6,#23ADE5);color:#FFF;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 24px rgba(0,161,214,.35),inset 0 1px 0 rgba(255,255,255,.2);transition:all .18s;font-family:inherit;letter-spacing:1px;transform-style:preserve-3d}
+.landing .btn-captain{display:block;width:100%;max-width:260px;margin:0 auto 10px;padding:13px 20px;border:none;border-radius:12px;background:linear-gradient(135deg,#00A1D6,#23ADE5);color:#FFF;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 6px 24px rgba(0,161,214,.35),inset 0 1px 0 rgba(255,255,255,.2);transition:all .18s;font-family:inherit;letter-spacing:1px;transform-style:preserve-3d}
 .landing .btn-captain:hover{transform:translateY(-3px) translateZ(8px);box-shadow:0 12px 36px rgba(0,161,214,.45)}
 .landing .btn-captain:active{transform:translateY(0) translateZ(0) scale(.97)}
+.landing .btn-song{display:block;width:100%;max-width:260px;margin:0 auto 10px;padding:13px 20px;border:2px solid rgba(255,255,255,.3);border-radius:12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-size:16px;font-weight:800;cursor:not-allowed;font-family:inherit;letter-spacing:1px;backdrop-filter:blur(4px)}
+.landing .btn-song::after{content:'施工中';font-size:10px;background:rgba(251,114,153,.7);color:#fff;padding:2px 6px;border-radius:4px;margin-left:8px;vertical-align:middle}
 .landing .admin-link{margin-top:32px;font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;transition:color .15s}
 .landing .admin-link:hover{color:rgba(255,255,255,.6)}
 .alogin .m{border-radius:16px;max-width:340px;width:calc(100% - 32px)}
@@ -196,6 +198,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
     <h2>浮光-Luminos</h2>
     <p class="sub">✨ 万物皆有裂痕，那是光照进的地方 ✨</p>
     <button class="btn-captain" onclick="openGuestNick()">⚓ 舰长礼物</button>
+    <button class="btn-song">🎵 歌单</button>
     <button class="btn-gift" onclick="openGiftShowcase()">往期舰礼</button>
     <button class="btn-cotton" onclick="openCottonCandy()">🍬 匿名投稿</button>
     <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>

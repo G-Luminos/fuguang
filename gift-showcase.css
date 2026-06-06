@@ -3,18 +3,37 @@
  * 酷炫立体效果
  * ============================================ */
 
+/* ===== Loading ===== */
+.gift-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--ts);
+}
+.gift-loading p { margin-top: 16px; font-size: 14px; }
+.gift-loading-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(0,161,214,.2);
+  border-top-color: #00A1D6;
+  border-radius: 50%;
+  animation: giftSpin .8s linear infinite;
+}
+@keyframes giftSpin { to { transform: rotate(360deg); } }
+
 /* ===== 往期舰礼按钮（Landing 页面） ===== */
 .landing .btn-gift {
   display: block;
   width: 100%;
-  max-width: 320px;
-  margin: 16px auto 0;
-  padding: 15px 24px;
+  max-width: 260px;
+  margin: 0 auto 10px;
+  padding: 13px 20px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(251, 114, 153, 0.9), rgba(255, 150, 180, 0.9));
   color: #FFF;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 

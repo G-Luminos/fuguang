@@ -44,7 +44,15 @@
 
   /* ===== 打开/关闭 ===== */
   window.openCottonCandy = function() {
-    if (!window.sb) return;
+    if (!window.sb) {
+      // 尝试初始化 Supabase（可能 SDK 加载较慢）
+      if (typeof supabase !== 'undefined') {
+        window.sb = supabase.createClient('https://yiexaopgxcroktltjqoz.supabase.co', 'sb_publishable_O3vb23iYR6lKOjQCpFbhug_Dy_X4DR4');
+      } else {
+        alert('页面加载中，请稍后再试');
+        return;
+      }
+    }
     resetForm();
     var isAdmin = window.role === 'admin';
     if (isAdmin) {

@@ -109,8 +109,18 @@ async function openGiftShowcase() {
     window.initSB();
   }
   
-  await loadGiftImages();
-  renderGiftShowcase();
+  // 显示加载状态
+  const container = document.getElementById('giftContainer');
+  const prevHtml = container.innerHTML;
+  container.innerHTML = '<div class="gift-loading"><div class="gift-loading-spinner"></div><p>加载中...</p></div>';
+  
+  try {
+    await loadGiftImages();
+    renderGiftShowcase();
+  } catch(e) {
+    console.error('加载舰礼数据出错:', e);
+    container.innerHTML = '<div class="gift-loading"><p>加载失败，请重试</p><button onclick="openGiftShowcase()" style="margin-top:12px;padding:8px 20px;border:1px solid #ccc;border-radius:8px;cursor:pointer">重试</button></div>';
+  }
 }
 
 /**
