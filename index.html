@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>浮光舰长信息登记</title>
+<title>浮光-Luminos</title>
 <!-- 预加载关键资源 -->
 <link rel="preconnect" href="https://yiexaopgxcroktltjqoz.supabase.co">
 <link rel="dns-prefetch" href="https://yiexaopgxcroktltjqoz.supabase.co">
 <link rel="preload" href="gift-showcase.css" as="style">
+<link rel="preload" href="cotton-candy.css" as="style">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <link rel="stylesheet" href="gift-showcase.css">
+<link rel="stylesheet" href="cotton-candy.css">
 <style>
 
 
@@ -191,10 +193,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
   <div class="lp"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="lc">
     <div class="icon">⚓</div>
-    <h2>舰长信息登记</h2>
-    <p class="sub">Luminos · Captain Gift Registry</p>
+    <h2>浮光-Luminos</h2>
+    <p class="sub">✨ 你的温暖，我们都记得 ✨</p>
     <button class="btn-captain" onclick="openGuestNick()">📝 填写舰长礼物</button>
     <button class="btn-gift" onclick="openGiftShowcase()">往期舰礼</button>
+    <button class="btn-cotton" onclick="openCottonCandy()">🍬 匿名投稿</button>
     <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>
   </div>
 </div>
@@ -240,6 +243,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
     </div>
     <div class="hd-act">
       <button class="btn-o" onclick="backToLanding()">返回</button>
+      <button class="btn-cotton-hd" onclick="openCottonCandy()">🍬</button>
       <button class="btn-o" onclick="openGiftShowcase()">舰礼</button>
       <button class="btn-o" id="btnHist" onclick="openHistory()">历史</button>
       <button class="btn-o" id="btnExport" onclick="exportData()">导出</button>
@@ -933,7 +937,46 @@ initProvinces();
 })();
 
 </script>
+<!-- 棉花糖投稿弹窗 -->
+<div class="cc-overlay" id="ccOverlay" onclick="if(event.target===this)closeCottonCandy()">
+  <div class="cc-modal">
+    <div class="cc-header">
+      <h2><span class="cc-emoji">🍬</span> 匿名投稿</h2>
+      <button class="cc-close" onclick="closeCottonCandy()">✕</button>
+    </div>
+    <div class="cc-tabs">
+      <button class="cc-tab active" id="ccTabForm" onclick="ccSwitchTab('form')">写投稿</button>
+      <button class="cc-tab" id="ccTabList" onclick="ccSwitchTab('list')">看投稿</button>
+    </div>
+    <div class="cc-content">
+      <div id="ccContentForm" class="cc-form">
+        <div class="cc-textarea-wrap">
+          <textarea id="ccText" placeholder="写点什么吧~ 每周四粉丝念会读取这里的投稿 ✨" rows="5"></textarea>
+          <span class="cc-char-count" id="ccCharCount">0/1500</span>
+        </div>
+        <div class="cc-upload-area" onclick="ccTriggerUpload()">
+          <div class="cc-upload-icon">📷</div>
+          <p>点击上传图片/视频</p>
+          <p class="cc-upload-hint">图片≤5MB，视频≤50MB，最多6个</p>
+          <input type="file" class="cc-upload-input" id="ccFileInput" accept="image/*,video/*" multiple onchange="ccOnFilesSelected(event)">
+        </div>
+        <div class="cc-preview" id="ccPreview"></div>
+        <button class="cc-submit" id="ccSubmit" onclick="ccSubmit()">🍬 投稿</button>
+      </div>
+      <div id="ccContentList" class="cc-list" style="display:none">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 棉花糖灯箱 -->
+<div class="cc-lightbox" id="ccLightbox" onclick="ccCloseLightbox()">
+  <button class="cc-lightbox-close" onclick="ccCloseLightbox()">✕</button>
+  <img src="" alt="大图">
+</div>
+
 <script src="gift-showcase.js"></script>
+<script src="cotton-candy.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </body>
 </html>
