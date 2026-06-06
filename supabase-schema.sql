@@ -1,7 +1,18 @@
 -- ================================================================
--- 浮光-Luminos 完整数据库配置
+-- 浮光-Luminos 完整数据库配置（修复版）
 -- 在 Supabase SQL Editor 中一次性执行
+-- 注意：请逐段执行，如果某段报错跳过继续
 -- ================================================================
+
+-- ========== 0. 存储桶（先创建，确保存在） ==========
+-- 如果报错 "already exists" 请忽略
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('gifts', 'gifts', true)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('cotton-media', 'cotton-media', true)
+ON CONFLICT (id) DO NOTHING;
 
 -- ========== 1. 舰长记录表 ==========
 CREATE TABLE IF NOT EXISTS records (
@@ -24,9 +35,13 @@ CREATE INDEX IF NOT EXISTS idx_records_month_nick ON records(month, nickname);
 
 ALTER TABLE records ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow insert records" ON records;
 CREATE POLICY "Allow insert records" ON records FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow select records" ON records;
 CREATE POLICY "Allow select records" ON records FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow update records" ON records;
 CREATE POLICY "Allow update records" ON records FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Allow delete records" ON records;
 CREATE POLICY "Allow delete records" ON records FOR DELETE USING (true);
 
 -- updated_at 触发器
@@ -53,7 +68,9 @@ CREATE INDEX IF NOT EXISTS idx_gift_images_sort ON gift_images(sort_order);
 
 ALTER TABLE gift_images ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow view gift images" ON gift_images;
 CREATE POLICY "Allow view gift images" ON gift_images FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow manage gift images" ON gift_images;
 CREATE POLICY "Allow manage gift images" ON gift_images FOR ALL USING (true) WITH CHECK (true);
 
 -- ========== 3. 棉花糖投稿表 ==========
@@ -69,34 +86,30 @@ CREATE INDEX IF NOT EXISTS idx_cotton_posts_created_at ON cotton_posts(created_a
 
 ALTER TABLE cotton_posts ENABLE ROW LEVEL SECURITY;
 
--- 仅允许匿名插入（投稿），查询需要管理员权限（前端控制）
+DROP POLICY IF EXISTS "Allow insert cotton posts" ON cotton_posts;
 CREATE POLICY "Allow insert cotton posts" ON cotton_posts FOR INSERT WITH CHECK (true);
--- 管理员才能查询投稿列表（前端通过角色判断，RLS允许查询但前端不展示给非管理员）
+DROP POLICY IF EXISTS "Allow select cotton posts" ON cotton_posts;
 CREATE POLICY "Allow select cotton posts" ON cotton_posts FOR SELECT USING (true);
--- 允许更新投稿（上传媒体后回写 media_urls）
+DROP POLICY IF EXISTS "Allow update cotton posts" ON cotton_posts;
 CREATE POLICY "Allow update cotton posts" ON cotton_posts FOR UPDATE USING (true) WITH CHECK (true);
 
--- ========== 4. 存储桶 ==========
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('gifts', 'gifts', true)
-ON CONFLICT (id) DO NOTHING;
-
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('cotton-media', 'cotton-media', true)
-ON CONFLICT (id) DO NOTHING;
-
--- ========== 5. 存储 RLS ==========
+-- ========== 4. 存储 RLS ==========
 -- gifts 桶
+DROP POLICY IF EXISTS "Allow read gifts" ON storage.objects;
 CREATE POLICY "Allow read gifts" ON storage.objects FOR SELECT TO anon, authenticated
   USING (bucket_id = 'gifts');
+DROP POLICY IF EXISTS "Allow upload gifts" ON storage.objects;
 CREATE POLICY "Allow upload gifts" ON storage.objects FOR INSERT TO anon, authenticated
   WITH CHECK (bucket_id = 'gifts');
 
 -- cotton-media 桶
+DROP POLICY IF EXISTS "Allow read cotton media" ON storage.objects;
 CREATE POLICY "Allow read cotton media" ON storage.objects FOR SELECT TO anon, authenticated
   USING (bucket_id = 'cotton-media');
+DROP POLICY IF EXISTS "Allow upload cotton media" ON storage.objects;
 CREATE POLICY "Allow upload cotton media" ON storage.objects FOR INSERT TO anon, authenticated
   WITH CHECK (bucket_id = 'cotton-media');
 
 -- ===== 执行完毕 =====
--- 验证: SELECT tablename FROM pg_tables WHERE schemaname = 'public';
+-- 验证表: SELECT tablename FROM pg_tables WHERE schemaname = 'public';
+-- 验证桶: SELECT * FROM storage.buckets;
