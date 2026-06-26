@@ -1,0 +1,666 @@
+/* ================================================================
+   浮光小游戏中心 - Games Center
+   数字炸弹 / 3D掷骰子 / 狐狐大富翁
+   移动端投屏优先 · 狐狸元素 · 可爱风格
+   ================================================================ */
+
+/* ===== CSS 变量（局部覆盖） ===== */
+.games-root {
+  --g-fox: #FF6B35;
+  --g-fox-light: #FF9A6C;
+  --g-pink: #FB7299;
+  --g-pink-light: #FFB3CC;
+  --g-gold: #F59E0B;
+  --g-purple: #8B5CF6;
+  --g-green: #10B981;
+  --g-bomb: #EF4444;
+  --g-bg: #1a1a2e;
+  --g-card: #16213e;
+  --g-text: #FFF;
+  --g-sub: rgba(255,255,255,.6);
+  line-height: 1.5;
+}
+
+/* ===== 游戏中心弹窗 ===== */
+.gm-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 300;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.gm-overlay.show { display: flex }
+@media(min-width:600px) {
+  .gm-overlay { align-items: center }
+}
+
+.gm-modal {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 500px;
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  animation: gmSlideUp .3s ease;
+}
+@media(min-width:600px) {
+  .gm-modal { border-radius: 20px; max-height: 85vh; animation: gmFadeIn .25s ease }
+}
+@keyframes gmSlideUp { from { transform: translateY(100%) } to { transform: translateY(0) } }
+@keyframes gmFadeIn { from { transform: scale(.92); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+.gm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(251,114,153,.08);
+}
+.gm-header h2 { font-size: 18px; font-weight: 800; color: #FFF; display: flex; align-items: center; gap: 8px }
+.gm-header .gm-fox { font-size: 28px; animation: gmFoxBounce 2s ease infinite }
+@keyframes gmFoxBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+.gm-header button {
+  background: none; border: none; color: rgba(255,255,255,.5);
+  font-size: 22px; cursor: pointer; padding: 4px; line-height: 1;
+}
+.gm-header button:hover { color: #FFF }
+
+.gm-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ===== 游戏选择卡片 ===== */
+.gm-game-list {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.gm-game-card {
+  background: var(--g-card);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all .2s;
+  border: 1.5px solid rgba(255,255,255,.06);
+  display: flex; gap: 14px; align-items: center;
+}
+.gm-game-card:hover { border-color: var(--g-pink); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(251,114,153,.15) }
+.gm-game-card:active { transform: scale(.98) }
+
+.gm-game-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+}
+.gm-game-icon.gm-dice { background: linear-gradient(135deg, #8B5CF6, #A78BFA) }
+.gm-game-icon.gm-bomb { background: linear-gradient(135deg, #EF4444, #F87171) }
+.gm-game-icon.gm-monopoly { background: linear-gradient(135deg, #F59E0B, #FBBF24) }
+
+.gm-game-info { flex: 1; min-width: 0 }
+.gm-game-name { font-size: 16px; font-weight: 700; color: #FFF; margin-bottom: 4px }
+.gm-game-desc { font-size: 12px; color: rgba(255,255,255,.5) }
+.gm-game-arrow { color: rgba(255,255,255,.3); font-size: 18px }
+
+/* ===== 全屏游戏容器 ===== */
+.gm-game-full {
+  position: fixed; inset: 0;
+  background: var(--g-bg);
+  z-index: 310;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+.gm-game-full.show { display: flex }
+
+.gm-game-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(0,0,0,.3);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  min-height: 48px;
+}
+.gm-game-bar .gm-back {
+  background: rgba(255,255,255,.1); border: none; color: #FFF;
+  padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer;
+  font-family: inherit;
+}
+.gm-game-bar .gm-back:hover { background: rgba(255,255,255,.2) }
+.gm-game-bar .gm-title-bar { font-size: 15px; font-weight: 700; color: #FFF; display: flex; align-items: center; gap: 6px }
+.gm-game-bar .gm-fox-sm { font-size: 22px }
+
+.gm-game-body {
+  flex: 1; overflow-y: auto;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================
+   游戏1: 数字炸弹
+   ============================================ */
+.gnb-setup {
+  text-align: center; width: 100%; max-width: 360px;
+  margin: auto;
+}
+.gnb-setup h3 { color: #FFF; font-size: 20px; margin-bottom: 6px }
+.gnb-setup p { color: rgba(255,255,255,.5); font-size: 13px; margin-bottom: 20px }
+.gnb-setup .gnb-fox { font-size: 60px; animation: gmFoxBounce 1.5s ease infinite; display: block; margin-bottom: 8px }
+
+.gnb-input-group {
+  display: flex; gap: 10px; align-items: center;
+  margin-bottom: 16px;
+}
+.gnb-input-group label { color: rgba(255,255,255,.7); font-size: 13px; white-space: nowrap }
+.gnb-input-group input {
+  width: 80px; padding: 10px;
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 10px; background: rgba(255,255,255,.06);
+  color: #FFF; font-size: 16px; text-align: center;
+  font-family: inherit; outline: none;
+}
+.gnb-input-group input:focus { border-color: var(--g-pink) }
+
+.gnb-btn-start {
+  width: 100%; padding: 14px;
+  border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #EF4444, #F87171);
+  color: #FFF; font-size: 17px; font-weight: 800;
+  cursor: pointer; font-family: inherit;
+  box-shadow: 0 6px 24px rgba(239,68,68,.35);
+  transition: all .15s;
+}
+.gnb-btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(239,68,68,.45) }
+.gnb-btn-start:active { transform: scale(.97) }
+
+/* --- 游戏中 --- */
+.gnb-play {
+  text-align: center; width: 100%; max-width: 400px;
+  margin: auto;
+}
+.gnb-range {
+  background: rgba(255,255,255,.06);
+  border-radius: 14px; padding: 16px 24px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.gnb-range-label { font-size: 12px; color: rgba(255,255,255,.4); margin-bottom: 4px }
+.gnb-range-nums {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 28px; font-weight: 800; color: #FFF;
+}
+.gnb-range-nums .gnb-lo { color: var(--g-green) }
+.gnb-range-nums .gnb-hi { color: var(--g-bomb) }
+.gnb-range-nums .gnb-sep { color: rgba(255,255,255,.3) }
+
+.gnb-bomb-icon {
+  font-size: 70px; display: block; margin-bottom: 8px;
+  animation: gnbBombPulse 1.5s ease infinite;
+}
+@keyframes gnbBombPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+.gnb-prompt { color: rgba(255,255,255,.7); font-size: 14px; margin-bottom: 16px }
+
+.gnb-numpad {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 8px; max-width: 280px; margin: 0 auto 20px;
+}
+.gnb-num {
+  padding: 14px; border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.05);
+  color: #FFF; font-size: 18px; font-weight: 700;
+  cursor: pointer; transition: all .12s;
+  font-family: inherit;
+}
+.gnb-num:hover { background: rgba(255,255,255,.12); border-color: var(--g-pink) }
+.gnb-num:active { transform: scale(.93); background: var(--g-pink) }
+.gnb-num.gnb-disabled { opacity: .25; pointer-events: none }
+
+.gnb-custom-input {
+  display: flex; gap: 8px; margin-bottom: 16px;
+}
+.gnb-custom-input input {
+  flex: 1; padding: 12px;
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 10px; background: rgba(255,255,255,.06);
+  color: #FFF; font-size: 16px; text-align: center;
+  font-family: inherit; outline: none;
+}
+.gnb-custom-input input:focus { border-color: var(--g-pink) }
+.gnb-custom-input button {
+  padding: 10px 18px; border: none; border-radius: 10px;
+  background: var(--g-pink); color: #FFF; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+.gnb-history {
+  text-align: left; width: 100%; max-width: 280px;
+  color: rgba(255,255,255,.3); font-size: 12px;
+}
+.gnb-history span { display: inline-block; background: rgba(255,255,255,.06); padding: 3px 8px; border-radius: 4px; margin: 2px }
+
+/* --- 爆炸动画 --- */
+.gnb-explosion {
+  position: fixed; inset: 0;
+  z-index: 320;
+  background: rgba(0,0,0,.85);
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+  animation: gnbFadeIn .3s ease;
+}
+.gnb-explosion.show { display: flex }
+@keyframes gnbFadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.gnb-explosion-fox {
+  font-size: 100px;
+  animation: gnbExplode .6s ease-out;
+}
+@keyframes gnbExplode {
+  0% { transform: scale(.3); opacity: 0 }
+  40% { transform: scale(1.4); opacity: 1 }
+  100% { transform: scale(1); opacity: 1 }
+}
+.gnb-explosion-text {
+  font-size: 28px; font-weight: 900; color: #FFF;
+  margin: 16px 0; text-align: center;
+}
+.gnb-explosion-sub {
+  font-size: 14px; color: rgba(255,255,255,.5);
+  margin-bottom: 24px;
+}
+.gnb-explosion button {
+  padding: 12px 32px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, var(--g-pink), #FF9CBB);
+  color: #FFF; font-size: 16px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+.gnb-explosion button:hover { transform: scale(1.05) }
+
+/* ============================================
+   游戏2: 3D掷骰子
+   ============================================ */
+.gdc-container {
+  text-align: center; width: 100%; max-width: 400px;
+  margin: auto;
+}
+.gdc-fox { font-size: 50px; display: block; margin-bottom: 4px }
+
+/* --- 3D骰子场景 --- */
+.gdc-scene {
+  width: 160px; height: 160px;
+  perspective: 600px;
+  margin: 24px auto;
+}
+.gdc-cube {
+  width: 100%; height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .6s cubic-bezier(.34,1.56,.64,1);
+}
+.gdc-cube.rolling {
+  animation: gdcRoll .8s cubic-bezier(.25,.46,.45,.94);
+}
+@keyframes gdcRoll {
+  0% { transform: rotateX(0) rotateY(0) rotateZ(0) }
+  25% { transform: rotateX(180deg) rotateY(90deg) rotateZ(45deg) }
+  50% { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg) }
+  75% { transform: rotateX(540deg) rotateY(270deg) rotateZ(135deg) }
+  100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(0deg) }
+}
+
+.gdc-face {
+  position: absolute;
+  width: 160px; height: 160px;
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 50px;
+  background: linear-gradient(145deg, #2d1b4e, #1a0f2e);
+  border: 3px solid rgba(139,92,246,.4);
+  box-shadow: inset 0 0 30px rgba(139,92,246,.2), 0 0 20px rgba(139,92,246,.1);
+  backface-visibility: hidden;
+}
+.gdc-face.gdc-bomb-face {
+  background: linear-gradient(145deg, #4e1b1b, #2e0f0f);
+  border-color: rgba(239,68,68,.5);
+  box-shadow: inset 0 0 30px rgba(239,68,68,.2), 0 0 20px rgba(239,68,68,.15);
+}
+
+/* 骰子点数和狐狸标记 */
+.gdc-face .gdc-dots {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  grid-template-rows: repeat(3,1fr);
+  gap: 8px; width: 80px; height: 80px;
+}
+.gdc-face .gdc-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #FFF;
+  box-shadow: 0 0 8px rgba(255,255,255,.3);
+  place-self: center;
+}
+.gdc-face .gdc-fox-face {
+  font-size: 56px;
+  text-shadow: 0 0 20px rgba(255,107,53,.6);
+}
+
+/* 骰面定位 */
+.gdc-face.front  { transform: translateZ(80px) }
+.gdc-face.back   { transform: rotateY(180deg) translateZ(80px) }
+.gdc-face.right  { transform: rotateY(90deg) translateZ(80px) }
+.gdc-face.left   { transform: rotateY(-90deg) translateZ(80px) }
+.gdc-face.top    { transform: rotateX(90deg) translateZ(80px) }
+.gdc-face.bottom { transform: rotateX(-90deg) translateZ(80px) }
+
+/* 显示结果的面 */
+.gdc-result {
+  margin: 16px 0;
+}
+.gdc-result-value {
+  font-size: 42px; font-weight: 900; color: #FFF;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 70px; height: 70px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+  box-shadow: 0 6px 24px rgba(139,92,246,.4);
+}
+.gdc-result-value.gdc-bomb-val {
+  background: linear-gradient(135deg, #EF4444, #F87171);
+  box-shadow: 0 6px 24px rgba(239,68,68,.4);
+}
+.gdc-result-label {
+  font-size: 20px; font-weight: 800; color: #FFF; margin-top: 8px;
+}
+
+/* --- 骰子设置 --- */
+.gdc-settings {
+  margin-top: 12px; width: 100%;
+}
+.gdc-mode-toggle {
+  display: flex; gap: 4px; margin-bottom: 12px;
+  background: rgba(255,255,255,.06); border-radius: 10px; padding: 4px;
+}
+.gdc-mode-btn {
+  flex: 1; padding: 8px; border: none; border-radius: 8px;
+  background: transparent; color: rgba(255,255,255,.6);
+  font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600;
+  transition: all .15s;
+}
+.gdc-mode-btn.active { background: var(--g-pink); color: #FFF }
+
+.gdc-rewards {
+  display: none;
+  margin-bottom: 12px;
+}
+.gdc-rewards.show { display: block }
+.gdc-reward-item {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 6px;
+}
+.gdc-reward-item span {
+  width: 20px; text-align: center; color: rgba(255,255,255,.4);
+  font-size: 12px;
+}
+.gdc-reward-item input {
+  flex: 1; padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; background: rgba(255,255,255,.04);
+  color: #FFF; font-size: 13px; font-family: inherit; outline: none;
+}
+.gdc-reward-item input:focus { border-color: var(--g-pink) }
+.gdc-reward-hint {
+  font-size: 11px; color: rgba(255,255,255,.3);
+  margin-bottom: 8px; text-align: left;
+}
+
+.gdc-roll-btn {
+  width: 100%; padding: 14px;
+  border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+  color: #FFF; font-size: 17px; font-weight: 800;
+  cursor: pointer; font-family: inherit;
+  box-shadow: 0 6px 24px rgba(139,92,246,.35);
+  transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.gdc-roll-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(139,92,246,.45) }
+.gdc-roll-btn:active { transform: scale(.97) }
+.gdc-roll-btn:disabled { opacity: .4; pointer-events: none }
+
+/* 骰子爆炸弹窗 */
+.gdc-bomb-popup {
+  position: fixed; inset: 0;
+  z-index: 320;
+  background: rgba(0,0,0,.88);
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+}
+.gdc-bomb-popup.show { display: flex }
+.gdc-bomb-fox {
+  font-size: 90px;
+  animation: gdcBombBounce .5s ease-out;
+}
+@keyframes gdcBombBounce {
+  0% { transform: scale(.2) rotate(-10deg); opacity: 0 }
+  50% { transform: scale(1.3) rotate(5deg); opacity: 1 }
+  100% { transform: scale(1) rotate(0); opacity: 1 }
+}
+.gdc-bomb-text {
+  font-size: 30px; font-weight: 900; color: #FFF;
+  margin: 16px 0;
+  text-shadow: 0 0 20px rgba(255,107,53,.6);
+}
+.gdc-bomb-sub {
+  font-size: 14px; color: rgba(255,255,255,.5);
+  margin-bottom: 20px;
+}
+.gdc-bomb-close {
+  padding: 12px 32px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, var(--g-pink), #FF9CBB);
+  color: #FFF; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+/* ============================================
+   游戏3: 狐狐大富翁
+   ============================================ */
+.gmp-container {
+  text-align: center; width: 100%;
+  margin: auto;
+}
+
+/* 棋盘 */
+.gmp-board {
+  display: grid; grid-template-columns: repeat(5,1fr);
+  gap: 4px; max-width: 400px; margin: 0 auto 16px;
+  aspect-ratio: 1;
+}
+@media(min-width:500px) {
+  .gmp-board { grid-template-columns: repeat(6,1fr); max-width: 480px }
+}
+
+.gmp-tile {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #FFF;
+  cursor: pointer; position: relative;
+  transition: all .12s;
+  border: 2px solid transparent;
+  overflow: hidden;
+  text-align: center;
+  padding: 2px;
+  word-break: break-all;
+}
+.gmp-tile:active { transform: scale(.93) }
+.gmp-tile.gmp-t-normal { background: linear-gradient(135deg, #334155, #1e293b); border-color: rgba(255,255,255,.08) }
+.gmp-tile.gmp-t-reward { background: linear-gradient(135deg, #065f46, #064e3b); border-color: rgba(16,185,129,.3) }
+.gmp-tile.gmp-t-penalty { background: linear-gradient(135deg, #7f1d1d, #581c1c); border-color: rgba(239,68,68,.3) }
+.gmp-tile.gmp-t-bomb { background: linear-gradient(135deg, #4e1b1b, #2e0f0f); border-color: rgba(239,68,68,.5) }
+.gmp-tile.gmp-t-start { background: linear-gradient(135deg, var(--g-pink), #FF9CBB); border-color: rgba(251,114,153,.5) }
+.gmp-tile.gmp-current { box-shadow: 0 0 16px rgba(251,114,153,.6), 0 0 0 3px rgba(251,114,153,.3); z-index: 2 }
+
+.gmp-tile .gmp-tile-emoji {
+  font-size: 16px; line-height: 1;
+}
+.gmp-tile .gmp-tile-label {
+  font-size: 9px; opacity: .8; margin-top: 1px;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gmp-tile .gmp-player {
+  position: absolute; font-size: 20px;
+  animation: gmpPlayerBounce .6s ease infinite;
+}
+@keyframes gmpPlayerBounce { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-2px,-4px)} }
+
+/* 大富翁控制栏 */
+.gmp-controls {
+  display: flex; gap: 8px; align-items: center;
+  justify-content: center; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.gmp-dice-display {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: #FFF; font-weight: 900;
+  box-shadow: 0 4px 16px rgba(139,92,246,.3);
+}
+.gmp-roll-btn {
+  padding: 12px 24px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, var(--g-purple), #A78BFA);
+  color: #FFF; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  box-shadow: 0 4px 16px rgba(139,92,246,.3);
+  transition: all .15s;
+}
+.gmp-roll-btn:hover { transform: translateY(-2px) }
+.gmp-roll-btn:active { transform: scale(.97) }
+.gmp-roll-btn:disabled { opacity: .4; pointer-events: none }
+
+.gmp-pos { font-size: 14px; color: rgba(255,255,255,.6) }
+
+/* 大富翁弹窗 */
+.gmp-popup {
+  position: fixed; inset: 0;
+  z-index: 315;
+  background: rgba(0,0,0,.85);
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+}
+.gmp-popup.show { display: flex }
+.gmp-popup-icon { font-size: 60px; margin-bottom: 12px }
+.gmp-popup-text {
+  font-size: 22px; font-weight: 800; color: #FFF;
+  margin-bottom: 8px; text-align: center; padding: 0 20px;
+}
+.gmp-popup-sub {
+  font-size: 14px; color: rgba(255,255,255,.5);
+  margin-bottom: 20px;
+}
+.gmp-popup button {
+  padding: 12px 32px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, var(--g-pink), #FF9CBB);
+  color: #FFF; font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+}
+
+/* 编辑模式 */
+.gmp-edit-btn {
+  padding: 8px 16px; border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px; background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7); font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+}
+.gmp-edit-btn:hover { border-color: var(--g-pink); color: #FFF }
+.gmp-edit-btn.active { background: var(--g-pink); border-color: var(--g-pink); color: #FFF }
+
+.gmp-editor {
+  display: none; width: 100%; max-width: 400px; margin: 0 auto 16px;
+}
+.gmp-editor.show { display: block }
+.gmp-editor-title {
+  font-size: 14px; color: rgba(255,255,255,.7); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.gmp-editor-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 6px; max-height: 200px; overflow-y: auto;
+}
+.gmp-editor-item {
+  display: flex; gap: 4px; align-items: center;
+  background: rgba(255,255,255,.04); border-radius: 8px; padding: 4px 8px;
+}
+.gmp-editor-item span { font-size: 10px; color: rgba(255,255,255,.4); width: 20px; text-align: center }
+.gmp-editor-item select {
+  width: 55px; padding: 4px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06); color: #FFF;
+  font-size: 10px; font-family: inherit; outline: none;
+}
+.gmp-editor-item input {
+  flex: 1; padding: 4px 6px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.06); color: #FFF;
+  font-size: 11px; font-family: inherit; outline: none; min-width: 0;
+}
+.gmp-editor-item input:focus { border-color: var(--g-pink) }
+
+/* ===== 共享 ===== */
+.gm-empty {
+  text-align: center; padding: 40px 20px;
+  color: rgba(255,255,255,.4); font-size: 14px;
+}
+
+/* ===== 移动端适配 ===== */
+@media(max-width:480px) {
+  .gm-modal { border-radius: 16px 16px 0 0 }
+  .gm-header { padding: 12px 16px }
+  .gm-body { padding: 12px 16px }
+  .gm-game-card { padding: 12px }
+  .gm-game-icon { width: 46px; height: 46px; font-size: 24px; border-radius: 12px }
+  .gnb-numpad { gap: 6px; max-width: 260px }
+  .gnb-num { padding: 12px; font-size: 16px }
+  .gnb-range-nums { font-size: 24px }
+  .gdc-scene { width: 130px; height: 130px }
+  .gdc-face { width: 130px; height: 130px; border-radius: 16px; font-size: 40px }
+  .gdc-face.front  { transform: translateZ(65px) }
+  .gdc-face.back   { transform: rotateY(180deg) translateZ(65px) }
+  .gdc-face.right  { transform: rotateY(90deg) translateZ(65px) }
+  .gdc-face.left   { transform: rotateY(-90deg) translateZ(65px) }
+  .gdc-face.top    { transform: rotateX(90deg) translateZ(65px) }
+  .gdc-face.bottom { transform: rotateX(-90deg) translateZ(65px) }
+  .gdc-face .gdc-dots { width: 60px; height: 60px; gap: 6px }
+  .gdc-face .gdc-dot { width: 12px; height: 12px }
+  .gdc-face .gdc-fox-face { font-size: 44px }
+  .gmp-board { grid-template-columns: repeat(5,1fr); gap: 3px }
+  .gmp-tile { font-size: 9px }
+  .gmp-tile .gmp-tile-emoji { font-size: 12px }
+  .gmp-editor-grid { grid-template-columns: repeat(1,1fr) }
+}
+
+@media(max-width:360px) {
+  .gnb-numpad { max-width: 230px; gap: 4px }
+  .gnb-num { padding: 10px; font-size: 15px }
+  .gdc-scene { width: 110px; height: 110px }
+  .gdc-face { width: 110px; height: 110px }
+  .gdc-face.front  { transform: translateZ(55px) }
+  .gdc-face.back   { transform: rotateY(180deg) translateZ(55px) }
+  .gdc-face.right  { transform: rotateY(90deg) translateZ(55px) }
+  .gdc-face.left   { transform: rotateY(-90deg) translateZ(55px) }
+  .gdc-face.top    { transform: rotateX(90deg) translateZ(55px) }
+  .gdc-face.bottom { transform: rotateX(-90deg) translateZ(55px) }
+  .gdc-face .gdc-dots { width: 50px; height: 50px; gap: 4px }
+  .gdc-face .gdc-dot { width: 10px; height: 10px }
+  .gdc-face .gdc-fox-face { font-size: 36px }
+}

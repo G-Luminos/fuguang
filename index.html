@@ -10,10 +10,12 @@
 <link rel="preload" href="gift-showcase.css" as="style">
 <link rel="preload" href="cotton-candy.css" as="style">
 <link rel="preload" href="playlist.css" as="style">
+<link rel="preload" href="games.css" as="style">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="gift-showcase.css">
 <link rel="stylesheet" href="cotton-candy.css">
 <link rel="stylesheet" href="playlist.css">
+<link rel="stylesheet" href="games.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -254,6 +256,53 @@
 </div>
 
 <script src="songs_data.js"></script>
+
+<!-- ===== 小游戏中心 ===== -->
+<div class="gm-overlay" id="gmOverlay" onclick="if(event.target===this)closeGameCenter()">
+  <div class="gm-modal">
+    <div class="gm-header">
+      <h2><span class="gm-fox">🦊</span> 活动小游戏</h2>
+      <button onclick="closeGameCenter()">✕</button>
+    </div>
+    <div class="gm-body" id="gmBody"></div>
+  </div>
+</div>
+
+<!-- 全屏游戏视图 -->
+<div class="gm-game-full" id="gmGameFull">
+  <div class="gm-game-bar">
+    <button class="gm-back" onclick="gmBackToCenter()">‹ 返回</button>
+    <div class="gm-title-bar" id="gmGameTitle"><span class="gm-fox-sm">🦊</span></div>
+    <button class="gm-back" onclick="gmRestartGame()">🔄 重来</button>
+  </div>
+  <div class="gm-game-body" id="gmGameBody"></div>
+</div>
+
+<!-- 数字炸弹爆炸动画 -->
+<div class="gnb-explosion" id="gnbExplosion">
+  <span class="gnb-explosion-fox" id="gnbBoomFox">🦊💥</span>
+  <div class="gnb-explosion-text" id="gnbBoomText">光光爆炸喽！</div>
+  <div class="gnb-explosion-sub" id="gnbBoomSub"></div>
+  <button onclick="gmBombCloseExplosion()">🔄 再来一局</button>
+</div>
+
+<!-- 骰子炸弹弹窗 -->
+<div class="gdc-bomb-popup" id="gdcBombPopup">
+  <span class="gdc-bomb-fox" id="gdcBombFoxIcon">🦊💥</span>
+  <div class="gdc-bomb-text" id="gdcBombText">光光爆炸喽！</div>
+  <div class="gdc-bomb-sub" id="gdcBombSub"></div>
+  <button class="gdc-bomb-close" onclick="gmDiceCloseBomb()">知道了</button>
+</div>
+
+<!-- 大富翁弹窗 -->
+<div class="gmp-popup" id="gmpPopup" onclick="if(event.target===this)gmMonoPopupClose()">
+  <div class="gmp-popup-icon" id="gmpPopupIcon">🦊</div>
+  <div class="gmp-popup-text" id="gmpPopupText"></div>
+  <div class="gmp-popup-sub" id="gmpPopupSub"></div>
+  <button onclick="gmMonoPopupClose()">继续</button>
+</div>
+
+<script src="games.js"></script>
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>
 <script src="playlist.js"></script>

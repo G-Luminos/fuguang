@@ -39,13 +39,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 @keyframes iconFloat{0%{transform:translateY(0)}100%{transform:translateY(-8px)}}
 .landing h2{font-size:26px;font-weight:800;color:#FFF;letter-spacing:1px;text-shadow:0 0 30px rgba(0,161,214,.3)}
 .landing .sub{font-size:14px;color:rgba(255,255,255,.7);margin-top:6px;margin-bottom:36px}
-.landing .btn-captain,.landing .btn-song,.landing .btn-gift,.landing .btn-cotton{display:block;width:100%;max-width:260px;margin:0 auto 10px;padding:13px 20px;border:none;border-radius:12px;color:#FFF;font-size:16px;font-weight:800;cursor:pointer;transition:all .18s;font-family:inherit;letter-spacing:1px;transform-style:preserve-3d}
-.landing .btn-captain:hover,.landing .btn-song:hover,.landing .btn-gift:hover,.landing .btn-cotton:hover{transform:translateY(-3px) translateZ(8px)}
-.landing .btn-captain:active,.landing .btn-song:active,.landing .btn-gift:active,.landing .btn-cotton:active{transform:translateY(0) translateZ(0) scale(.97)}
+.landing .btn-captain,.landing .btn-song,.landing .btn-gift,.landing .btn-cotton,.landing .btn-game{display:block;width:100%;max-width:260px;margin:0 auto 10px;padding:13px 20px;border:none;border-radius:12px;color:#FFF;font-size:16px;font-weight:800;cursor:pointer;transition:all .18s;font-family:inherit;letter-spacing:1px;transform-style:preserve-3d}
+.landing .btn-captain:hover,.landing .btn-song:hover,.landing .btn-gift:hover,.landing .btn-cotton:hover,.landing .btn-game:hover{transform:translateY(-3px) translateZ(8px)}
+.landing .btn-captain:active,.landing .btn-song:active,.landing .btn-gift:active,.landing .btn-cotton:active,.landing .btn-game:active{transform:translateY(0) translateZ(0) scale(.97)}
 .landing .btn-captain{background:linear-gradient(135deg,#00A1D6,#23ADE5);box-shadow:0 6px 24px rgba(0,161,214,.35),inset 0 1px 0 rgba(255,255,255,.2)}
 .landing .btn-captain:hover{box-shadow:0 12px 36px rgba(0,161,214,.45)}
 .landing .btn-song{background:linear-gradient(135deg,#FB7299,#FF9CBB);box-shadow:0 6px 24px rgba(251,114,153,.35),inset 0 1px 0 rgba(255,255,255,.2)}
 .landing .btn-song:hover{box-shadow:0 12px 36px rgba(251,114,153,.45)}
+.landing .btn-game{background:linear-gradient(135deg,#10B981,#34D399);box-shadow:0 6px 24px rgba(16,185,129,.35),inset 0 1px 0 rgba(255,255,255,.2)}
+.landing .btn-game:hover{box-shadow:0 12px 36px rgba(16,185,129,.45)}
 .landing .admin-link{margin-top:32px;font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;transition:color .15s}
 .landing .admin-link:hover{color:rgba(255,255,255,.6)}
 .alogin .m{border-radius:16px;max-width:340px;width:calc(100% - 32px)}
