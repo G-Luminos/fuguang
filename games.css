@@ -4,23 +4,6 @@
    移动端投屏优先 · 狐狸元素 · 可爱风格
    ================================================================ */
 
-/* ===== CSS 变量（局部覆盖） ===== */
-.games-root {
-  --g-fox: #FF6B35;
-  --g-fox-light: #FF9A6C;
-  --g-pink: #FB7299;
-  --g-pink-light: #FFB3CC;
-  --g-gold: #F59E0B;
-  --g-purple: #8B5CF6;
-  --g-green: #10B981;
-  --g-bomb: #EF4444;
-  --g-bg: #1a1a2e;
-  --g-card: #16213e;
-  --g-text: #FFF;
-  --g-sub: rgba(255,255,255,.6);
-  line-height: 1.5;
-}
-
 /* ===== 游戏中心弹窗 ===== */
 .gm-overlay {
   position: fixed; inset: 0;
@@ -76,7 +59,7 @@
 }
 
 .gm-game-card {
-  background: var(--g-card);
+  background: #16213e;
   border-radius: 16px;
   padding: 16px;
   cursor: pointer;
@@ -84,7 +67,7 @@
   border: 1.5px solid rgba(255,255,255,.06);
   display: flex; gap: 14px; align-items: center;
 }
-.gm-game-card:hover { border-color: var(--g-pink); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(251,114,153,.15) }
+.gm-game-card:hover { border-color: #FB7299; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(251,114,153,.15) }
 .gm-game-card:active { transform: scale(.98) }
 
 .gm-game-icon {
@@ -106,7 +89,7 @@
 /* ===== 全屏游戏容器 ===== */
 .gm-game-full {
   position: fixed; inset: 0;
-  background: var(--g-bg);
+  background: #1a1a2e;
   z-index: 310;
   display: none;
   flex-direction: column;
@@ -161,7 +144,7 @@
   color: #FFF; font-size: 16px; text-align: center;
   font-family: inherit; outline: none;
 }
-.gnb-input-group input:focus { border-color: var(--g-pink) }
+.gnb-input-group input:focus { border-color: #FB7299 }
 
 .gnb-btn-start {
   width: 100%; padding: 14px;
@@ -191,8 +174,8 @@
   display: flex; align-items: center; justify-content: center; gap: 12px;
   font-size: 28px; font-weight: 800; color: #FFF;
 }
-.gnb-range-nums .gnb-lo { color: var(--g-green) }
-.gnb-range-nums .gnb-hi { color: var(--g-bomb) }
+.gnb-range-nums .gnb-lo { color: #10B981 }
+.gnb-range-nums .gnb-hi { color: #EF4444 }
 .gnb-range-nums .gnb-sep { color: rgba(255,255,255,.3) }
 
 .gnb-bomb-icon {
@@ -215,8 +198,8 @@
   cursor: pointer; transition: all .12s;
   font-family: inherit;
 }
-.gnb-num:hover { background: rgba(255,255,255,.12); border-color: var(--g-pink) }
-.gnb-num:active { transform: scale(.93); background: var(--g-pink) }
+.gnb-num:hover { background: rgba(255,255,255,.12); border-color: #FB7299 }
+.gnb-num:active { transform: scale(.93); background: #FB7299 }
 .gnb-num.gnb-disabled { opacity: .25; pointer-events: none }
 
 .gnb-custom-input {
@@ -229,10 +212,10 @@
   color: #FFF; font-size: 16px; text-align: center;
   font-family: inherit; outline: none;
 }
-.gnb-custom-input input:focus { border-color: var(--g-pink) }
+.gnb-custom-input input:focus { border-color: #FB7299 }
 .gnb-custom-input button {
   padding: 10px 18px; border: none; border-radius: 10px;
-  background: var(--g-pink); color: #FFF; font-size: 14px; font-weight: 700;
+  background: #FB7299; color: #FFF; font-size: 14px; font-weight: 700;
   cursor: pointer; font-family: inherit;
 }
 
@@ -274,7 +257,7 @@
 }
 .gnb-explosion button {
   padding: 12px 32px; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, var(--g-pink), #FF9CBB);
+  background: linear-gradient(135deg, #FB7299, #FF9CBB);
   color: #FFF; font-size: 16px; font-weight: 700;
   cursor: pointer; font-family: inherit;
 }
@@ -389,7 +372,7 @@
   font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600;
   transition: all .15s;
 }
-.gdc-mode-btn.active { background: var(--g-pink); color: #FFF }
+.gdc-mode-btn.active { background: #FB7299; color: #FFF }
 
 .gdc-rewards {
   display: none;
@@ -410,7 +393,7 @@
   border-radius: 8px; background: rgba(255,255,255,.04);
   color: #FFF; font-size: 13px; font-family: inherit; outline: none;
 }
-.gdc-reward-item input:focus { border-color: var(--g-pink) }
+.gdc-reward-item input:focus { border-color: #FB7299 }
 .gdc-reward-hint {
   font-size: 11px; color: rgba(255,255,255,.3);
   margin-bottom: 8px; text-align: left;
@@ -460,7 +443,7 @@
 }
 .gdc-bomb-close {
   padding: 12px 32px; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, var(--g-pink), #FF9CBB);
+  background: linear-gradient(135deg, #FB7299, #FF9CBB);
   color: #FFF; font-size: 15px; font-weight: 700;
   cursor: pointer; font-family: inherit;
 }
@@ -502,7 +485,7 @@
 .gmp-tile.gmp-t-reward { background: linear-gradient(135deg, #065f46, #064e3b); border-color: rgba(16,185,129,.3) }
 .gmp-tile.gmp-t-penalty { background: linear-gradient(135deg, #7f1d1d, #581c1c); border-color: rgba(239,68,68,.3) }
 .gmp-tile.gmp-t-bomb { background: linear-gradient(135deg, #4e1b1b, #2e0f0f); border-color: rgba(239,68,68,.5) }
-.gmp-tile.gmp-t-start { background: linear-gradient(135deg, var(--g-pink), #FF9CBB); border-color: rgba(251,114,153,.5) }
+.gmp-tile.gmp-t-start { background: linear-gradient(135deg, #FB7299, #FF9CBB); border-color: rgba(251,114,153,.5) }
 .gmp-tile.gmp-current { box-shadow: 0 0 16px rgba(251,114,153,.6), 0 0 0 3px rgba(251,114,153,.3); z-index: 2 }
 
 .gmp-tile .gmp-tile-emoji {
@@ -537,7 +520,7 @@
 }
 .gmp-roll-btn {
   padding: 12px 24px; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, var(--g-purple), #A78BFA);
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
   color: #FFF; font-size: 15px; font-weight: 700;
   cursor: pointer; font-family: inherit;
   box-shadow: 0 4px 16px rgba(139,92,246,.3);
@@ -570,7 +553,7 @@
 }
 .gmp-popup button {
   padding: 12px 32px; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, var(--g-pink), #FF9CBB);
+  background: linear-gradient(135deg, #FB7299, #FF9CBB);
   color: #FFF; font-size: 15px; font-weight: 700;
   cursor: pointer; font-family: inherit;
 }
@@ -582,8 +565,8 @@
   color: rgba(255,255,255,.7); font-size: 12px; cursor: pointer;
   font-family: inherit; transition: all .15s;
 }
-.gmp-edit-btn:hover { border-color: var(--g-pink); color: #FFF }
-.gmp-edit-btn.active { background: var(--g-pink); border-color: var(--g-pink); color: #FFF }
+.gmp-edit-btn:hover { border-color: #FB7299; color: #FFF }
+.gmp-edit-btn.active { background: #FB7299; border-color: #FB7299; color: #FFF }
 
 .gmp-editor {
   display: none; width: 100%; max-width: 400px; margin: 0 auto 16px;
@@ -614,7 +597,7 @@
   background: rgba(255,255,255,.06); color: #FFF;
   font-size: 11px; font-family: inherit; outline: none; min-width: 0;
 }
-.gmp-editor-item input:focus { border-color: var(--g-pink) }
+.gmp-editor-item input:focus { border-color: #FB7299 }
 
 /* ===== 共享 ===== */
 .gm-empty {
