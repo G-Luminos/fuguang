@@ -76,6 +76,7 @@
   var nbTarget = 0, nbMin = 1, nbMax = 50, nbGuessed = {};
 
   window.gmLaunchBomb = function() {
+    gmCurrentGame = 'bomb';
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);
@@ -203,6 +204,14 @@
     gmLaunchBomb();
   };
 
+  /* ----- 全局重来 ----- */
+  var gmCurrentGame = '';
+  window.gmRestartGame = function() {
+    if (gmCurrentGame === 'bomb') gmLaunchBomb();
+    else if (gmCurrentGame === 'dice') gmLaunchDice();
+    else if (gmCurrentGame === 'monopoly') gmLaunchMonopoly();
+  };
+
   /* ================================================================
      Game 2: 3D掷骰子
      ================================================================ */
@@ -219,6 +228,7 @@
   };
 
   window.gmLaunchDice = function() {
+    gmCurrentGame = 'dice';
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);
@@ -403,6 +413,7 @@
   var mpEditing = false;
 
   window.gmLaunchMonopoly = function() {
+    gmCurrentGame = 'monopoly';
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);

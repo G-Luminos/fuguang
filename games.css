@@ -24,7 +24,7 @@
 /* ===== 游戏中心弹窗 ===== */
 .gm-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.7);
+  background: #1a1a2e;
   z-index: 300;
   display: none;
   align-items: flex-end;
@@ -246,7 +246,7 @@
 .gnb-explosion {
   position: fixed; inset: 0;
   z-index: 320;
-  background: rgba(0,0,0,.85);
+  background: #0f0f1a;
   display: none;
   align-items: center; justify-content: center;
   flex-direction: column;
@@ -434,7 +434,7 @@
 .gdc-bomb-popup {
   position: fixed; inset: 0;
   z-index: 320;
-  background: rgba(0,0,0,.88);
+  background: #0f0f1a;
   display: none;
   align-items: center; justify-content: center;
   flex-direction: column;
@@ -553,7 +553,7 @@
 .gmp-popup {
   position: fixed; inset: 0;
   z-index: 315;
-  background: rgba(0,0,0,.85);
+  background: #0f0f1a;
   display: none;
   align-items: center; justify-content: center;
   flex-direction: column;
