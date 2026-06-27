@@ -681,20 +681,22 @@
 
 /* Insert button between tiles */
 .gmp-insert-btn {
-  grid-column: span 1;
-  width: 100%;
   aspect-ratio: 1;
   border-radius: 8px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
+  cursor: pointer; position: relative;
+  transition: all .12s;
   border: 2px dashed rgba(255,255,255,.2);
+  overflow: hidden;
+  text-align: center;
+  padding: 2px;
   background: rgba(255,255,255,.03);
   color: rgba(255,255,255,.4);
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: 700;
-  transition: all .15s;
   font-family: inherit;
-  display: flex; align-items: center; justify-content: center;
-  padding: 2px;
+  min-height: 0;
+  min-width: 0;
   box-sizing: border-box;
 }
 .gmp-insert-btn:hover {
@@ -1023,11 +1025,11 @@
   .gmp-board-manager { flex-direction: column; align-items: stretch }
   .gmp-board-manager select { min-width: auto }
   .gmp-ep-save-btn, .gmp-ep-del-btn { font-size: 12px }
-  .gmp-insert-btn { font-size: 14px; padding: 2px }
+  .gmp-insert-btn { font-size: 14px }
 }
 
 @media(max-width:360px) {
-  .gmp-insert-btn { font-size: 12px; padding: 1px }
+  .gmp-insert-btn { font-size: 12px }
   .gnb-numpad { max-width: 230px; gap: 4px }
   .gnb-num { padding: 10px; font-size: 15px }
   .gdc-scene { width: 110px; height: 110px }
