@@ -170,3 +170,31 @@ CREATE TRIGGER playlists_updated_at BEFORE UPDATE ON playlists FOR EACH ROW EXEC
 -- ===== 执行完毕 =====
 -- 验证表: SELECT tablename FROM pg_tables WHERE schemaname = 'public';
 -- 验证桶: SELECT * FROM storage.buckets;
+
+
+-- ========== 7. 大富翁棋盘表 ==========
+CREATE TABLE IF NOT EXISTS monopoly_boards (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  tiles JSONB NOT NULL DEFAULT '[]'::jsonb,
+  author TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_monopoly_boards_updated ON monopoly_boards(updated_at DESC);
+
+ALTER TABLE monopoly_boards ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow select monopoly boards" ON monopoly_boards;
+CREATE POLICY "Allow select monopoly boards" ON monopoly_boards FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow insert monopoly boards" ON monopoly_boards;
+CREATE POLICY "Allow insert monopoly boards" ON monopoly_boards FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow update monopoly boards" ON monopoly_boards;
+CREATE POLICY "Allow update monopoly boards" ON monopoly_boards FOR UPDATE USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow delete monopoly boards" ON monopoly_boards;
+CREATE POLICY "Allow delete monopoly boards" ON monopoly_boards FOR DELETE USING (true);
+
+-- monopoly_boards updated_at 触发器
+DROP TRIGGER IF EXISTS monopoly_boards_updated_at ON monopoly_boards;
+CREATE TRIGGER monopoly_boards_updated_at BEFORE UPDATE ON monopoly_boards FOR EACH ROW EXECUTE FUNCTION update_updated_at();

@@ -1,7 +1,7 @@
 /* ================================================================
    浮光小游戏中心 - Games JS
    数字炸弹 / 3D掷骰子 / 狐狐大富翁
-   狐狸主题 · 无存储 · 投屏友好
+   狐狸主题 · Supabase云端存储 · 投屏友好
    ================================================================ */
 
 (function() {
@@ -424,6 +424,7 @@
   var mpMoving = false;
   var mpCurrentBoardName = '__default__';
   var mpEditIdx = -1; // currently editing tile index
+  var mpCachedBoards = {};
 
   var mpPresetEmojis = ['🏁','🌲','🌸','🌙','⭐','🍗','🎁','💣','😈','❓','🎉','✨','🔥','💎','🎪','🎯','🌈','🦊','🐾','🍀','👑','💫','🧩','🎈'];
 
@@ -445,23 +446,65 @@
     ];
   }
 
-  function getMonoBoards() {
-    try { return JSON.parse(localStorage.getItem('gm_monopoly_boards') || '{}'); }
-    catch(e) { return {}; }
+  /* --- Supabase-backed board storage --- */
+  async function getMonoBoards() {
+    if (!window.sb) return {};
+    try {
+      var res = await window.sb.from('monopoly_boards').select('name,tiles,author');
+      if (res.error) throw res.error;
+      var boards = {};
+      (res.data || []).forEach(function(r) {
+        boards[r.name] = r.tiles;
+        if (r.author) boards[r.name]._author = r.author;
+      });
+      return boards;
+    } catch(e) { console.warn('getMonoBoards:', e); return {}; }
   }
 
-  function saveMonoBoards(boards) {
-    try { localStorage.setItem('gm_monopoly_boards', JSON.stringify(boards)); }
-    catch(e) {}
+  async function saveMonoBoards(boards) {
+    if (!window.sb) return;
+    try {
+      var rows = [];
+      Object.keys(boards).forEach(function(name) {
+        var b = boards[name];
+        var author = (b._author || '');
+        // Clone tiles as a plain array (JSON.stringify strips non-indexed _author prop)
+        var cleanTiles = JSON.parse(JSON.stringify(b));
+        rows.push({ name: name, tiles: cleanTiles, author: author });
+      });
+      var res = await window.sb.from('monopoly_boards').upsert(rows, { onConflict: 'name' });
+      if (res.error) console.warn('saveMonoBoards:', res.error);
+    } catch(e) { console.warn('saveMonoBoards:', e); }
   }
 
-  window.gmLaunchMonopoly = function() {
+  async function deleteMonoBoard(name) {
+    if (!window.sb || !name) return;
+    try {
+      var res = await window.sb.from('monopoly_boards').delete().eq('name', name);
+      if (res.error) console.warn('deleteMonoBoard:', res.error);
+    } catch(e) { console.warn('deleteMonoBoard:', e); }
+  }
+
+  async function mpRefreshBoards() {
+    mpCachedBoards = await getMonoBoards();
+    updateSyncStatus();
+  }
+
+  function updateSyncStatus() {
+    var el = $('mpSyncStatus');
+    if (!el) return;
+    el.textContent = '☁️ 已同步';
+    el.className = 'gmp-sync-status';
+  }
+
+  window.gmLaunchMonopoly = async function() {
     gmCurrentGame = 'monopoly';
     mpEditing = false; mpMoving = false; mpPos = 0; mpDice = 0; mpEditIdx = -1;
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);
     $('gmGameTitle').innerHTML = '🦊 狐狐大富翁';
+    await mpRefreshBoards();
     body.innerHTML = renderMonopolyUI();
   };
 
@@ -560,7 +603,7 @@
   }
 
   function mpSaveLoadUI() {
-    var boards = getMonoBoards();
+    var boards = mpCachedBoards;
     var boardNames = Object.keys(boards);
     var isAdmin = (typeof window.role !== 'undefined' && window.role === 'admin');
     var html = ''
@@ -578,6 +621,7 @@
     if (isAdmin) {
       html += '  <button class="gmp-ep-del-btn" onclick="gmMonoDeleteBoard()">🗑 删除棋盘</button>';
     }
+    html += '  <span class="gmp-sync-status" id="mpSyncStatus">☁️ 已同步</span>';
     html += '</div>';
     return html;
   }
@@ -721,15 +765,17 @@
      ================================================================ */
 
   /* Save current board — opens styled popup instead of ugly prompt */
-  window.gmMonoSaveBoard = function() {
+  window.gmMonoSaveBoard = async function() {
     if (mpCurrentBoardName !== '__default__') {
       /* Already named — save directly */
-      var boards2 = getMonoBoards();
+      var boards2 = mpCachedBoards;
       var existing = boards2[mpCurrentBoardName];
       var author = existing ? existing._author : '';
       boards2[mpCurrentBoardName] = JSON.parse(JSON.stringify(mpTiles));
       boards2[mpCurrentBoardName]._author = author;
-      saveMonoBoards(boards2);
+      setSyncStatus('🔄 同步中...', 'syncing');
+      await saveMonoBoards(boards2);
+      await mpRefreshBoards();
       $('gmGameBody').innerHTML = renderMonopolyUI();
     } else {
       /* Show styled save popup */
@@ -743,17 +789,19 @@
   };
 
   /* Confirm save from popup */
-  window.gmMonoConfirmSaveBoard = function() {
+  window.gmMonoConfirmSaveBoard = async function() {
     var name = ($('gmpSaveName').value || '').trim();
     if (!name) { $('gmpSaveName').style.borderColor = '#EF4444'; return; }
     if (name === '__default__') name = name + '_copy';
     var author = ($('gmpSaveAuthor').value || '').trim();
-    var boards = getMonoBoards();
+    var boards = mpCachedBoards;
     boards[name] = JSON.parse(JSON.stringify(mpTiles));
     if (author) boards[name]._author = author;
-    saveMonoBoards(boards);
+    setSyncStatus('🔄 同步中...', 'syncing');
+    await saveMonoBoards(boards);
     mpCurrentBoardName = name;
     gmMonoCloseSavePopup();
+    await mpRefreshBoards();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
@@ -771,7 +819,7 @@
     if (name === '__default__') {
       mpTiles = cloneDefaultTiles();
     } else {
-      var boards = getMonoBoards();
+      var boards = mpCachedBoards;
       if (boards[name]) {
         mpTiles = JSON.parse(JSON.stringify(boards[name]));
       } else return;
@@ -784,21 +832,30 @@
   };
 
   /* Delete selected board — admin only */
-  window.gmMonoDeleteBoard = function() {
+  window.gmMonoDeleteBoard = async function() {
     var isAdmin = (typeof window.role !== 'undefined' && window.role === 'admin');
     if (!isAdmin) return;
     var sel = $('mpBoardSelect');
     if (!sel) return;
     var name = sel.value;
     if (!name || name === '__default__') return;
-    var boards = getMonoBoards();
+    var boards = mpCachedBoards;
     if (!boards[name]) return;
     if (!confirm('确定要删除棋盘「' + name + '」吗？此操作不可撤销。')) return;
+    setSyncStatus('🔄 同步中...', 'syncing');
     delete boards[name];
-    saveMonoBoards(boards);
+    await deleteMonoBoard(name);
     mpCurrentBoardName = '__default__';
+    await mpRefreshBoards();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
+
+  function setSyncStatus(text, cls) {
+    var el = $('mpSyncStatus');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'gmp-sync-status' + (cls ? ' ' + cls : '');
+  }
 
   window.gmMonoRoll = function() {
     if (mpMoving) return;

@@ -855,6 +855,18 @@
 }
 .gmp-ep-cancel:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8) }
 
+/* Sync status indicator */
+.gmp-sync-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: rgba(255,255,255,.35);
+  padding: 3px 8px; border-radius: 10px;
+  background: rgba(16,185,129,.06);
+  border: 1px solid rgba(16,185,129,.12);
+}
+.gmp-sync-status.syncing { color: rgba(251,182,86,.7); background: rgba(251,182,86,.06); border-color: rgba(251,182,86,.15); animation: gmpPulse 1.5s infinite }
+.gmp-sync-status.error { color: rgba(239,68,68,.7); background: rgba(239,68,68,.06); border-color: rgba(239,68,68,.15) }
+@keyframes gmpPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
 /* ============================================
    Board Manager (save/load toolbar)
    ============================================ */
