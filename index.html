@@ -367,13 +367,11 @@
   </div>
 </div>
 
-<!-- oneko.js 小黑猫 -->
+<!-- oneko.js 小猫咪 -->
 <style>
 #oneko {
   transform: scale(2);
   transform-origin: left top;
-  /* 灰度+对比度+暗度 — 身体变黑，绿色眼睛还能透出一点 */
-  filter: grayscale(0.85) brightness(0.5) contrast(2.5) saturate(1.5);
   pointer-events: auto !important;
   cursor: pointer;
   transition: transform .15s ease;
@@ -387,22 +385,22 @@
 <script data-cat="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif" src="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.js"></script>
 <script>
 (function(){
-  function waitClick(){
+  function bind(){
     var c = document.getElementById('oneko');
-    if(!c) return setTimeout(waitClick, 200);
+    if(!c) return setTimeout(bind, 200);
     c.addEventListener('click',function(e){
       e.stopPropagation();
       c.style.transform='scale(2.2) translateY(-6px)';
-      setTimeout(function(){ c.style.transform='scale(2)'; },150);
+      setTimeout(function(){ c.style.transform='scale(2)'; }, 150);
       var h=document.createElement('span');
       h.style.cssText='position:fixed;z-index:2147483648;pointer-events:none;font-size:20px;left:'+(e.clientX-10)+'px;top:'+(e.clientY-10)+'px;transition:all 1s ease-out;opacity:1;';
       h.textContent='💚';
       document.body.appendChild(h);
       requestAnimationFrame(function(){ h.style.transform='translateY(-60px)'; h.style.opacity='0'; });
-      setTimeout(function(){ h.remove(); },1100);
+      setTimeout(function(){ h.remove(); }, 1100);
     });
   }
-  waitClick();
+  bind();
 })();
 </script>
 <!-- xlsx仅在导出时延迟加载 -->
