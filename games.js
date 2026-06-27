@@ -458,7 +458,7 @@
         if (r.author) boards[r.name]._author = r.author;
       });
       return boards;
-    } catch(e) { console.warn('getMonoBoards:', e); return {}; }
+    } catch(e) { return {}; }
   }
 
   async function saveMonoBoards(boards) {
@@ -472,22 +472,22 @@
         rows.push({ name: name, tiles: cleanTiles, author: author });
       });
       var res = await window.sb.from('monopoly_boards').upsert(rows, { onConflict: 'name' });
-      if (res.error) { console.warn('saveMonoBoards:', res.error); return; }
+      if (res.error) { return; }
       // 直接更新缓存，省掉第二次select往返
       mpCachedBoards = boards;
       updateSyncStatus();
-    } catch(e) { console.warn('saveMonoBoards:', e); }
+    } catch(e) { }
   }
 
   async function deleteMonoBoard(name) {
     if (!window.sb || !name) return;
     try {
       var res = await window.sb.from('monopoly_boards').delete().eq('name', name);
-      if (res.error) { console.warn('deleteMonoBoard:', res.error); return; }
+      if (res.error) { return; }
       // 直接更新缓存
       delete mpCachedBoards[name];
       updateSyncStatus();
-    } catch(e) { console.warn('deleteMonoBoard:', e); }
+    } catch(e) { }
   }
 
   async function mpRefreshBoards() {

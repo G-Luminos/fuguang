@@ -120,7 +120,6 @@ async function openGiftShowcase() {
     await loadGiftImages();
     renderGiftShowcase();
   } catch(e) {
-    console.error('加载舰礼数据出错:', e);
     container.innerHTML = '<div class="gift-loading"><p>加载失败，请重试</p><button onclick="openGiftShowcase()" style="margin-top:12px;padding:8px 20px;border:1px solid #ccc;border-radius:8px;cursor:pointer">重试</button></div>';
   }
 }
@@ -142,8 +141,6 @@ async function loadGiftImages() {
   
   // 检查 sb 是否可用
   if (typeof window.sb === 'undefined' || !window.sb) {
-    console.warn('Supabase 客户端未初始化');
-    // 静默处理，不显示错误提示
     return;
   }
   
@@ -155,12 +152,8 @@ async function loadGiftImages() {
       .order('sort_order', { ascending: true });
     
     if (error) {
-      console.error('加载礼物图片失败:', error);
-      // 静默处理错误，不显示弹窗，游客和管理员都能正常浏览
       return;
     }
-    
-    console.log('加载到图片数据:', data);
     
     // 按月份分组
     data.forEach(img => {
@@ -172,7 +165,6 @@ async function loadGiftImages() {
     
     // 同步到全局变量以便调试
     window.giftImages = giftImages;
-    console.log('giftImages 已加载:', Object.keys(giftImages).length, '个月份有图片');
   } catch (err) {
     console.error('加载礼物图片出错:', err);
   }
@@ -183,8 +175,7 @@ async function loadGiftImages() {
  * 注意：需要在 Supabase SQL Editor 中手动执行 supabase-schema.sql 中的建表语句
  */
 async function createGiftImagesTable() {
-  console.log('请手动在 Supabase SQL Editor 中执行 supabase-schema.sql 中的建表语句');
-  // 静默处理，不显示错误提示
+  // 需要在 Supabase SQL Editor 中手动执行 supabase-schema.sql 中的建表语句
 }
 
 /**
@@ -580,7 +571,6 @@ async function handleImageUpload(files) {
         });
       
       if (uploadError) {
-        console.error('上传失败:', uploadError);
         continue;
       }
       
@@ -602,7 +592,6 @@ async function handleImageUpload(files) {
         .single();
       
       if (dbError) {
-        console.error('保存到数据库失败:', dbError);
         continue;
       }
       
@@ -721,7 +710,7 @@ async function deleteImage(imageId) {
       .remove([image.storage_path]);
     
     if (storageError) {
-      console.error('删除存储文件失败:', storageError);
+      // 存储删除失败，继续删除数据库记录
     }
     
     // 2. 从数据库删除
@@ -731,7 +720,6 @@ async function deleteImage(imageId) {
       .eq('id', imageId);
     
     if (dbError) {
-      console.error('删除数据库记录失败:', dbError);
       showToast('删除失败', 'e');
       return;
     }
@@ -744,7 +732,6 @@ async function deleteImage(imageId) {
     renderGiftShowcase();
     
   } catch (err) {
-    console.error('删除图片失败:', err);
     showToast('删除失败', 'e');
   }
 }

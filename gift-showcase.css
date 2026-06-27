@@ -24,32 +24,11 @@
 
 /* ===== 往期舰礼按钮（Landing 页面） ===== */
 .landing .btn-gift {
-  display: block;
-  width: 100%;
-  max-width: 260px;
-  margin: 0 auto 10px;
-  padding: 13px 20px;
-  border: none;
-  border-radius: 12px;
   background: linear-gradient(135deg, #8B5CF6, #A78BFA);
-  color: #FFF;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
   box-shadow: 0 6px 24px rgba(139,92,246,.35), inset 0 1px 0 rgba(255,255,255,.2);
-  transition: all .18s;
-  font-family: inherit;
-  letter-spacing: 1px;
-  transform-style: preserve-3d;
 }
-
 .landing .btn-gift:hover {
-  transform: translateY(-3px) translateZ(8px);
   box-shadow: 0 12px 36px rgba(139,92,246,.45);
-}
-
-.landing .btn-gift:active {
-  transform: translateY(0) translateZ(0) scale(.97);
 }
 
 /* ===== 往期舰礼弹窗 ===== */

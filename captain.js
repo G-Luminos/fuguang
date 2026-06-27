@@ -71,8 +71,6 @@ window.sb = null;
    ================================================================ */
 function initSB() {
   if (typeof supabase === 'undefined') {
-    console.error('Supabase SDK not loaded');
-    // 静默失败，不弹窗提示，避免新人进入页面时看到错误
     return false;
   }
   window.sb = supabase.createClient(SB_URL, SB_KEY);
@@ -89,7 +87,7 @@ async function dbGetRecords(month) {
     .select('*')
     .eq('month', month)
     .order('created_at', { ascending: false });
-  if (error) { console.error('dbGetRecords:', error); return []; }
+  if (error) { return []; }
   return data || [];
 }
 
@@ -100,7 +98,7 @@ async function dbInsertRecord(rec) {
     .insert(rec)
     .select()
     .single();
-  if (error) { console.error('dbInsertRecord:', error); return null; }
+  if (error) { return null; }
   return data;
 }
 
@@ -110,7 +108,7 @@ async function dbUpdateRecord(id, updates) {
     .from('records')
     .update(updates)
     .eq('id', id);
-  if (error) { console.error('dbUpdateRecord:', error); return false; }
+  if (error) { return false; }
   return true;
 }
 
@@ -120,7 +118,7 @@ async function dbDeleteRecord(id) {
     .from('records')
     .delete()
     .eq('id', id);
-  if (error) { console.error('dbDeleteRecord:', error); return false; }
+  if (error) { return false; }
   return true;
 }
 
@@ -130,7 +128,7 @@ async function dbGetMonths() {
     .from('records')
     .select('month')
     .order('month', { ascending: false });
-  if (error) { console.error('dbGetMonths:', error); return []; }
+  if (error) { return []; }
   const months = [...new Set((data||[]).map(r => r.month))];
   return months;
 }
