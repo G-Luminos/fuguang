@@ -183,10 +183,10 @@
   };
 
   function showBombResult(isBomb, num) {
+    nbGameOver = true;
     var el = $('gnbExplosion');
     if (!el) return;
     if (isBomb) {
-      nbGameOver = true;
       $('gnbBoomFox').textContent = '🦊💥';
       $('gnbBoomText').textContent = '光光爆炸喽！';
       $('gnbBoomSub').textContent = '炸弹数字是 ' + num;
@@ -238,6 +238,14 @@
     $('gmGameTitle').innerHTML = '🦊 掷骰子';
     body.innerHTML = renderDiceUI();
   };
+
+  /* OBS-safe wrapper: ensure full-game container is visible during roll */
+  function ensureGameFullVisible() {
+    var el = $('gmGameFull');
+    if (el && !el.classList.contains('show')) {
+      el.classList.add('show');
+    }
+  }
 
   function renderDiceUI() {
     var bombBtnHtml = '';

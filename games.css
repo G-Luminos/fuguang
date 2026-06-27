@@ -100,7 +100,7 @@
 .gm-game-bar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 16px;
-  background: rgba(0,0,0,.3);
+  background: #16213e;
   border-bottom: 1px solid rgba(255,255,255,.06);
   min-height: 48px;
 }
@@ -118,6 +118,7 @@
   display: flex; flex-direction: column;
   align-items: center;
   padding: 20px;
+  background: #1a1a2e;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -228,7 +229,7 @@
 /* --- 爆炸动画 --- */
 .gnb-explosion {
   position: fixed; inset: 0;
-  z-index: 320;
+  z-index: 999;
   background: #0f0f1a;
   display: none;
   align-items: center; justify-content: center;
