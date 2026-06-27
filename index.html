@@ -367,21 +367,16 @@
   </div>
 </div>
 
-<!-- oneko.js 小猫 - 黑猫Canvas版 -->
+<!-- oneko.js 小黑猫 -->
 <style>
-#oneko-orig {
+#oneko {
   transform: scale(2);
   transform-origin: left top;
+  /* 灰度+对比度+暗度 — 身体变黑，绿色眼睛还能透出一点 */
+  filter: grayscale(0.85) brightness(0.5) contrast(2.5) saturate(1.5);
   pointer-events: auto !important;
   cursor: pointer;
-  /* 保持原始精灵图，用Canvas替代渲染 */
-  opacity: 0 !important;
-}
-#neko-canvas {
-  position: fixed;
-  z-index: 2147483647;
-  pointer-events: auto;
-  cursor: pointer;
+  transition: transform .15s ease;
 }
 </style>
 
@@ -389,112 +384,25 @@
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>
 <script src="playlist.js"></script>
-<!-- oneko.js - 开源小猫宠物 (adryd325/oneko.js) -->
 <script data-cat="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif" src="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.js"></script>
 <script>
-// 黑猫Canvas着色器 - 橘猫身体→黑色, 绿色眼睛保留
 (function(){
-  var spriteImg = new Image();
-  spriteImg.crossOrigin = 'anonymous';
-  spriteImg.src = 'https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif';
-  
-  var canvas = document.createElement('canvas');
-  canvas.id = 'neko-canvas';
-  canvas.width = 64; canvas.height = 64;
-  canvas.style.width = '64px'; canvas.style.height = '64px';
-  document.body.appendChild(canvas);
-  var ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-  function waitForNeko(cb) {
-    var el = document.getElementById('oneko');
-    if (!el) return setTimeout(function(){ waitForNeko(cb); }, 100);
-    el.id = 'oneko-orig';
-    cb(el);
-  }
-
-  function recolorImageData(id) {
-    var d = id.data;
-    for (var i = 0; i < d.length; i += 4) {
-      var r = d[i], g = d[i+1], b = d[i+2], a = d[i+3];
-      if (a < 30) continue;
-      // Detect green eyes: g dominant, g > r*1.15, g > b*1.3, g > 70
-      if (g > 70 && g > r * 1.15 && g > b * 1.3) {
-        // Brighten green eyes
-        d[i] = Math.min(255, r + 20);
-        d[i+1] = Math.min(255, g + 40);
-        d[i+2] = Math.min(255, b + 10);
-        continue;
-      }
-      // Keep very dark outlines
-      if (r < 40 && g < 40 && b < 40) {
-        d[i] = Math.max(0, r - 5);
-        d[i+1] = Math.max(0, g - 5);
-        d[i+2] = Math.max(0, b - 5);
-        continue;
-      }
-      // Everything else → dark body (preserve brightness for shading)
-      var lum = (r + g + b) / 3;
-      var dv = Math.max(6, Math.min(52, lum * 0.2));
-      d[i] = dv;
-      d[i+1] = dv;
-      d[i+2] = dv;
-    }
-    return id;
-  }
-
-  var spriteCanvas = null, spriteCtx = null;
-  spriteImg.onload = function() {
-    spriteCanvas = document.createElement('canvas');
-    spriteCanvas.width = spriteImg.width;
-    spriteCanvas.height = spriteImg.height;
-    spriteCtx = spriteCanvas.getContext('2d', { willReadFrequently: true });
-    spriteCtx.drawImage(spriteImg, 0, 0);
-    // Pre-recolor entire sprite sheet
-    var id = spriteCtx.getImageData(0, 0, spriteImg.width, spriteImg.height);
-    spriteCtx.putImageData(recolorImageData(id), 0, 0);
-    console.log('🐱 黑猫精灵图着色完成');
-  };
-
-  waitForNeko(function(nekoEl) {
-    function sync() {
-      if (!spriteCtx) { requestAnimationFrame(sync); return; }
-      var style = getComputedStyle(nekoEl);
-      var pos = style.backgroundPosition.split(' ');
-      var sx = parseInt(pos[0]) || 0;
-      var sy = parseInt(pos[1]) || 0;
-      var left = parseInt(style.left) || 0;
-      var top = parseInt(style.top) || 0;
-      
-      // oneko div is 32×32, we scale canvas to 64×64
-      canvas.style.left = (left - 16) + 'px';
-      canvas.style.top = (top - 16) + 'px';
-      canvas.style.width = '64px';
-      canvas.style.height = '64px';
-      
-      ctx.clearRect(0, 0, 64, 64);
-      // Draw the recolored sprite region scaled 2x
-      ctx.drawImage(spriteCanvas, sx, sy, 32, 32, 0, 0, 64, 64);
-      
-      requestAnimationFrame(sync);
-    }
-    sync();
-
-    // Click interaction on canvas
-    canvas.addEventListener('click', function(e) {
+  function waitClick(){
+    var c = document.getElementById('oneko');
+    if(!c) return setTimeout(waitClick, 200);
+    c.addEventListener('click',function(e){
       e.stopPropagation();
-      // Bounce animation
-      canvas.style.transition = 'transform .15s ease';
-      canvas.style.transform = 'scale(1.1) translateY(-6px)';
-      setTimeout(function(){ canvas.style.transform = 'scale(1)'; }, 150);
-      // Heart
-      var h = document.createElement('span');
-      h.style.cssText = 'position:fixed;z-index:2147483648;pointer-events:none;font-size:20px;left:'+(e.clientX-10)+'px;top:'+(e.clientY-10)+'px;transition:all 1s ease-out;opacity:1;';
-      h.textContent = '💚';
+      c.style.transform='scale(2.2) translateY(-6px)';
+      setTimeout(function(){ c.style.transform='scale(2)'; },150);
+      var h=document.createElement('span');
+      h.style.cssText='position:fixed;z-index:2147483648;pointer-events:none;font-size:20px;left:'+(e.clientX-10)+'px;top:'+(e.clientY-10)+'px;transition:all 1s ease-out;opacity:1;';
+      h.textContent='💚';
       document.body.appendChild(h);
       requestAnimationFrame(function(){ h.style.transform='translateY(-60px)'; h.style.opacity='0'; });
-      setTimeout(function(){ h.remove(); }, 1100);
+      setTimeout(function(){ h.remove(); },1100);
     });
-  });
+  }
+  waitClick();
 })();
 </script>
 <!-- xlsx仅在导出时延迟加载 -->
