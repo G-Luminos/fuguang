@@ -417,7 +417,7 @@
 /* 骰子炸弹弹窗 */
 .gdc-bomb-popup {
   position: fixed; inset: 0;
-  z-index: 320;
+  z-index: 999;
   background: #0f0f1a;
   display: none;
   align-items: center; justify-content: center;
@@ -589,7 +589,7 @@
 /* 大富翁弹窗 */
 .gmp-popup {
   position: fixed; inset: 0;
-  z-index: 315;
+  z-index: 999;
   background: #0f0f1a;
   display: none;
   align-items: center; justify-content: center;
@@ -678,7 +678,12 @@
 .gmp-edit-btn.active { background: #FB7299; border-color: #FB7299; color: #FFF }
 
 .gmp-editor {
-  display: none; width: 100%; max-width: 400px; margin: 0 auto 16px;
+  display: none; width: 100%; max-width: 480px; margin: 0 auto 16px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 12px;
 }
 .gmp-editor.show { display: block }
 .gmp-editor-title {
@@ -764,13 +769,50 @@
 
 /* ===== PC 桌面端优化 ===== */
 @media(min-width:768px) {
-  .gm-game-body { max-width: 600px; margin-left: auto; margin-right: auto }
+  .gm-modal { max-width: 640px }
+  .gm-game-body { max-width: 700px; margin-left: auto; margin-right: auto }
+  .gm-game-card { padding: 20px }
+  .gm-game-icon { width: 64px; height: 64px; font-size: 36px; border-radius: 18px }
+  .gm-game-name { font-size: 18px }
+  .gm-game-desc { font-size: 14px }
   .gmp-board {
-    max-width: 540px;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 6px;
+    max-width: 650px;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+    aspect-ratio: auto;
   }
-  .gmp-tile { font-size: 14px; padding: 6px }
-  .gmp-tile .gmp-tile-emoji { font-size: 22px }
-  .gmp-tile .gmp-tile-label { font-size: 11px }
+  .gmp-tile { 
+    font-size: 15px; padding: 8px; border-radius: 12px; 
+    aspect-ratio: auto; min-height: 90px;
+  }
+  .gmp-tile .gmp-tile-emoji { font-size: 28px }
+  .gmp-tile .gmp-tile-label { font-size: 12px; white-space: normal }
+  .gmp-tile .gmp-player { font-size: 28px }
+  .gmp-controls { gap: 12px }
+  .gmp-dice-display { width: 64px; height: 64px; font-size: 32px; border-radius: 16px }
+  .gmp-roll-btn { font-size: 16px; padding: 14px 28px }
+  
+  /* 编辑器毛玻璃面板 */
+  .gmp-editor {
+    background: rgba(255,255,255,.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    padding: 16px;
+    max-width: 600px;
+  }
+  .gmp-editor-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 350px }
+  .gmp-editor-item { padding: 10px 12px; gap: 8px }
+  .gmp-editor-item span { font-size: 14px; min-width: 22px }
+  .gmp-editor-item select { font-size: 15px; min-width: 80px; padding: 8px 10px; min-height: 36px }
+  .gmp-editor-item input { font-size: 14px; padding: 8px 10px; min-height: 36px }
+  
+  .gnb-numpad { max-width: 360px; gap: 10px }
+  .gnb-num { padding: 18px; font-size: 20px; border-radius: 14px }
+  .gnb-custom-input input { font-size: 18px; padding: 14px }
+  .gnb-custom-input button { font-size: 16px; padding: 12px 22px }
+  
+  .gmp-edit-btn { font-size: 14px; padding: 10px 20px }
+  .gmp-tile:hover { transform: translateY(-2px); filter: brightness(1.1) }
 }

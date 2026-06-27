@@ -66,6 +66,8 @@
   }
 
   window.gmBackToCenter = function() {
+    mpEditing = false;
+    mpMoving = false;
     showFullGame(false);
     renderGameCenter();
   };
@@ -252,12 +254,12 @@
     for (var f = 1; f <= 6; f++) {
       var isBomb = (f === dcBombFace);
       bombBtnHtml += '<button onclick="gmDiceSetBomb(' + f + ')" style="'
-        + 'width:36px;height:36px;border-radius:50%;'
+        + 'width:40px;height:40px;border-radius:50%;'
         + 'border:2px solid ' + (isBomb ? '#EF4444' : 'rgba(255,255,255,.2)') + ';'
         + 'background:' + (isBomb ? 'rgba(239,68,68,.25)' : 'rgba(255,255,255,.06)') + ';'
         + 'color:' + (isBomb ? '#EF4444' : 'rgba(255,255,255,.6)') + ';'
-        + 'font-size:' + (isBomb ? '18px' : '14px') + ';font-weight:bold;cursor:pointer;'
-        + 'font-family:inherit;transition:all .2s;line-height:32px;text-align:center;padding:0;'
+        + 'font-size:' + (isBomb ? '18px' : '13px') + ';font-weight:bold;cursor:pointer;'
+        + 'font-family:inherit;transition:all .2s;line-height:36px;text-align:center;padding:0;'
         + 'margin:0 2px'
         + '">' + (isBomb ? '💣' : f) + '</button>';
     }
@@ -331,7 +333,7 @@
       var isBomb = (i === dcBombFace);
       html += '<div class="gdc-reward-item">'
         + '<span>' + i + (isBomb ? '💣' : '') + '</span>'
-        + '<input id="dcReward' + i + '" value="' + escA(defaults[i-1]) + '" placeholder="点数' + i + '奖励" style="font-size:14px;color:#e0e0e0;background:rgba(255,255,255,.06)">'
+        + '<input id="dcReward' + i + '" value="' + escA(defaults[i-1]) + '" placeholder="点数' + i + '奖励" style="font-size:15px;min-height:32px;color:#e0e0e0;background:rgba(255,255,255,.06)">'
         + '</div>';
     }
     return html;
@@ -454,6 +456,7 @@
 
   window.gmLaunchMonopoly = function() {
     gmCurrentGame = 'monopoly';
+    mpEditing = false; mpMoving = false; mpPos = 0; mpDice = 0;
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);
