@@ -120,7 +120,10 @@
   padding: 20px;
   background: #1a1a2e;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.gm-game-body::-webkit-scrollbar { display: none }
 
 /* ============================================
    游戏1: 数字炸弹
@@ -667,7 +670,8 @@
 .gmp-board-manager .gmp-mgr-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
 .gmp-board-manager .gmp-mgr-btn:active { transform: scale(.96) }
 
-/* 编辑模式 */
+/* 编辑模式 — 仅PC端可见 */
+.gmp-edit-toggle { display: none }
 .gmp-edit-btn {
   padding: 8px 16px; border: 1px solid rgba(255,255,255,.2);
   border-radius: 20px; background: rgba(255,255,255,.06);
@@ -690,28 +694,103 @@
   font-size: 14px; color: rgba(255,255,255,.7); margin-bottom: 8px;
   display: flex; align-items: center; gap: 6px;
 }
-.gmp-editor-grid {
-  display: grid; grid-template-columns: repeat(2,1fr);
-  gap: 8px; max-height: 300px; overflow-y: auto;
+
+/* 编辑器表格布局 */
+.gmp-editor-table { display: flex; flex-direction: column; gap: 2px }
+.gmp-editor-header {
+  display: flex; gap: 8px; align-items: center;
+  padding: 6px 10px;
+  font-size: 12px; color: rgba(255,255,255,.35);
+  font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
 }
-.gmp-editor-item {
-  display: flex; gap: 4px; align-items: center;
-  background: rgba(255,255,255,.04); border-radius: 8px; padding: 8px;
+.gmp-editor-header span:nth-child(1) { width: 24px }
+.gmp-editor-header span:nth-child(2) { width: 72px }
+.gmp-editor-header span:nth-child(3) { flex: 0 0 140px }
+.gmp-editor-header span:nth-child(4) { flex: 1 }
+.gmp-editor-header span:nth-child(5) { width: 32px }
+
+.gmp-editor-row {
+  display: flex; gap: 8px; align-items: center;
+  background: rgba(255,255,255,.03);
+  border-radius: 8px; padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,.04);
+  transition: all .15s;
 }
-.gmp-editor-item span { font-size: 13px; color: rgba(255,255,255,.4); width: 20px; text-align: center }
-.gmp-editor-item select {
-  width: auto; min-width: 70px; padding: 8px; border-radius: 6px;
+.gmp-editor-row:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1) }
+.gmp-editor-num {
+  width: 24px; text-align: center;
+  font-size: 13px; color: rgba(255,255,255,.35); font-weight: 700;
+}
+.gmp-editor-row select {
+  width: 72px; padding: 6px 4px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: #2a2a3a; color: #e0e0e0;
+  font-size: 13px; font-family: inherit; outline: none;
+  min-height: 34px; cursor: pointer;
+}
+.gmp-editor-emoji {
+  flex: 0 0 140px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.gmp-editor-emoji input {
+  width: 44px; text-align: center; padding: 6px;
+  border-radius: 6px;
   border: 1px solid rgba(255,255,255,.1);
   background: rgba(255,255,255,.06); color: #FFF;
-  font-size: 14px; font-family: inherit; outline: none;
+  font-size: 15px; font-family: inherit; outline: none;
+  min-height: 34px;
 }
-.gmp-editor-item input {
-  flex: 1; padding: 8px; border-radius: 6px;
+.gmp-editor-row > input {
+  flex: 1; min-width: 100px; padding: 6px 8px; border-radius: 6px;
   border: 1px solid rgba(255,255,255,.1);
   background: rgba(255,255,255,.06); color: #FFF;
-  font-size: 13px; font-family: inherit; outline: none; min-width: 0;
+  font-size: 13px; font-family: inherit; outline: none;
+  min-height: 34px;
 }
-.gmp-editor-item input:focus { border-color: #FB7299 }
+.gmp-editor-row input:focus,
+.gmp-editor-row select:focus { border-color: #FB7299 }
+
+.gmp-editor-del {
+  background: none; border: none; color: #EF4444;
+  cursor: pointer; font-size: 20px; padding: 0 4px;
+  width: 32px; text-align: center;
+  line-height: 1; font-family: inherit;
+}
+.gmp-editor-del:hover { color: #F87171; transform: scale(1.15) }
+
+.gmp-editor-add {
+  margin-top: 8px; width: 100%; padding: 10px;
+  border: 1px dashed rgba(255,255,255,.2); border-radius: 8px;
+  background: none; color: rgba(255,255,255,.5);
+  cursor: pointer; font-family: inherit; font-size: 14px;
+  transition: all .2s;
+}
+.gmp-editor-add:hover { border-color: #FB7299; color: #FB7299; background: rgba(251,114,153,.06) }
+
+/* Emoji picker in table (compact row) */
+.gmp-editor-row .gmp-emoji-picker {
+  display: flex; flex-wrap: wrap; gap: 2px;
+}
+.gmp-editor-row .gmp-emoji-btn {
+  width: 24px; height: 24px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03);
+  cursor: pointer; font-size: 13px;
+  font-family: inherit; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.gmp-editor-row .gmp-emoji-btn:hover {
+  background: rgba(255,255,255,.12); transform: scale(1.12);
+}
+.gmp-editor-row .gmp-emoji-btn.active {
+  border-color: #FB7299; background: rgba(251,114,153,.2);
+  box-shadow: 0 0 6px rgba(251,114,153,.3);
+}
+
+/* Old grid editor — hidden (replaced by table) */
+.gmp-editor-grid { display: none }
+.gmp-editor-item { display: none }
 
 /* ===== 共享 ===== */
 .gm-empty {
@@ -770,29 +849,28 @@
 /* ===== PC 桌面端优化 ===== */
 @media(min-width:768px) {
   .gm-modal { max-width: 640px }
-  .gm-game-body { max-width: 700px; margin-left: auto; margin-right: auto }
+  .gm-game-body { max-width: 750px; margin-left: auto; margin-right: auto }
   .gm-game-card { padding: 20px }
   .gm-game-icon { width: 64px; height: 64px; font-size: 36px; border-radius: 18px }
   .gm-game-name { font-size: 18px }
   .gm-game-desc { font-size: 14px }
-  .gmp-board {
-    max-width: 650px;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 8px;
-    aspect-ratio: auto;
-  }
-  .gmp-tile { 
-    font-size: 15px; padding: 8px; border-radius: 12px; 
-    aspect-ratio: auto; min-height: 90px;
-  }
-  .gmp-tile .gmp-tile-emoji { font-size: 28px }
+  
+  /* 棋盘格子变大 */
+  .gmp-board { max-width: 680px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; aspect-ratio: auto }
+  .gmp-tile { font-size: 15px; padding: 8px; border-radius: 12px; aspect-ratio: auto; min-height: 100px }
+  .gmp-tile .gmp-tile-emoji { font-size: 30px }
   .gmp-tile .gmp-tile-label { font-size: 12px; white-space: normal }
-  .gmp-tile .gmp-player { font-size: 28px }
+  .gmp-tile .gmp-player { font-size: 30px }
+  .gmp-tile:hover { transform: translateY(-2px); filter: brightness(1.1) }
   .gmp-controls { gap: 12px }
   .gmp-dice-display { width: 64px; height: 64px; font-size: 32px; border-radius: 16px }
   .gmp-roll-btn { font-size: 16px; padding: 14px 28px }
   
-  /* 编辑器毛玻璃面板 */
+  /* PC端显示编辑按钮 */
+  .gmp-edit-toggle { display: block }
+  .gmp-edit-btn { font-size: 14px; padding: 10px 20px }
+  
+  /* 编辑器表格 PC 放大 */
   .gmp-editor {
     background: rgba(255,255,255,.04);
     backdrop-filter: blur(12px);
@@ -800,19 +878,25 @@
     border: 1px solid rgba(255,255,255,.1);
     border-radius: 16px;
     padding: 16px;
-    max-width: 600px;
+    max-width: 680px;
   }
-  .gmp-editor-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; max-height: 350px }
-  .gmp-editor-item { padding: 10px 12px; gap: 8px }
-  .gmp-editor-item span { font-size: 14px; min-width: 22px }
-  .gmp-editor-item select { font-size: 15px; min-width: 80px; padding: 8px 10px; min-height: 36px }
-  .gmp-editor-item input { font-size: 14px; padding: 8px 10px; min-height: 36px }
+  .gmp-editor-header { font-size: 13px; padding: 8px 14px }
+  .gmp-editor-header span:nth-child(1) { width: 28px }
+  .gmp-editor-header span:nth-child(2) { width: 80px }
+  .gmp-editor-header span:nth-child(3) { flex: 0 0 180px }
   
-  .gnb-numpad { max-width: 360px; gap: 10px }
-  .gnb-num { padding: 18px; font-size: 20px; border-radius: 14px }
+  .gmp-editor-row { padding: 10px 14px; gap: 10px }
+  .gmp-editor-num { width: 28px; font-size: 14px }
+  .gmp-editor-row select { width: 80px; font-size: 14px; min-height: 38px; padding: 8px 6px }
+  .gmp-editor-emoji { flex: 0 0 180px }
+  .gmp-editor-emoji input { width: 50px; font-size: 16px; min-height: 38px }
+  .gmp-editor-row > input { font-size: 14px; min-height: 38px; padding: 8px 10px }
+  .gmp-editor-row .gmp-emoji-btn { width: 28px; height: 28px; font-size: 15px }
+  .gmp-editor-add { font-size: 15px; padding: 12px }
+  
+  /* 数字炸弹 */
+  .gnb-numpad { max-width: 420px; gap: 10px }
+  .gnb-num { padding: 20px; font-size: 22px; border-radius: 14px }
   .gnb-custom-input input { font-size: 18px; padding: 14px }
   .gnb-custom-input button { font-size: 16px; padding: 12px 22px }
-  
-  .gmp-edit-btn { font-size: 14px; padding: 10px 20px }
-  .gmp-tile:hover { transform: translateY(-2px); filter: brightness(1.1) }
 }

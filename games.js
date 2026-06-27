@@ -502,20 +502,25 @@
       + (mpEditing ? '✓ 完成编辑' : '✏️ 编辑棋盘')
       + '</button></div>';
 
-    /* Editor */
+    /* Editor — table layout */
     html += '<div class="gmp-editor' + (mpEditing ? ' show' : '') + '" id="mpEditor" style="position:relative;z-index:1">'
       + '<div class="gmp-editor-title">🦊 编辑棋盘格子</div>';
 
     /* Save/Load controls */
     html += mpSaveLoadUI();
 
-    /* Editor grid */
-    html += '<div class="gmp-editor-grid">';
+    /* Column headers */
+    html += '<div class="gmp-editor-table">'
+      + '<div class="gmp-editor-header">'
+      + '<span>#</span><span>类型</span><span>图标</span><span>名称/效果</span><span></span>'
+      + '</div>';
+
+    /* Editor rows */
     for (var j = 0; j < mpTiles.length; j++) {
       var t = mpTiles[j];
       var canDelete = (j > 0 && j < mpTiles.length - 1);
-      html += '<div class="gmp-editor-item">'
-        + '<span style="min-width:18px;font-size:14px">' + (j + 1) + '</span>'
+      html += '<div class="gmp-editor-row">'
+        + '<span class="gmp-editor-num">' + (j + 1) + '</span>'
         + '<select onchange="gmMonoSet(' + j + ',\'type\',this.value)" style="' + SELECT_STYLE + '">'
         + '<option value="normal"' + (t.type==='normal'?' selected':'') + '>普通</option>'
         + '<option value="reward"' + (t.type==='reward'?' selected':'') + '>奖励</option>'
@@ -524,28 +529,21 @@
         + '<option value="start"' + (t.type==='start'?' selected':'') + '>起点</option>'
         + '<option value="end"' + (t.type==='end'?' selected':'') + '>终点</option>'
         + '</select>'
-        + '<input value="' + escA(t.emoji) + '" onchange="gmMonoSet(' + j + ',\'emoji\',this.value)" style="width:40px;text-align:center;' + INPUT_STYLE + '" maxlength="4">'
-        + '<input value="' + escA(t.label) + '" onchange="gmMonoSet(' + j + ',\'label\',this.value)" placeholder="名称/效果" style="min-width:80px;flex:1;' + INPUT_STYLE + '">'
-        + (canDelete ? '<button onclick="gmMonoDel(' + j + ')" style="background:none;border:none;color:#EF4444;cursor:pointer;font-size:18px;padding:0 4px">×</button>' : '<span style="width:28px;display:inline-block"></span>')
-        + '</div>';
-
-      /* Emoji picker row */
-      html += '<div style="display:flex;flex-wrap:wrap;gap:2px;margin:2px 0 4px 22px">';
+        + '<div class="gmp-editor-emoji">'
+        + '<input value="' + escA(t.emoji) + '" onchange="gmMonoSet(' + j + ',\'emoji\',this.value)" style="width:44px;text-align:center;' + INPUT_STYLE + '" maxlength="4">'
+        + '<div class="gmp-emoji-picker">';
       for (var k = 0; k < mpPresetEmojis.length; k++) {
         var e = mpPresetEmojis[k];
         var isActive = (e === t.emoji);
-        html += '<button onclick="gmMonoSetEmoji(' + j + ',\'' + e + '\')" style="'
-          + 'font-size:15px;'
-          + 'background:' + (isActive ? 'rgba(239,184,86,.2)' : 'rgba(255,255,255,.04)') + ';'
-          + 'border:1px solid ' + (isActive ? 'rgba(239,184,86,.4)' : 'rgba(255,255,255,.08)') + ';'
-          + 'border-radius:4px;cursor:pointer;padding:1px 4px;'
-          + 'transition:all .15s'
-          + '">' + e + '</button>';
+        html += '<button onclick="gmMonoSetEmoji(' + j + ',\'' + e + '\')" class="gmp-emoji-btn' + (isActive ? ' active' : '') + '">' + e + '</button>';
       }
-      html += '</div>';
+      html += '</div></div>'
+        + '<input value="' + escA(t.label) + '" onchange="gmMonoSet(' + j + ',\'label\',this.value)" placeholder="名称/效果" style="flex:1;min-width:100px;' + INPUT_STYLE + '">'
+        + (canDelete ? '<button onclick="gmMonoDel(' + j + ')" class="gmp-editor-del">×</button>' : '<span style="width:32px"></span>')
+        + '</div>';
     }
     html += '</div>'
-      + '<button onclick="gmMonoAdd()" style="margin-top:8px;width:100%;padding:10px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;background:none;color:rgba(255,255,255,.5);cursor:pointer;font-family:inherit;font-size:14px;transition:all .2s">+ 添加格子</button>'
+      + '<button onclick="gmMonoAdd()" class="gmp-editor-add">+ 添加格子</button>'
       + '</div>';
 
     html += '</div>';
@@ -660,6 +658,8 @@
     } else {
       mpDice = Math.floor(Math.random() * 6) + 1;
       $('gmGameBody').innerHTML = renderMonopolyUI();
+      /* Auto-move fox after showing dice */
+      setTimeout(function() { if (!mpMoving && !mpEditing) gmMonoRoll(); }, 600);
     }
   };
 
