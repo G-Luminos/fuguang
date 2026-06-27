@@ -55,7 +55,7 @@
   max-width: 1000px;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 
+  box-shadow:
     0 25px 80px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -205,6 +205,7 @@
 .gift-card {
   position: relative;
   aspect-ratio: 3/4;
+  min-height: 280px;
   border-radius: 16px;
   cursor: pointer;
   transform-style: preserve-3d;
@@ -236,7 +237,7 @@
   height: 100%;
   border-radius: 16px;
   background: var(--card-bg);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -295,8 +296,12 @@
 }
 
 .gift-preview {
-  height: 80px;
+  height: 120px;
+  min-height: 120px;
+  max-height: 120px;
   overflow: hidden;
+  border-radius: 0 0 16px 16px;
+  flex-shrink: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.3);
   background: rgba(0, 0, 0, 0.05);
 }
@@ -305,6 +310,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
   transition: transform 0.3s ease;
   will-change: transform;
 }
@@ -317,8 +323,6 @@
 .gift-card.missing {
   opacity: 0.7;
 }
-
-
 
 /* 上传提示 */
 .gift-upload-hint {
@@ -462,11 +466,42 @@
   background: transparent;
 }
 
+/* 图片悬停提示 */
+.gift-image-zoom-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: #FFF;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.gift-image-item:hover .gift-image-zoom-hint {
+  opacity: 1;
+}
+
 /* 管理员操作区 */
 .gift-admin-actions {
   display: flex;
   gap: 10px;
   margin-top: 12px;
+}
+
+.gift-edit-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFF;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .gift-upload-btn {
@@ -477,14 +512,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-}
-
-.gift-edit-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFF;
-}
-
-.gift-upload-btn {
   background: #FB7299;
   color: #FFF;
 }
@@ -493,9 +520,6 @@
   background: #ff85a7;
   transform: translateY(-2px);
 }
-
-/* 拖拽排序 */
-
 
 /* 删除按钮 */
 .gift-delete-btn {
@@ -556,11 +580,7 @@
   box-shadow: 0 8px 20px rgba(251, 114, 153, 0.4);
 }
 
-/* ===== 灯箱查看器 ===== */
-  font-size: 14px;
-  margin-bottom: 24px;
-}
-
+/* ===== 2.0 特性预告 ===== */
 .gift-v2-features {
   display: flex;
   flex-direction: column;
@@ -589,33 +609,6 @@
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
-
-/* ===== 移动端适配 ===== */
-@media (max-width: 600px) {
-  .gift-modal {
-    border-radius: 20px 20px 0 0;
-    max-height: 95vh;
-  }
-  
-  .gift-timeline {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  
-  .gift-card {
-    aspect-ratio: 1/1.2;
-  }
-  
-  .gift-v2-card {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .gift-image-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 
 /* ===== 图片加载错误提示 ===== */
 .gift-img-error {
@@ -647,7 +640,7 @@
   font-size: 12px;
 }
 
-/* ===== ͼƬ������ʽ ===== */
+/* ===== 灯箱查看器 ===== */
 .image-lightbox {
   position: fixed;
   inset: 0;
@@ -790,65 +783,7 @@
   opacity: 0.8;
 }
 
-/* ͼƬ����ͣ��ʾ */
-.gift-image-item {
-  position: relative;
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.gift-image-zoom-hint {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  color: #FFF;
-  font-size: 14px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-}
-
-.gift-image-item:hover .gift-image-zoom-hint {
-  opacity: 1;
-}
-
-/* �ƶ������� */
-@media (max-width: 768px) {
-  .lightbox-nav {
-    width: 40px;
-    height: 60px;
-    font-size: 28px;
-  }
-  
-  .lightbox-prev {
-    left: 10px;
-  }
-  
-  .lightbox-next {
-    right: 10px;
-  }
-  
-  .lightbox-close {
-    top: 10px;
-    right: 10px;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-  }
-  
-  .lightbox-info {
-    bottom: 10px;
-    font-size: 12px;
-    padding: 8px 16px;
-  }
-}
-
 /* ===== 折叠面板和十二花语样式 ===== */
-
-/* 折叠面板样式 */
 .gift-section {
   margin-bottom: 20px;
   background: rgba(255, 255, 255, 0.03);
@@ -895,6 +830,15 @@
   max-height: 0;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+/* 1.0 星座立牌折叠样式 */
+.gift-v1-section {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.gift-v1-section .gift-section-header h4 {
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* 2.0 十二花语样式 */
@@ -1022,21 +966,7 @@
   display: inline-block;
 }
 
-/* 1.0 星座立牌折叠样式 */
-.gift-v1-section {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.gift-v1-section .gift-section-header h4 {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* 确保所有卡片尺寸一致 - 1.0星座卡片 */
-.gift-card {
-  aspect-ratio: 3/4;
-  min-height: 280px;
-}
-
+/* 确保所有卡片尺寸一致 */
 .gift-card .gift-card-inner {
   height: 100%;
   display: flex;
@@ -1054,32 +984,15 @@
 
 /* 特殊礼物月份图片高度保持一致 */
 .gift-card.special-month .gift-preview {
-  height: 100px;
-  min-height: 100px;
-  max-height: 100px;
+  height: 120px;
+  min-height: 120px;
+  max-height: 120px;
   flex-shrink: 0;
 }
 
 .gift-card.special-month .gift-preview img {
   height: 100%;
   object-fit: cover;
-}
-
-/* 确保所有卡片图片高度一致 */
-.gift-card .gift-preview {
-  height: 100px;
-  min-height: 100px;
-  max-height: 100px;
-  overflow: hidden;
-  border-radius: 0 0 16px 16px;
-  flex-shrink: 0;
-}
-
-.gift-card .gift-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 /* 2.0花语卡片 - 复用1.0结构 */
@@ -1110,45 +1023,6 @@
   color: #FB7299;
   font-weight: 600;
   border: 1px solid rgba(251, 114, 153, 0.3);
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .gift-flower-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 16px;
-  }
-  
-  .gift-flower-card {
-    padding: 14px 10px;
-  }
-  
-  .flower-icon {
-    font-size: 28px;
-  }
-  
-  .flower-name {
-    font-size: 14px;
-  }
-  
-  .gift-section-header {
-    padding: 14px 16px;
-  }
-  
-  .gift-section-header h4 {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .gift-flower-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .flower-desc {
-    display: none;
-  }
 }
 
 /* ===== 特殊礼物标记样式 ===== */
@@ -1200,292 +1074,20 @@
   box-shadow: 0 4px 12px rgba(251, 114, 153, 0.3);
 }
 
-/* �������￨Ƭ����Ч�� */
+/* 特殊礼物卡片高亮效果 */
 .gift-card:has(.gift-special-badge) {
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(251, 114, 153, 0.25),
     0 0 0 2px rgba(251, 114, 153, 0.3);
 }
 
 .gift-card:has(.gift-special-badge):hover {
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(251, 114, 153, 0.35),
     0 0 0 3px rgba(251, 114, 153, 0.4);
 }
 
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .gift-special-badge {
-    top: 4px;
-    right: 4px;
-    font-size: 9px;
-    padding: 2px 6px;
-    border-radius: 8px;
-  }
-  
-  .gift-special-gift {
-    font-size: 10px;
-    padding: 4px 6px;
-    color: #FFF;
-  }
-  
-  .gift-detail-special {
-    font-size: 13px;
-    padding: 6px 12px;
-  }
-}
-/* ===== 折叠面板样式 ===== */
-.gift-section {
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-.gift-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-  cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
-}
-
-.gift-section-header:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
-}
-
-.gift-section-header h4 {
-  font-size: 16px;
-  font-weight: 700;
-  color: #FFF;
-  margin: 0;
-}
-
-.toggle-icon {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  transition: transform 0.3s ease;
-}
-
-.gift-section-content {
-  max-height: 2000px;
-  overflow: hidden;
-  transition: max-height 0.4s ease, padding 0.3s ease;
-}
-
-.gift-section-content.collapsed {
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-/* ===== 2.0 十二花语样式 ===== */
-.gift-v2-section-main {
-  background: linear-gradient(145deg, rgba(251, 114, 153, 0.1), rgba(255, 150, 180, 0.05));
-  border-color: rgba(251, 114, 153, 0.2);
-}
-
-.gift-v2-section-main .gift-section-header {
-  background: linear-gradient(135deg, rgba(251, 114, 153, 0.2), rgba(251, 114, 153, 0.1));
-}
-
-.gift-v2-section-main .gift-section-header:hover {
-  background: linear-gradient(135deg, rgba(251, 114, 153, 0.25), rgba(251, 114, 153, 0.15));
-}
-
-.gift-flower-intro {
-  padding: 16px 20px;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.gift-flower-intro p {
-  margin: 0;
-  font-style: italic;
-}
-
-.gift-flower-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-  padding: 20px;
-}
-
-.gift-flower-card {
-  background: var(--flower-bg, linear-gradient(135deg, #F5E6F0, #E8C8E0));
-  border-radius: 16px;
-  padding: 16px 12px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  animation: flowerCardIn 0.5s ease backwards;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-@keyframes flowerCardIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.gift-flower-card:hover {
-  transform: translateY(-6px) scale(1.03);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-}
-
-.gift-flower-card::before {
-  content: '';
-  position: absolute;
-  top: -30px;
-  right: -30px;
-  width: 80px;
-  height: 80px;
-  background: var(--flower-color, #FFB6C1);
-  opacity: 0.15;
-  border-radius: 50%;
-  filter: blur(20px);
-}
-
-.flower-month {
-  font-size: 11px;
-  color: var(--flower-accent, #C080B0);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-
-.flower-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.flower-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--flower-accent, #8B4B6B);
-  margin-bottom: 4px;
-}
-
-.flower-meaning {
-  font-size: 11px;
-  color: rgba(139, 75, 107, 0.7);
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.flower-desc {
-  font-size: 11px;
-  color: rgba(139, 75, 107, 0.6);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.flower-coming-soon {
-  margin-top: 10px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 20px;
-  font-size: 10px;
-  color: var(--flower-accent, #8B4B6B);
-  font-weight: 600;
-  display: inline-block;
-}
-
-/* ===== 1.0 星座立牌折叠样式 ===== */
-.gift-v1-section {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.gift-v1-section .gift-section-header h4 {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* 特殊礼物月份图片高度保持一�?*/
-.gift-card.special-month .gift-preview {
-  height: 120px;
-  min-height: 120px;
-  max-height: 120px;
-}
-
-.gift-card.special-month .gift-preview img {
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 确保所有卡片图片高度一�?*/
-.gift-card .gift-preview {
-  height: 120px;
-  min-height: 120px;
-  max-height: 120px;
-  overflow: hidden;
-  border-radius: 0 0 16px 16px;
-}
-
-.gift-card .gift-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .gift-flower-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 16px;
-  }
-  
-  .gift-flower-card {
-    padding: 14px 10px;
-  }
-  
-  .flower-icon {
-    font-size: 28px;
-  }
-  
-  .flower-name {
-    font-size: 14px;
-  }
-  
-  .gift-section-header {
-    padding: 14px 16px;
-  }
-  
-  .gift-section-header h4 {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .gift-flower-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .flower-desc {
-    display: none;
-  }
-}
-
-
-/* ===== 移动端适配优化 ===== */
+/* ===== 移动端适配 ===== */
 @media (max-width: 768px) {
   .gift-modal-overlay { padding: 10px; }
   .gift-modal { border-radius: 16px; max-height: 95vh; }
@@ -1501,11 +1103,60 @@
   .gift-desc { font-size: 9px; -webkit-line-clamp: 2; }
   .gift-preview { height: 60px; }
   .gift-image-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* 灯箱 */
+  .lightbox-nav { width: 40px; height: 60px; font-size: 28px; }
+  .lightbox-prev { left: 10px; }
+  .lightbox-next { right: 10px; }
+  .lightbox-close { top: 10px; right: 10px; width: 40px; height: 40px; font-size: 20px; }
+  .lightbox-info { bottom: 10px; font-size: 12px; padding: 8px 16px; }
+
+  /* 折叠面板 */
+  .gift-flower-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px; }
+  .gift-flower-card { padding: 14px 10px; }
+  .flower-icon { font-size: 28px; }
+  .flower-name { font-size: 14px; }
+  .gift-section-header { padding: 14px 16px; }
+  .gift-section-header h4 { font-size: 15px; }
+
+  /* 特殊礼物 */
+  .gift-special-badge { top: 4px; right: 4px; font-size: 9px; padding: 2px 6px; border-radius: 8px; }
+  .gift-special-gift { font-size: 10px; padding: 4px 6px; }
+  .gift-detail-special { font-size: 13px; padding: 6px 12px; }
 }
+
+@media (max-width: 600px) {
+  .gift-modal {
+    border-radius: 20px 20px 0 0;
+    max-height: 95vh;
+  }
+
+  .gift-timeline {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .gift-card {
+    aspect-ratio: 1/1.2;
+  }
+
+  .gift-v2-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .gift-image-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 480px) {
   .gift-timeline { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .gift-card { min-height: 160px; }
   .gift-modal-overlay { padding: 0; }
   .gift-modal { border-radius: 0; max-height: 100vh; max-width: 100%; }
-}
 
+  /* 十二花语 */
+  .gift-flower-grid { grid-template-columns: repeat(2, 1fr); }
+  .flower-desc { display: none; }
+}

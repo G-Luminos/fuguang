@@ -988,6 +988,5 @@
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
-  /* Removed: gmMonoSet, gmMonoDel, gmMonoAdd, gmMonoSetEmoji — replaced by popup editor */
 
 })();

@@ -79,10 +79,6 @@ const FLOWER_COLORS = {
 let giftImages = {}; // { monthId: [{id, url, sort_order}, ...] }
 let currentMonthId = null;
 
-// 暴露到全局以便调试
-window.giftImages = giftImages;
-window.loadGiftImages = loadGiftImages;
-
 // Supabase Storage bucket 名称
 const GIFT_BUCKET = 'gifts';
 
@@ -162,20 +158,10 @@ async function loadGiftImages() {
       }
       giftImages[img.month_id].push(img);
     });
-    
-    // 同步到全局变量以便调试
-    window.giftImages = giftImages;
+
   } catch (err) {
     console.error('加载礼物图片出错:', err);
   }
-}
-
-/**
- * 创建 gift_images 表
- * 注意：需要在 Supabase SQL Editor 中手动执行 supabase-schema.sql 中的建表语句
- */
-async function createGiftImagesTable() {
-  // 需要在 Supabase SQL Editor 中手动执行 supabase-schema.sql 中的建表语句
 }
 
 /**
@@ -512,8 +498,6 @@ function navigateLightbox(direction) {
     counterEl.textContent = `${lightboxCurrentIndex + 1} / ${lightboxImages.length}`;
   }
 }
-
-
 
 /**
  * 打开上传对话框
