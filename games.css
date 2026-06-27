@@ -413,7 +413,7 @@
 .gdc-roll-btn:active { transform: scale(.97) }
 .gdc-roll-btn:disabled { opacity: .4; pointer-events: none }
 
-/* 骰子爆炸弹窗 */
+/* 骰子炸弹弹窗 */
 .gdc-bomb-popup {
   position: fixed; inset: 0;
   z-index: 320;
@@ -448,13 +448,63 @@
   cursor: pointer; font-family: inherit;
 }
 
+/* --- 骰子炸弹面选择器 --- */
+.gdc-bomb-select {
+  display: flex; gap: 6px; justify-content: center;
+  margin-top: 8px; flex-wrap: wrap;
+}
+.gdc-bomb-select .gdc-bomb-opt {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.5);
+  background: rgba(255,255,255,.1);
+  cursor: pointer; font-size: 13px; color: #FFF;
+  font-family: inherit; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; font-weight: 600;
+}
+.gdc-bomb-select .gdc-bomb-opt:hover {
+  background: rgba(255,255,255,.2); border-color: #FFF;
+}
+.gdc-bomb-select .gdc-bomb-opt.active {
+  background: #EF4444; border-color: #EF4444;
+  box-shadow: 0 0 12px rgba(239,68,68,.5);
+}
+
 /* ============================================
    游戏3: 狐狐大富翁
    ============================================ */
 .gmp-container {
   text-align: center; width: 100%;
   margin: auto;
+  position: relative; overflow: hidden;
 }
+/* 星空背景 */
+.gmp-container::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(1px 1px at 10% 8%, rgba(255,255,255,.8), transparent),
+    radial-gradient(1.5px 1.5px at 25% 15%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1px 1px at 40% 5%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1px 1px at 55% 22%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.5px 1.5px at 70% 10%, rgba(255,255,255,.8), transparent),
+    radial-gradient(1px 1px at 85% 18%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1px 1px at 15% 35%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.5px 1.5px at 60% 40%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1px 1px at 35% 52%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1px 1px at 80% 45%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1px 1px at 20% 68%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1.5px 1.5px at 50% 62%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1px 1px at 72% 72%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1px 1px at 8% 82%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.5px 1.5px at 42% 85%, rgba(251,114,153,.3), transparent),
+    radial-gradient(2px 2px at 68% 8%, rgba(251,114,153,.25), transparent),
+    radial-gradient(2px 2px at 32% 42%, rgba(167,139,250,.2), transparent),
+    radial-gradient(1.5px 1.5px at 88% 82%, rgba(251,114,153,.2), transparent);
+  pointer-events: none; z-index: 0;
+  opacity: .7;
+}
+.gmp-container > * { position: relative; z-index: 1 }
 
 /* 棋盘 */
 .gmp-board {
@@ -501,6 +551,9 @@
 .gmp-tile .gmp-player {
   position: absolute; font-size: 20px;
   animation: gmpPlayerBounce .6s ease infinite;
+}
+.gmp-tile .gmp-player.gmp-stepping {
+  transition: left .3s ease, top .3s ease, transform .3s ease;
 }
 @keyframes gmpPlayerBounce { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-2px,-4px)} }
 
@@ -558,6 +611,61 @@
   cursor: pointer; font-family: inherit;
 }
 
+/* 大富翁 Emoji 选择器 */
+.gmp-emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px; margin: 8px 0;
+}
+.gmp-emoji-picker .gmp-emoji-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  cursor: pointer; font-size: 18px;
+  font-family: inherit; transition: all .12s;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.gmp-emoji-picker .gmp-emoji-btn:hover {
+  background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3);
+  transform: scale(1.1);
+}
+.gmp-emoji-picker .gmp-emoji-btn.active {
+  border-color: #FB7299;
+  box-shadow: 0 0 10px rgba(251,114,153,.4);
+  background: rgba(251,114,153,.15);
+}
+
+/* 大富翁保存/加载面板 */
+.gmp-board-manager {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.gmp-board-manager input {
+  flex: 1; min-width: 120px; padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; background: rgba(255,255,255,.04);
+  color: #FFF; font-size: 13px; font-family: inherit; outline: none;
+}
+.gmp-board-manager input:focus { border-color: #FB7299 }
+.gmp-board-manager .gmp-mgr-btn {
+  padding: 8px 14px; border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+  color: #FFF;
+}
+.gmp-board-manager .gmp-mgr-save {
+  background: linear-gradient(135deg, #10B981, #34D399);
+}
+.gmp-board-manager .gmp-mgr-load {
+  background: linear-gradient(135deg, #3B82F6, #60A5FA);
+}
+.gmp-board-manager .gmp-mgr-delete {
+  background: linear-gradient(135deg, #EF4444, #F87171);
+}
+.gmp-board-manager .gmp-mgr-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
+.gmp-board-manager .gmp-mgr-btn:active { transform: scale(.96) }
+
 /* 编辑模式 */
 .gmp-edit-btn {
   padding: 8px 16px; border: 1px solid rgba(255,255,255,.2);
@@ -578,24 +686,24 @@
 }
 .gmp-editor-grid {
   display: grid; grid-template-columns: repeat(2,1fr);
-  gap: 6px; max-height: 200px; overflow-y: auto;
+  gap: 8px; max-height: 300px; overflow-y: auto;
 }
 .gmp-editor-item {
   display: flex; gap: 4px; align-items: center;
-  background: rgba(255,255,255,.04); border-radius: 8px; padding: 4px 8px;
+  background: rgba(255,255,255,.04); border-radius: 8px; padding: 8px;
 }
-.gmp-editor-item span { font-size: 10px; color: rgba(255,255,255,.4); width: 20px; text-align: center }
+.gmp-editor-item span { font-size: 13px; color: rgba(255,255,255,.4); width: 20px; text-align: center }
 .gmp-editor-item select {
-  width: 55px; padding: 4px; border-radius: 6px;
+  width: auto; min-width: 70px; padding: 8px; border-radius: 6px;
   border: 1px solid rgba(255,255,255,.1);
   background: rgba(255,255,255,.06); color: #FFF;
-  font-size: 10px; font-family: inherit; outline: none;
+  font-size: 14px; font-family: inherit; outline: none;
 }
 .gmp-editor-item input {
-  flex: 1; padding: 4px 6px; border-radius: 6px;
+  flex: 1; padding: 8px; border-radius: 6px;
   border: 1px solid rgba(255,255,255,.1);
   background: rgba(255,255,255,.06); color: #FFF;
-  font-size: 11px; font-family: inherit; outline: none; min-width: 0;
+  font-size: 13px; font-family: inherit; outline: none; min-width: 0;
 }
 .gmp-editor-item input:focus { border-color: #FB7299 }
 
@@ -626,10 +734,13 @@
   .gdc-face .gdc-dots { width: 60px; height: 60px; gap: 6px }
   .gdc-face .gdc-dot { width: 12px; height: 12px }
   .gdc-face .gdc-fox-face { font-size: 44px }
+  .gdc-bomb-select .gdc-bomb-opt { width: 28px; height: 28px; font-size: 11px }
   .gmp-board { grid-template-columns: repeat(5,1fr); gap: 3px }
   .gmp-tile { font-size: 9px }
   .gmp-tile .gmp-tile-emoji { font-size: 12px }
   .gmp-editor-grid { grid-template-columns: repeat(1,1fr) }
+  .gmp-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
+  .gmp-emoji-picker .gmp-emoji-btn { width: 32px; height: 32px; font-size: 16px }
 }
 
 @media(max-width:360px) {
@@ -646,4 +757,19 @@
   .gdc-face .gdc-dots { width: 50px; height: 50px; gap: 4px }
   .gdc-face .gdc-dot { width: 10px; height: 10px }
   .gdc-face .gdc-fox-face { font-size: 36px }
+  .gmp-emoji-picker { grid-template-columns: repeat(4, 1fr); gap: 3px }
+  .gmp-emoji-picker .gmp-emoji-btn { width: 28px; height: 28px; font-size: 14px }
+}
+
+/* ===== PC 桌面端优化 ===== */
+@media(min-width:768px) {
+  .gm-game-body { max-width: 600px; margin-left: auto; margin-right: auto }
+  .gmp-board {
+    max-width: 540px;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+  }
+  .gmp-tile { font-size: 14px; padding: 6px }
+  .gmp-tile .gmp-tile-emoji { font-size: 22px }
+  .gmp-tile .gmp-tile-label { font-size: 11px }
 }

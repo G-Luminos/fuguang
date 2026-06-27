@@ -74,9 +74,11 @@
      Game 1: 数字炸弹
      ================================================================ */
   var nbTarget = 0, nbMin = 1, nbMax = 50, nbGuessed = {};
+  var nbGameOver = false;
 
   window.gmLaunchBomb = function() {
     gmCurrentGame = 'bomb';
+    nbGameOver = false;
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);
@@ -103,6 +105,7 @@
     if (r < 10) r = 10; if (r > 200) r = 200;
     nbMax = r; nbMin = 1; nbGuessed = {};
     nbTarget = Math.floor(Math.random() * nbMax) + 1;
+    nbGameOver = false;
     renderBombPlay();
   };
 
@@ -110,13 +113,11 @@
     var body = $('gmGameBody');
     if (!body) return;
 
-    var pad = '';
-    /* Show 12 nearest guessable numbers */
-    var show = []; var range = nbMax - nbMin + 1;
+    var show = [];
+    var range = nbMax - nbMin + 1;
     if (range <= 12) {
       for (var i = nbMin; i <= nbMax; i++) show.push(i);
     } else {
-      /* Show min area + mid area + max area */
       var mid = Math.floor((nbMin + nbMax) / 2);
       var used = {};
       for (var i = nbMin; i <= Math.min(nbMax, nbMin + 3); i++) { show.push(i); used[i] = true; }
@@ -129,7 +130,6 @@
       var cls = nbGuessed[n] ? ' gnb-disabled' : '';
       padHtml += '<button class="gnb-num' + cls + '" onclick="gmBombGuess(' + n + ')">' + n + '</button>';
     }
-    /* Custom input */
     var histHtml = '';
     var keys = Object.keys(nbGuessed);
     if (keys.length > 0) {
@@ -161,6 +161,7 @@
   }
 
   window.gmBombGuess = function(n) {
+    if (nbGameOver) return;
     if (nbGuessed[n]) return;
     nbGuessed[n] = true;
     if (n === nbTarget) { showBombResult(true, n); return; }
@@ -171,6 +172,7 @@
   };
 
   window.gmBombCustomGuess = function() {
+    if (nbGameOver) return;
     var inp = $('nbCustom');
     if (!inp) return;
     var n = parseInt(inp.value);
@@ -184,6 +186,7 @@
     var el = $('gnbExplosion');
     if (!el) return;
     if (isBomb) {
+      nbGameOver = true;
       $('gnbBoomFox').textContent = '🦊💥';
       $('gnbBoomText').textContent = '光光爆炸喽！';
       $('gnbBoomSub').textContent = '炸弹数字是 ' + num;
@@ -216,7 +219,7 @@
      Game 2: 3D掷骰子
      ================================================================ */
   var dcRolling = false;
-  var dcBombFace = 3;  /* face 3 (value=4) is the bomb by default; user can change */
+  var dcBombFace = 6;
   /* Face rotation: value → [rotateX, rotateY] in degrees */
   var dcFaceRot = {
     1: [   0,   0],
@@ -237,15 +240,29 @@
   };
 
   function renderDiceUI() {
+    var bombBtnHtml = '';
+    for (var f = 1; f <= 6; f++) {
+      var isBomb = (f === dcBombFace);
+      bombBtnHtml += '<button onclick="gmDiceSetBomb(' + f + ')" style="'
+        + 'width:36px;height:36px;border-radius:50%;'
+        + 'border:2px solid ' + (isBomb ? '#EF4444' : 'rgba(255,255,255,.2)') + ';'
+        + 'background:' + (isBomb ? 'rgba(239,68,68,.25)' : 'rgba(255,255,255,.06)') + ';'
+        + 'color:' + (isBomb ? '#EF4444' : 'rgba(255,255,255,.6)') + ';'
+        + 'font-size:' + (isBomb ? '18px' : '14px') + ';font-weight:bold;cursor:pointer;'
+        + 'font-family:inherit;transition:all .2s;line-height:32px;text-align:center;padding:0;'
+        + 'margin:0 2px'
+        + '">' + (isBomb ? '💣' : f) + '</button>';
+    }
+
     return ''
     + '<div class="gdc-container">'
     + '  <span class="gdc-fox">🦊</span>'
     + '  <div class="gdc-scene">'
     + '    <div class="gdc-cube" id="dcCube">'
-    + '      ' + makeFace(1, 'front')  /* 狐狸脚印 */
+    + '      ' + makeFace(1, 'front')
     + '      ' + makeFace(2, 'right')
     + '      ' + makeFace(3, 'top')
-    + '      ' + makeFace(4, 'bottom')  /* 默认炸弹面 */
+    + '      ' + makeFace(4, 'bottom')
     + '      ' + makeFace(5, 'left')
     + '      ' + makeFace(6, 'back')
     + '    </div>'
@@ -257,8 +274,9 @@
     + '    🎲 掷骰子'
     + '  </button>'
     + '  <div class="gdc-settings">'
-    + '    <div class="gdc-mode-toggle">'
-    + '      <button class="gdc-mode-btn active" onclick="gmDiceSetBomb(' + dcBombFace + ',this)">💣炸弹面:' + dcBombFace + '</button>'
+    + '    <div class="gdc-mode-toggle" style="text-align:center">'
+    + '      <div style="margin-bottom:4px;font-size:12px;color:rgba(255,255,255,.5)">选择炸弹面：</div>'
+    + '      <div style="display:flex;justify-content:center;gap:2px">' + bombBtnHtml + '</div>'
     + '    </div>'
     + '    <div class="gdc-rewards show" id="dcRewards">'
     + '      <div class="gdc-reward-hint">每面奖励(1-6点，含炸弹面的兑奖结果)：</div>'
@@ -272,8 +290,7 @@
     var isBomb = (val === dcBombFace);
     var cls = 'gdc-face ' + pos + (isBomb ? ' gdc-bomb-face' : '');
     if (val === 1) {
-      /* Face 1: fox paw */
-      return '<div class="' + cls + '"><span class="gdc-fox-face">🦊</span></div>';
+      return '<div class="' + cls + '"><span class="gdc-fox-face">🦊</span>' + (isBomb ? '<span style="position:absolute;top:-4px;right:-4px;font-size:12px;">💣</span>' : '') + '</div>';
     }
     var dotMap = {
       2: ['a','c'],
@@ -287,34 +304,34 @@
     for (var j = 0; j < dots.length; j++) {
       dotsHtml += '<div class="gdc-dot" style="grid-area:' + dots[j] + '"></div>';
     }
-    /* 9-cell grid areas: a b c / d e f / g h i */
     return '<div class="' + cls + '">'
       + '<div class="gdc-dots" style="grid-template-areas:'
       + '\'a b c\' \'d e f\' \'g h i\'">'
       + dotsHtml
-      + '</div></div>';
+      + '</div>'
+      + (isBomb ? '<span style="position:absolute;top:-2px;right:-2px;font-size:10px;z-index:2;filter:drop-shadow(0 0 2px rgba(239,68,68,.6))">💣</span>' : '')
+      + '</div>';
   }
 
   function makeRewardInputs() {
     var defaults = [
       '🦊 狐狐jio印奖！', '好事成双～', '三生有幸！',
-      '💥 光光爆炸喽！', '五福临门！', '六六大顺！'
+      '四季平安！', '五福临门！', '💥 光光爆炸喽！'
     ];
     var html = '';
     for (var i = 1; i <= 6; i++) {
       var isBomb = (i === dcBombFace);
       html += '<div class="gdc-reward-item">'
         + '<span>' + i + (isBomb ? '💣' : '') + '</span>'
-        + '<input id="dcReward' + i + '" value="' + escA(defaults[i-1]) + '" placeholder="点数' + i + '奖励">'
+        + '<input id="dcReward' + i + '" value="' + escA(defaults[i-1]) + '" placeholder="点数' + i + '奖励" style="font-size:14px;color:#e0e0e0;background:rgba(255,255,255,.06)">'
         + '</div>';
     }
     return html;
   }
 
-  window.gmDiceSetBomb = function(face, btn) {
+  window.gmDiceSetBomb = function(face) {
     if (dcRolling) return;
     dcBombFace = face;
-    /* Re-render dice UI */
     var body = $('gmGameBody');
     if (body) body.innerHTML = renderDiceUI();
   };
@@ -325,7 +342,6 @@
     var btn = $('dcRollBtn');
     if (btn) btn.disabled = true;
 
-    /* Determine result */
     var result = Math.floor(Math.random() * 6) + 1;
     var rot = dcFaceRot[result];
     var extraX = (Math.floor(Math.random() * 2) + 3) * 360;
@@ -334,19 +350,16 @@
     var cube = $('dcCube');
     if (!cube) { dcRolling = false; return; }
 
-    /* Start animation */
     cube.classList.remove('rolling');
     cube.style.transform = 'rotateX(' + (Math.random()*360) + 'deg) rotateY(' + (Math.random()*360) + 'deg)';
     void cube.offsetWidth;
     cube.classList.add('rolling');
 
-    /* After animation */
     setTimeout(function() {
       cube.classList.remove('rolling');
       cube.style.transition = 'transform .5s cubic-bezier(.34,1.56,.64,1)';
       cube.style.transform = 'rotateX(' + (rot[0] + extraX) + 'deg) rotateY(' + (rot[1] + extraY) + 'deg)';
 
-      /* Show result */
       var rewardEl = $('dcReward' + result);
       var rewardText = rewardEl ? rewardEl.value : '';
       var isBomb = (result === dcBombFace);
@@ -358,7 +371,6 @@
         + '<div class="gdc-result-label">' + esc(rewardText || ('点数 ' + result)) + '</div>';
 
         if (isBomb) {
-          /* Show bomb popup */
           setTimeout(function() {
             showDiceBombPopup(result, rewardText);
           }, 400);
@@ -395,22 +407,42 @@
   /* ================================================================
      Game 3: 狐狐大富翁
      ================================================================ */
-  /* 默认棋盘（10格，可编辑） */
-  var mpTiles = [
-    { type:'start', emoji:'🏁', label:'起点' },
-    { type:'normal', emoji:'🌲', label:'森林小道' },
-    { type:'penalty', emoji:'😈', label:'狐狸陷阱\n后退2格' },
-    { type:'normal', emoji:'🌸', label:'樱花路' },
-    { type:'reward', emoji:'🍗', label:'幸运鸡腿\n前进2格' },
-    { type:'normal', emoji:'🌙', label:'月光台' },
-    { type:'bomb', emoji:'💣', label:'光光炸弹\n退回起点' },
-    { type:'normal', emoji:'⭐', label:'星星桥' },
-    { type:'reward', emoji:'🎁', label:'惊喜礼盒\n再掷一次' },
-    { type:'end', emoji:'🏆', label:'终点' },
-  ];
+  var mpTiles = cloneDefaultTiles();
   var mpPos = 0;
   var mpDice = 0;
   var mpEditing = false;
+  var mpMoving = false;
+  var mpCurrentBoardName = '__default__';
+
+  var mpPresetEmojis = ['🏁','🌲','🌸','🌙','⭐','🍗','🎁','💣','😈','❓','🎉','✨','🔥','💎','🎪','🎯','🌈','🦊','🐾','🍀','👑','💫','🧩','🎈'];
+
+  var SELECT_STYLE = 'font-size:14px;min-height:28px;padding:4px 8px;color:#e0e0e0;background:#2a2a3a;border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;font-family:inherit;max-width:100px;outline:none';
+  var INPUT_STYLE = 'font-size:14px;min-height:28px;padding:4px 8px;color:#e0e0e0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-family:inherit;outline:none';
+
+  function cloneDefaultTiles() {
+    return [
+      { type:'start', emoji:'🏁', label:'起点' },
+      { type:'normal', emoji:'🌲', label:'森林小道' },
+      { type:'penalty', emoji:'😈', label:'狐狸陷阱\n后退2格' },
+      { type:'normal', emoji:'🌸', label:'樱花路' },
+      { type:'reward', emoji:'🍗', label:'幸运鸡腿\n前进2格' },
+      { type:'normal', emoji:'🌙', label:'月光台' },
+      { type:'bomb', emoji:'💣', label:'光光炸弹\n退回起点' },
+      { type:'normal', emoji:'⭐', label:'星星桥' },
+      { type:'reward', emoji:'🎁', label:'惊喜礼盒\n再掷一次' },
+      { type:'end', emoji:'🏆', label:'终点' },
+    ];
+  }
+
+  function getMonoBoards() {
+    try { return JSON.parse(localStorage.getItem('gm_monopoly_boards') || '{}'); }
+    catch(e) { return {}; }
+  }
+
+  function saveMonoBoards(boards) {
+    try { localStorage.setItem('gm_monopoly_boards', JSON.stringify(boards)); }
+    catch(e) {}
+  }
 
   window.gmLaunchMonopoly = function() {
     gmCurrentGame = 'monopoly';
@@ -423,10 +455,12 @@
 
   function renderMonopolyUI() {
     var gridCols = Math.min(mpTiles.length, 6);
-    var html = '<div class="gmp-container">';
+    var html = ''
+    + '<div class="gmp-container" style="position:relative;overflow:hidden">'
+    + mpBgPattern();
 
     /* Board */
-    html += '<div class="gmp-board" style="grid-template-columns:repeat(' + gridCols + ',1fr)">';
+    html += '<div class="gmp-board" style="grid-template-columns:repeat(' + gridCols + ',1fr);position:relative;z-index:1">';
     for (var i = 0; i < mpTiles.length; i++) {
       var t = mpTiles[i];
       var cls = 'gmp-tile gmp-t-' + t.type;
@@ -440,30 +474,38 @@
     html += '</div>';
 
     /* Controls */
-    html += '<div class="gmp-controls">'
+    html += '<div class="gmp-controls" style="position:relative;z-index:1">'
       + '<div class="gmp-dice-display" id="mpDice">' + (mpDice > 0 ? mpDice : '?') + '</div>'
-      + '<button class="gmp-roll-btn" id="mpRollBtn" onclick="gmMonoRoll()">'
+      + '<button class="gmp-roll-btn" id="mpRollBtn" onclick="gmMonoRoll()"'
+      + (mpMoving ? ' disabled style="opacity:.5;pointer-events:none"' : '')
+      + '>'
       + (mpDice > 0 ? '🎲 走' + mpDice + '步' : '🎲 掷骰子')
       + '</button>'
       + '</div>'
-      + '<div class="gmp-pos">🦊 位置：第' + (mpPos + 1) + '格 ' + esc(mpTiles[mpPos].label).replace(/\n/g,' ') + '</div>';
+      + '<div class="gmp-pos" style="position:relative;z-index:1">🦊 位置：第' + (mpPos + 1) + '格 '
+      + esc(mpTiles[mpPos].label).replace(/\n/g,' ') + '</div>';
 
     /* Edit toggle */
-    html += '<div style="margin-top:12px;text-align:center">'
+    html += '<div style="margin-top:12px;text-align:center;position:relative;z-index:1">'
       + '<button class="gmp-edit-btn' + (mpEditing ? ' active' : '') + '" onclick="gmMonoToggleEdit()">'
       + (mpEditing ? '✓ 完成编辑' : '✏️ 编辑棋盘')
       + '</button></div>';
 
     /* Editor */
-    html += '<div class="gmp-editor' + (mpEditing ? ' show' : '') + '" id="mpEditor">'
-      + '<div class="gmp-editor-title">🦊 编辑棋盘格子</div>'
-      + '<div class="gmp-editor-grid">';
+    html += '<div class="gmp-editor' + (mpEditing ? ' show' : '') + '" id="mpEditor" style="position:relative;z-index:1">'
+      + '<div class="gmp-editor-title">🦊 编辑棋盘格子</div>';
+
+    /* Save/Load controls */
+    html += mpSaveLoadUI();
+
+    /* Editor grid */
+    html += '<div class="gmp-editor-grid">';
     for (var j = 0; j < mpTiles.length; j++) {
       var t = mpTiles[j];
       var canDelete = (j > 0 && j < mpTiles.length - 1);
       html += '<div class="gmp-editor-item">'
-        + '<span>' + (j + 1) + '</span>'
-        + '<select onchange="gmMonoSet(' + j + ',\'type\',this.value)" value="' + t.type + '">'
+        + '<span style="min-width:18px;font-size:14px">' + (j + 1) + '</span>'
+        + '<select onchange="gmMonoSet(' + j + ',\'type\',this.value)" style="' + SELECT_STYLE + '">'
         + '<option value="normal"' + (t.type==='normal'?' selected':'') + '>普通</option>'
         + '<option value="reward"' + (t.type==='reward'?' selected':'') + '>奖励</option>'
         + '<option value="penalty"' + (t.type==='penalty'?' selected':'') + '>惩罚</option>'
@@ -471,41 +513,177 @@
         + '<option value="start"' + (t.type==='start'?' selected':'') + '>起点</option>'
         + '<option value="end"' + (t.type==='end'?' selected':'') + '>终点</option>'
         + '</select>'
-        + '<input value="' + escA(t.emoji) + '" onchange="gmMonoSet(' + j + ',\'emoji\',this.value)" style="width:32px;text-align:center" maxlength="2">'
-        + '<input value="' + escA(t.label) + '" onchange="gmMonoSet(' + j + ',\'label\',this.value)" placeholder="名称/效果">'
-        + (canDelete ? '<button onclick="gmMonoDel(' + j + ')" style="background:none;border:none;color:#EF4444;cursor:pointer;font-size:16px">×</button>' : '')
+        + '<input value="' + escA(t.emoji) + '" onchange="gmMonoSet(' + j + ',\'emoji\',this.value)" style="width:40px;text-align:center;' + INPUT_STYLE + '" maxlength="4">'
+        + '<input value="' + escA(t.label) + '" onchange="gmMonoSet(' + j + ',\'label\',this.value)" placeholder="名称/效果" style="min-width:80px;flex:1;' + INPUT_STYLE + '">'
+        + (canDelete ? '<button onclick="gmMonoDel(' + j + ')" style="background:none;border:none;color:#EF4444;cursor:pointer;font-size:18px;padding:0 4px">×</button>' : '<span style="width:28px;display:inline-block"></span>')
         + '</div>';
+
+      /* Emoji picker row */
+      html += '<div style="display:flex;flex-wrap:wrap;gap:2px;margin:2px 0 4px 22px">';
+      for (var k = 0; k < mpPresetEmojis.length; k++) {
+        var e = mpPresetEmojis[k];
+        var isActive = (e === t.emoji);
+        html += '<button onclick="gmMonoSetEmoji(' + j + ',\'' + e + '\')" style="'
+          + 'font-size:15px;'
+          + 'background:' + (isActive ? 'rgba(239,184,86,.2)' : 'rgba(255,255,255,.04)') + ';'
+          + 'border:1px solid ' + (isActive ? 'rgba(239,184,86,.4)' : 'rgba(255,255,255,.08)') + ';'
+          + 'border-radius:4px;cursor:pointer;padding:1px 4px;'
+          + 'transition:all .15s'
+          + '">' + e + '</button>';
+      }
+      html += '</div>';
     }
     html += '</div>'
-      + '<button onclick="gmMonoAdd()" style="margin-top:8px;width:100%;padding:8px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;background:none;color:rgba(255,255,255,.5);cursor:pointer;font-family:inherit;font-size:12px">+ 添加格子</button>'
+      + '<button onclick="gmMonoAdd()" style="margin-top:8px;width:100%;padding:10px;border:1px dashed rgba(255,255,255,.2);border-radius:8px;background:none;color:rgba(255,255,255,.5);cursor:pointer;font-family:inherit;font-size:14px;transition:all .2s">+ 添加格子</button>'
       + '</div>';
 
     html += '</div>';
     return html;
   }
 
-  window.gmMonoRoll = function() {
-    if (mpDice > 0) {
-      /* Move */
-      var oldPos = mpPos;
-      mpPos += mpDice;
-      if (mpPos >= mpTiles.length - 1) mpPos = mpTiles.length - 1;
-      mpDice = 0;
-      $('gmGameBody').innerHTML = renderMonopolyUI();
-      /* Apply landing effect */
-      setTimeout(function() { applyMonoEffect(oldPos, mpPos); }, 300);
+  function mpBgPattern() {
+    var stars = [
+      '✨','⭐','🌟','🦊','💫','🌙','❄','💎','🎀'
+    ];
+    var items = '';
+    for (var s = 0; s < 16; s++) {
+      var icon = stars[s % stars.length];
+      var top = (s * 37 + 11) % 100;
+      var left = (s * 53 + 7) % 100;
+      var size = 12 + (s % 3) * 4;
+      var op = 0.06 + (s % 5) * 0.03;
+      var rot = (s * 27) % 360;
+      items += '<span style="position:absolute;top:' + top + '%;left:' + left
+        + '%;font-size:' + size + 'px;opacity:' + op
+        + ';transform:rotate(' + rot + 'deg);pointer-events:none">' + icon + '</span>';
+    }
+    return '<div style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden">' + items + '</div>'
+      + '<div style="position:absolute;inset:0;pointer-events:none;z-index:0;background:'
+      + 'radial-gradient(ellipse at 20% 80%, rgba(255,154,86,.06) 0%, transparent 50%),'
+      + 'radial-gradient(ellipse at 80% 20%, rgba(255,192,203,.05) 0%, transparent 50%),'
+      + 'radial-gradient(ellipse at 60% 60%, rgba(173,216,230,.04) 0%, transparent 50%)'
+      + '"></div>';
+  }
+
+  function mpSaveLoadUI() {
+    var boards = getMonoBoards();
+    var boardNames = Object.keys(boards);
+    var html = ''
+    + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap">'
+    + '  <span style="font-size:13px;color:rgba(255,255,255,.5)">棋盘：</span>'
+    + '  <select id="mpBoardSelect" onchange="gmMonoLoadBoard(this.value)" style="' + SELECT_STYLE + '">'
+    + '    <option value="">加载棋盘</option>'
+    + '    <option value="__default__"' + (mpCurrentBoardName === '__default__' ? ' selected' : '') + '>🦊 默认棋盘</option>';
+    for (var b = 0; b < boardNames.length; b++) {
+      html += '<option value="' + escA(boardNames[b]) + '"' + (mpCurrentBoardName === boardNames[b] ? ' selected' : '') + '>' + esc(boardNames[b]) + '</option>';
+    }
+    html += '  </select>'
+    + '  <input id="mpBoardSaveName" placeholder="名称" style="width:90px;' + INPUT_STYLE + '">'
+    + '  <button onclick="gmMonoSaveBoard()" style="font-size:14px;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.7);cursor:pointer;font-family:inherit;min-height:28px">💾 保存</button>'
+    + '  <button onclick="gmMonoDeleteBoard()" style="font-size:14px;padding:4px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;font-family:inherit;min-height:28px">🗑 删除</button>'
+    + '</div>';
+    return html;
+  }
+
+  /* Trigger emoji set when clicking preset */
+  window.gmMonoSetEmoji = function(idx, emoji) {
+    if (!mpEditing) return;
+    mpTiles[idx].emoji = emoji;
+    $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  /* Save current board */
+  window.gmMonoSaveBoard = function() {
+    var nameInput = $('mpBoardSaveName');
+    var name = nameInput ? nameInput.value.trim() : '';
+    if (!name) { name = '棋盘' + (Object.keys(getMonoBoards()).length + 1); }
+    if (name === '__default__') { name = name + '_copy'; }
+    var boards = getMonoBoards();
+    boards[name] = JSON.parse(JSON.stringify(mpTiles));
+    saveMonoBoards(boards);
+    mpCurrentBoardName = name;
+    if (nameInput) nameInput.value = '';
+    $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  /* Load board from dropdown */
+  window.gmMonoLoadBoard = function(name) {
+    if (!name) return;
+    if (mpMoving) return;
+    if (name === '__default__') {
+      mpTiles = cloneDefaultTiles();
     } else {
-      /* Roll */
+      var boards = getMonoBoards();
+      if (boards[name]) {
+        mpTiles = JSON.parse(JSON.stringify(boards[name]));
+      } else return;
+    }
+    mpPos = 0;
+    mpDice = 0;
+    mpCurrentBoardName = name;
+    $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  /* Delete selected board */
+  window.gmMonoDeleteBoard = function() {
+    var sel = $('mpBoardSelect');
+    if (!sel) return;
+    var name = sel.value;
+    if (!name || name === '__default__') return;
+    var boards = getMonoBoards();
+    if (!boards[name]) return;
+    delete boards[name];
+    saveMonoBoards(boards);
+    mpCurrentBoardName = '__default__';
+    $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  window.gmMonoRoll = function() {
+    if (mpMoving) return;
+    if (mpDice > 0) {
+      mpMoving = true;
+      var steps = mpDice;
+      mpDice = 0;
+      var targetPos = Math.min(mpTiles.length - 1, mpPos + steps);
+      animateFoxMove(targetPos);
+    } else {
       mpDice = Math.floor(Math.random() * 6) + 1;
       $('gmGameBody').innerHTML = renderMonopolyUI();
     }
   };
 
+  function animateFoxMove(targetPos) {
+    var startPos = mpPos;
+    var step = 0;
+    var totalSteps = targetPos - startPos;
+
+    if (totalSteps <= 0) {
+      mpMoving = false;
+      $('gmGameBody').innerHTML = renderMonopolyUI();
+      setTimeout(function() { applyMonoEffect(startPos, targetPos); }, 300);
+      return;
+    }
+
+    function doStep() {
+      step++;
+      mpPos = startPos + step;
+      $('gmGameBody').innerHTML = renderMonopolyUI();
+      if (step < totalSteps) {
+        setTimeout(doStep, 200);
+      } else {
+        mpMoving = false;
+        $('gmGameBody').innerHTML = renderMonopolyUI();
+        setTimeout(function() { applyMonoEffect(startPos, targetPos); }, 400);
+      }
+    }
+    doStep();
+  }
+
   function applyMonoEffect(from, to) {
     var t = mpTiles[to];
     if (t.type === 'penalty') {
       showMonoPopup('😿', '掉进陷阱了！', t.label.replace(/\n/g,' · '), function() {
-        if (t.label.indexOf('后退2格') >= 0 || t.label.indexOf('后退') >= 0) {
+        if (t.label.indexOf('后退') >= 0) {
           mpPos = Math.max(0, to - 2);
           $('gmGameBody').innerHTML = renderMonopolyUI();
         } else if (t.label.indexOf('停一轮') >= 0) {
@@ -527,7 +705,7 @@
       });
     } else if (t.type === 'reward') {
       showMonoPopup('🎉', '运气真好！', t.label.replace(/\n/g,' · '), function() {
-        if (t.label.indexOf('前进2格') >= 0 || t.label.indexOf('前进') >= 0) {
+        if (t.label.indexOf('前进') >= 0) {
           mpPos = Math.min(mpTiles.length - 1, to + 2);
         } else if (t.label.indexOf('再掷一次') >= 0 || t.label.indexOf('再掷') >= 0) {
           mpDice = 0;
@@ -560,6 +738,7 @@
 
   window.gmMonoClick = function(i) {
     if (mpEditing) return;
+    if (mpMoving) return;
     var t = mpTiles[i];
     if (i === mpPos && t.type !== 'start' && t.type !== 'end') return;
     showMonoPopup(t.emoji, t.label.replace(/\n/g,' · '), '第' + (i+1) + '格 · ' + (t.type==='reward'?'奖励':t.type==='penalty'?'惩罚':t.type==='bomb'?'💣炸弹':t.type==='start'?'起点':t.type==='end'?'终点':'普通'));
