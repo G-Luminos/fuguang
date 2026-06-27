@@ -640,11 +640,9 @@
   border-radius: inherit;
   z-index: 3;
 }
-.gmp-tile.editing:hover .gmp-tile-edit-overlay {
-  opacity: 1;
-  pointer-events: auto;
-}
+.gmp-tile.editing:hover .gmp-tile-edit-overlay,
 .gmp-tile.editing .gmp-tile-edit-overlay {
+  opacity: 1;
   pointer-events: auto;
 }
 
@@ -695,9 +693,6 @@
   background: rgba(255,255,255,.03);
   color: rgba(255,255,255,.4);
   font-family: inherit;
-  min-height: 0;
-  min-width: 0;
-  box-sizing: border-box;
 }
 .gmp-insert-btn:hover {
   border-color: #10B981;
@@ -917,7 +912,6 @@
 .gmp-ep-del-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
 .gmp-ep-del-btn:active { transform: scale(.96) }
 
-
 /* ============================================
    Board Saving Overlay
    ============================================ */
@@ -952,7 +946,7 @@
 }
 @keyframes gmSpin { to { transform: rotate(360deg) } }
 
-/* ===== 大富翁 Emoji 选择器 (for legacy use in any other context) ===== */
+/* ===== 大富翁 Emoji 选择器 ===== */
 .gmp-emoji-picker {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1011,17 +1005,15 @@
   .gmp-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
   .gmp-emoji-picker .gmp-emoji-btn { width: 32px; height: 32px; font-size: 16px }
   .gmp-ep-card { width: 94%; max-width: 320px; max-height: 85vh }
-.gmp-ep-header { padding: 10px 14px }
-.gmp-ep-header span { font-size: 14px }
-.gmp-ep-body { padding: 10px 14px; gap: 10px }
-.gmp-ep-field label { font-size: 12px }
-.gmp-ep-field select, .gmp-ep-field input { font-size: 14px; padding: 7px 8px; min-height: 34px }
-.gmp-ep-footer { padding: 8px 14px; gap: 6px }
-.gmp-ep-save, .gmp-ep-delete, .gmp-ep-cancel { font-size: 13px; padding: 8px 14px }
+  .gmp-ep-header { padding: 10px 14px }
+  .gmp-ep-header span { font-size: 14px }
+  .gmp-ep-body { padding: 10px 14px; gap: 10px }
+  .gmp-ep-field label { font-size: 12px }
+  .gmp-ep-field select, .gmp-ep-field input { font-size: 14px; padding: 7px 8px; min-height: 34px }
+  .gmp-ep-footer { padding: 8px 14px; gap: 6px }
+  .gmp-ep-save, .gmp-ep-delete, .gmp-ep-cancel { font-size: 13px; padding: 8px 14px }
   .gmp-ep-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
   .gmp-ep-emoji-btn { font-size: 18px }
-  .gmp-ep-field select,
-  .gmp-ep-field input { font-size: 14px; padding: 8px 10px }
   .gmp-board-manager { flex-direction: column; align-items: stretch }
   .gmp-board-manager select { min-width: auto }
   .gmp-ep-save-btn, .gmp-ep-del-btn { font-size: 12px }
@@ -1052,12 +1044,12 @@
 /* ===== PC 桌面端优化 ===== */
 @media(min-width:768px) {
   .gm-modal { max-width: 640px }
-  .gm-game-body { max-width: 750px; margin-left: auto; margin-right: auto }
+  .gm-game-body { max-width: 750px; margin: 0 auto }
   .gm-game-card { padding: 20px }
   .gm-game-icon { width: 64px; height: 64px; font-size: 36px; border-radius: 18px }
   .gm-game-name { font-size: 18px }
   .gm-game-desc { font-size: 14px }
-  
+
   /* 棋盘格子变大 */
   .gmp-board { max-width: 680px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; aspect-ratio: auto }
   .gmp-tile { font-size: 15px; padding: 8px; border-radius: 12px; aspect-ratio: auto; min-height: 100px }
@@ -1068,15 +1060,15 @@
   .gmp-controls { gap: 12px }
   .gmp-dice-display { width: 64px; height: 64px; font-size: 32px; border-radius: 16px }
   .gmp-roll-btn { font-size: 16px; padding: 14px 28px }
-  
+
   /* PC端显示编辑按钮 */
   .gmp-edit-toggle { display: block }
   .gmp-edit-btn { font-size: 14px; padding: 10px 20px }
-  
+
   /* Edit overlay PC sizing */
   .gmp-edit-icon, .gmp-del-icon { width: 40px; height: 40px; font-size: 20px }
   .gmp-insert-btn { font-size: 22px; border-radius: 10px }
-  
+
   /* Edit popup PC */
   .gmp-ep-card { max-width: 480px }
   .gmp-ep-header span { font-size: 18px }
@@ -1086,12 +1078,12 @@
   .gmp-ep-emoji-picker { grid-template-columns: repeat(6, 1fr); gap: 8px }
   .gmp-ep-emoji-btn { font-size: 24px; border-radius: 12px }
   .gmp-ep-save, .gmp-ep-delete { font-size: 16px; padding: 12px 20px }
-  
+
   /* Board manager PC */
   .gmp-board-manager { padding: 14px 16px; gap: 10px }
   .gmp-board-manager select { font-size: 14px; min-height: 40px; padding: 10px 12px }
   .gmp-ep-save-btn, .gmp-ep-del-btn { font-size: 14px; padding: 10px 18px }
-  
+
   /* 数字炸弹 */
   .gnb-numpad { max-width: 420px; gap: 10px }
   .gnb-num { padding: 20px; font-size: 22px; border-radius: 14px }
