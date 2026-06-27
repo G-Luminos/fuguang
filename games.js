@@ -562,17 +562,23 @@
   function mpSaveLoadUI() {
     var boards = getMonoBoards();
     var boardNames = Object.keys(boards);
+    var isAdmin = (typeof window.role !== 'undefined' && window.role === 'admin');
     var html = ''
     + '<div class="gmp-board-manager">'
     + '  <select id="mpBoardSelect" onchange="gmMonoLoadBoard(this.value)" style="flex:1;min-width:140px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:#2a2a3a;color:#e0e0e0;font-size:13px;font-family:inherit;cursor:pointer;outline:none;min-height:36px">'
     + '    <option value="__default__"' + (mpCurrentBoardName === '__default__' ? ' selected' : '') + '>🦊 默认棋盘</option>';
     for (var b = 0; b < boardNames.length; b++) {
-      html += '<option value="' + escA(boardNames[b]) + '"' + (mpCurrentBoardName === boardNames[b] ? ' selected' : '') + '>' + esc(boardNames[b]) + '</option>';
+      var bn = boardNames[b];
+      var bt = boards[bn];
+      var author = bt && bt._author ? ' — ' + bt._author : '';
+      html += '<option value="' + escA(bn) + '"' + (mpCurrentBoardName === bn ? ' selected' : '') + '>' + esc(bn) + author + '</option>';
     }
     html += '  </select>'
-      + '  <button class="gmp-ep-save-btn" onclick="gmMonoSaveBoard()">💾 保存棋盘</button>'
-      + '  <button class="gmp-ep-del-btn" onclick="gmMonoDeleteBoard()">🗑 删除棋盘</button>'
-      + '</div>';
+      + '  <button class="gmp-ep-save-btn" onclick="gmMonoSaveBoard()">💾 保存棋盘</button>';
+    if (isAdmin) {
+      html += '  <button class="gmp-ep-del-btn" onclick="gmMonoDeleteBoard()">🗑 删除棋盘</button>';
+    }
+    html += '</div>';
     return html;
   }
 
@@ -714,24 +720,48 @@
      Save / Load / Delete Board
      ================================================================ */
 
-  /* Save current board */
+  /* Save current board — opens styled popup instead of ugly prompt */
   window.gmMonoSaveBoard = function() {
-    if (mpCurrentBoardName === '__default__') {
-      /* Need a name — prompt via inline input */
-      var name = prompt('请输入棋盘名称：', '我的棋盘');
-      if (!name || !name.trim()) return;
-      name = name.trim();
-      if (name === '__default__') name = name + '_copy';
-      var boards = getMonoBoards();
-      boards[name] = JSON.parse(JSON.stringify(mpTiles));
-      saveMonoBoards(boards);
-      mpCurrentBoardName = name;
-    } else {
+    if (mpCurrentBoardName !== '__default__') {
+      /* Already named — save directly */
       var boards2 = getMonoBoards();
+      var existing = boards2[mpCurrentBoardName];
+      var author = existing ? existing._author : '';
       boards2[mpCurrentBoardName] = JSON.parse(JSON.stringify(mpTiles));
+      boards2[mpCurrentBoardName]._author = author;
       saveMonoBoards(boards2);
+      $('gmGameBody').innerHTML = renderMonopolyUI();
+    } else {
+      /* Show styled save popup */
+      var popup = $('gmpSavePopup');
+      if (!popup) return;
+      $('gmpSaveName').value = '';
+      $('gmpSaveAuthor').value = '';
+      popup.classList.add('show');
+      setTimeout(function() { $('gmpSaveName').focus(); }, 200);
     }
+  };
+
+  /* Confirm save from popup */
+  window.gmMonoConfirmSaveBoard = function() {
+    var name = ($('gmpSaveName').value || '').trim();
+    if (!name) { $('gmpSaveName').style.borderColor = '#EF4444'; return; }
+    if (name === '__default__') name = name + '_copy';
+    var author = ($('gmpSaveAuthor').value || '').trim();
+    var boards = getMonoBoards();
+    boards[name] = JSON.parse(JSON.stringify(mpTiles));
+    if (author) boards[name]._author = author;
+    saveMonoBoards(boards);
+    mpCurrentBoardName = name;
+    gmMonoCloseSavePopup();
     $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  /* Close save popup */
+  window.gmMonoCloseSavePopup = function() {
+    var popup = $('gmpSavePopup');
+    if (popup) popup.classList.remove('show');
+    $('gmpSaveName').style.borderColor = '';
   };
 
   /* Load board from dropdown */
@@ -753,8 +783,10 @@
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
-  /* Delete selected board */
+  /* Delete selected board — admin only */
   window.gmMonoDeleteBoard = function() {
+    var isAdmin = (typeof window.role !== 'undefined' && window.role === 'admin');
+    if (!isAdmin) return;
     var sel = $('mpBoardSelect');
     if (!sel) return;
     var name = sel.value;

@@ -304,6 +304,7 @@
 </div>
 
 <!-- 大富翁编辑弹窗 -->
+<!-- 编辑格子弹窗 -->
 <div class="gmp-edit-popup" id="gmpEditPopup" onclick="if(event.target===this)gmMonoCloseEditPopup()">
   <div class="gmp-ep-card">
     <div class="gmp-ep-header">
@@ -314,12 +315,12 @@
       <div class="gmp-ep-field">
         <label>类型</label>
         <select id="gmpEditType">
-          <option value="normal">普通</option>
-          <option value="reward">奖励</option>
-          <option value="penalty">惩罚</option>
-          <option value="bomb">💣炸弹</option>
-          <option value="start">起点</option>
-          <option value="end">终点</option>
+          <option value="normal">🌟 普通</option>
+          <option value="reward">🎁 奖励</option>
+          <option value="penalty">😈 惩罚</option>
+          <option value="bomb">💣 炸弹</option>
+          <option value="start">🏁 起点</option>
+          <option value="end">🏆 终点</option>
         </select>
       </div>
       <div class="gmp-ep-field">
@@ -335,6 +336,30 @@
     <div class="gmp-ep-footer">
       <button id="gmpEditDelete" class="gmp-ep-delete" onclick="gmMonoPopupDelete()">🗑 删除</button>
       <button id="gmpEditSave" class="gmp-ep-save" onclick="gmMonoSaveTile()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 保存棋盘弹窗 -->
+<div class="gmp-edit-popup" id="gmpSavePopup" onclick="if(event.target===this)gmMonoCloseSavePopup()">
+  <div class="gmp-ep-card">
+    <div class="gmp-ep-header">
+      <span>💾 保存棋盘</span>
+      <button class="gmp-ep-close" onclick="gmMonoCloseSavePopup()">✕</button>
+    </div>
+    <div class="gmp-ep-body">
+      <div class="gmp-ep-field">
+        <label>棋盘名称 <span style="color:#EF4444">*</span></label>
+        <input id="gmpSaveName" type="text" placeholder="给棋盘起个名字吧~" maxlength="20">
+      </div>
+      <div class="gmp-ep-field">
+        <label>署名（可选）</label>
+        <input id="gmpSaveAuthor" type="text" placeholder="你的名字/昵称" maxlength="12">
+      </div>
+    </div>
+    <div class="gmp-ep-footer">
+      <button class="gmp-ep-cancel" onclick="gmMonoCloseSavePopup()">取消</button>
+      <button class="gmp-ep-save" onclick="gmMonoConfirmSaveBoard()">💾 保存到本地</button>
     </div>
   </div>
 </div>

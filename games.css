@@ -759,7 +759,7 @@
 }
 .gmp-ep-field select,
 .gmp-ep-field input {
-  padding: 10px 12px;
+  width: 100%; padding: 10px 12px;
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 10px;
   background: rgba(255,255,255,.05);
@@ -767,6 +767,11 @@
   font-size: 15px;
   font-family: inherit;
   outline: none;
+  min-height: 42px; box-sizing: border-box;
+}
+/* Fix select option dropdown text color */
+.gmp-ep-field select option {
+  background: #1e1e2e; color: #e0e0e0; padding: 8px;
 }
 .gmp-ep-field select:focus,
 .gmp-ep-field input:focus {
@@ -836,6 +841,19 @@
 }
 .gmp-ep-save:hover { filter: brightness(1.1); transform: translateY(-1px) }
 .gmp-ep-save:active { transform: scale(.97) }
+
+/* Cancel button (save popup) */
+.gmp-ep-cancel {
+  flex: 0 0 auto; padding: 10px 18px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.55);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.gmp-ep-cancel:hover { background: rgba(255,255,255,.08); color: rgba(255,255,255,.8) }
 
 /* ============================================
    Board Manager (save/load toolbar)
