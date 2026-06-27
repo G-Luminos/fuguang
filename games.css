@@ -914,15 +914,40 @@
 .gmp-ep-del-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
 .gmp-ep-del-btn:active { transform: scale(.96) }
 
-.gmp-sync-status {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; color: rgba(255,255,255,.45);
-  white-space: nowrap; margin-left: auto;
-  transition: all .2s;
-}
-.gmp-sync-status.syncing { color: #FB7299; animation: gmPulse 1.2s ease-in-out infinite }
 
-@keyframes gmPulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+/* ============================================
+   Board Saving Overlay
+   ============================================ */
+.gmp-saving-overlay {
+  position: fixed; inset: 0;
+  z-index: 1100;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+}
+.gmp-saving-overlay.show { display: flex }
+.gmp-saving-box {
+  background: linear-gradient(180deg, #1e1e3a 0%, #16213e 100%);
+  border-radius: 20px;
+  padding: 32px 40px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 12px 40px rgba(0,0,0,.4);
+}
+.gmp-saving-box p {
+  font-size: 15px; color: rgba(255,255,255,.8); margin: 16px 0 0;
+}
+.gmp-saving-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,.1);
+  border-top-color: #FB7299;
+  border-radius: 50%;
+  animation: gmSpin .8s linear infinite;
+  margin: 0 auto;
+}
+@keyframes gmSpin { to { transform: rotate(360deg) } }
 
 /* ===== 大富翁 Emoji 选择器 (for legacy use in any other context) ===== */
 .gmp-emoji-picker {
@@ -982,7 +1007,14 @@
   .gmp-tile .gmp-tile-emoji { font-size: 12px }
   .gmp-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
   .gmp-emoji-picker .gmp-emoji-btn { width: 32px; height: 32px; font-size: 16px }
-  .gmp-ep-card { width: 95%; max-width: 360px; max-height: 90vh }
+  .gmp-ep-card { width: 94%; max-width: 320px; max-height: 85vh }
+.gmp-ep-header { padding: 10px 14px }
+.gmp-ep-header span { font-size: 14px }
+.gmp-ep-body { padding: 10px 14px; gap: 10px }
+.gmp-ep-field label { font-size: 12px }
+.gmp-ep-field select, .gmp-ep-field input { font-size: 14px; padding: 7px 8px; min-height: 34px }
+.gmp-ep-footer { padding: 8px 14px; gap: 6px }
+.gmp-ep-save, .gmp-ep-delete, .gmp-ep-cancel { font-size: 13px; padding: 8px 14px }
   .gmp-ep-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
   .gmp-ep-emoji-btn { font-size: 18px }
   .gmp-ep-field select,

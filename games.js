@@ -765,9 +765,21 @@
      ================================================================ */
 
   /* Save current board — opens styled popup instead of ugly prompt */
+  /* Save board loading overlay */
+  function showMpSaving(msg) {
+    var el = $('mpSavingOverlay');
+    if (!el) return;
+    $('mpSavingText').textContent = msg || '⏳ 小光正在努力...';
+    el.classList.add('show');
+  }
+  function hideMpSaving() {
+    var el = $('mpSavingOverlay');
+    if (el) el.classList.remove('show');
+  }
+
   window.gmMonoSaveBoard = async function() {
     if (mpCurrentBoardName !== '__default__') {
-      /* Already named — save directly */
+      showMpSaving('⏳ 正在保存棋盘...');
       var boards2 = mpCachedBoards;
       var existing = boards2[mpCurrentBoardName];
       var author = existing ? existing._author : '';
@@ -776,9 +788,9 @@
       setSyncStatus('🔄 同步中...', 'syncing');
       await saveMonoBoards(boards2);
       await mpRefreshBoards();
+      hideMpSaving();
       $('gmGameBody').innerHTML = renderMonopolyUI();
     } else {
-      /* Show styled save popup */
       var popup = $('gmpSavePopup');
       if (!popup) return;
       $('gmpSaveName').value = '';
@@ -788,24 +800,25 @@
     }
   };
 
-  /* Confirm save from popup */
   window.gmMonoConfirmSaveBoard = async function() {
     var name = ($('gmpSaveName').value || '').trim();
     if (!name) { $('gmpSaveName').style.borderColor = '#EF4444'; return; }
     if (name === '__default__') name = name + '_copy';
     var author = ($('gmpSaveAuthor').value || '').trim();
+    gmMonoCloseSavePopup();
+    showMpSaving('⏳ 正在保存棋盘到云端...');
     var boards = mpCachedBoards;
     boards[name] = JSON.parse(JSON.stringify(mpTiles));
     if (author) boards[name]._author = author;
     setSyncStatus('🔄 同步中...', 'syncing');
     await saveMonoBoards(boards);
     mpCurrentBoardName = name;
-    gmMonoCloseSavePopup();
     await mpRefreshBoards();
+    setSyncStatus('☁️ 已同步');
+    hideMpSaving();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
-  /* Close save popup */
   window.gmMonoCloseSavePopup = function() {
     var popup = $('gmpSavePopup');
     if (popup) popup.classList.remove('show');
@@ -842,11 +855,14 @@
     var boards = mpCachedBoards;
     if (!boards[name]) return;
     if (!confirm('确定要删除棋盘「' + name + '」吗？此操作不可撤销。')) return;
+    showMpSaving('🗑 正在删除棋盘...');
     setSyncStatus('🔄 同步中...', 'syncing');
     delete boards[name];
     await deleteMonoBoard(name);
     mpCurrentBoardName = '__default__';
     await mpRefreshBoards();
+    setSyncStatus('☁️ 已同步');
+    hideMpSaving();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
