@@ -869,7 +869,7 @@
       mpDice = Math.floor(Math.random() * 6) + 1;
       $('gmGameBody').innerHTML = renderMonopolyUI();
       /* Auto-move fox after showing dice */
-      setTimeout(function() { if (!mpMoving && !mpEditing) gmMonoRoll(); }, 600);
+      setTimeout(function() { if (!mpMoving && !mpEditing) window.gmMonoRoll(); }, 300);
     }
   };
 
