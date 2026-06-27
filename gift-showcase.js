@@ -1,3 +1,5 @@
+(function() {
+'use strict';
 /**
  * 往期舰礼展示模块 v2
  * 使用 Supabase Storage 存储图片
@@ -772,3 +774,5 @@ window.closeMonthDetail = closeMonthDetail;
 window.openUploadDialog = openUploadDialog;
 window.deleteImage = deleteImage;
 window.toggleSection = toggleSection;
+
+})();

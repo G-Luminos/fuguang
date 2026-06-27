@@ -83,8 +83,8 @@ function initSB() {
    Database Operations
    ================================================================ */
 async function dbGetRecords(month) {
-  if (!sb) return [];
-  const { data, error } = await sb
+  if (!window.sb) return [];
+  const { data, error } = await window.sb
     .from('records')
     .select('*')
     .eq('month', month)
@@ -94,8 +94,8 @@ async function dbGetRecords(month) {
 }
 
 async function dbInsertRecord(rec) {
-  if (!sb) return null;
-  const { data, error } = await sb
+  if (!window.sb) return null;
+  const { data, error } = await window.sb
     .from('records')
     .insert(rec)
     .select()
@@ -105,8 +105,8 @@ async function dbInsertRecord(rec) {
 }
 
 async function dbUpdateRecord(id, updates) {
-  if (!sb) return false;
-  const { error } = await sb
+  if (!window.sb) return false;
+  const { error } = await window.sb
     .from('records')
     .update(updates)
     .eq('id', id);
@@ -115,8 +115,8 @@ async function dbUpdateRecord(id, updates) {
 }
 
 async function dbDeleteRecord(id) {
-  if (!sb) return false;
-  const { error } = await sb
+  if (!window.sb) return false;
+  const { error } = await window.sb
     .from('records')
     .delete()
     .eq('id', id);
@@ -125,8 +125,8 @@ async function dbDeleteRecord(id) {
 }
 
 async function dbGetMonths() {
-  if (!sb) return [];
-  const { data, error } = await sb
+  if (!window.sb) return [];
+  const { data, error } = await window.sb
     .from('records')
     .select('month')
     .order('month', { ascending: false });
@@ -534,7 +534,20 @@ async function exportData() {
 
 function doExport(recs, month) {
   month = month || getCurMonth();
-  if (typeof XLSX === 'undefined') { genCSV(recs, month); return; }
+  if (typeof XLSX === 'undefined') {
+    // 延迟加载 xlsx CDN
+    toast('正在加载导出组件...','s');
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onload = function() { doExportXLSX(recs, month); };
+    s.onerror = function() { toast('导出组件加载失败，改用CSV','e'); genCSV(recs, month); };
+    document.head.appendChild(s);
+    return;
+  }
+  doExportXLSX(recs, month);
+}
+
+function doExportXLSX(recs, month) {
   const wb = XLSX.utils.book_new();
   const wd = [
     ['导入说明','',''],

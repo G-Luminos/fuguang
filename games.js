@@ -468,12 +468,14 @@
       Object.keys(boards).forEach(function(name) {
         var b = boards[name];
         var author = (b._author || '');
-        // Clone tiles as a plain array (JSON.stringify strips non-indexed _author prop)
         var cleanTiles = JSON.parse(JSON.stringify(b));
         rows.push({ name: name, tiles: cleanTiles, author: author });
       });
       var res = await window.sb.from('monopoly_boards').upsert(rows, { onConflict: 'name' });
-      if (res.error) console.warn('saveMonoBoards:', res.error);
+      if (res.error) { console.warn('saveMonoBoards:', res.error); return; }
+      // 直接更新缓存，省掉第二次select往返
+      mpCachedBoards = boards;
+      updateSyncStatus();
     } catch(e) { console.warn('saveMonoBoards:', e); }
   }
 
@@ -481,7 +483,10 @@
     if (!window.sb || !name) return;
     try {
       var res = await window.sb.from('monopoly_boards').delete().eq('name', name);
-      if (res.error) console.warn('deleteMonoBoard:', res.error);
+      if (res.error) { console.warn('deleteMonoBoard:', res.error); return; }
+      // 直接更新缓存
+      delete mpCachedBoards[name];
+      updateSyncStatus();
     } catch(e) { console.warn('deleteMonoBoard:', e); }
   }
 
@@ -787,7 +792,6 @@
       boards2[mpCurrentBoardName]._author = author;
       setSyncStatus('🔄 同步中...', 'syncing');
       await saveMonoBoards(boards2);
-      await mpRefreshBoards();
       hideMpSaving();
       $('gmGameBody').innerHTML = renderMonopolyUI();
     } else {
@@ -813,8 +817,6 @@
     setSyncStatus('🔄 同步中...', 'syncing');
     await saveMonoBoards(boards);
     mpCurrentBoardName = name;
-    await mpRefreshBoards();
-    setSyncStatus('☁️ 已同步');
     hideMpSaving();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
@@ -860,8 +862,6 @@
     delete boards[name];
     await deleteMonoBoard(name);
     mpCurrentBoardName = '__default__';
-    await mpRefreshBoards();
-    setSyncStatus('☁️ 已同步');
     hideMpSaving();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };

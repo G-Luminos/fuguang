@@ -4,14 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>浮光-Luminos</title>
-<!-- 预加载关键资源 -->
 <link rel="preconnect" href="https://yiexaopgxcroktltjqoz.supabase.co">
-<link rel="dns-prefetch" href="https://yiexaopgxcroktltjqoz.supabase.co">
-<link rel="preload" href="gift-showcase.css" as="style">
-<link rel="preload" href="cotton-candy.css" as="style">
-<link rel="preload" href="playlist.css" as="style">
-<link rel="preload" href="games.css" as="style">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="gift-showcase.css">
 <link rel="stylesheet" href="cotton-candy.css">
 <link rel="stylesheet" href="playlist.css">
@@ -148,6 +142,8 @@
   </div>
 </div>
 
+<!-- Supabase SDK: 异步加载不阻塞首屏 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="area-data.js"></script>
 <script src="captain.js"></script>
 <!-- 棉花糖投稿弹窗 -->
@@ -256,7 +252,7 @@
   </div>
 </div>
 
-<script src="songs_data.js"></script>
+<!-- songs_data.js 延迟加载，由 playlist.js 按需 loadSongs() -->
 
 <!-- ===== 小游戏中心 ===== -->
 <div class="gm-overlay" id="gmOverlay" onclick="if(event.target===this)closeGameCenter()">
@@ -376,6 +372,6 @@
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>
 <script src="playlist.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- xlsx仅在导出时延迟加载 -->
 </body>
 </html>
