@@ -303,6 +303,42 @@
   <button onclick="gmMonoPopupClose()">继续</button>
 </div>
 
+<!-- 大富翁编辑弹窗 -->
+<div class="gmp-edit-popup" id="gmpEditPopup" onclick="if(event.target===this)gmMonoCloseEditPopup()">
+  <div class="gmp-ep-card">
+    <div class="gmp-ep-header">
+      <span id="gmpEditTitle">编辑格子</span>
+      <button class="gmp-ep-close" onclick="gmMonoCloseEditPopup()">✕</button>
+    </div>
+    <div class="gmp-ep-body">
+      <div class="gmp-ep-field">
+        <label>类型</label>
+        <select id="gmpEditType">
+          <option value="normal">普通</option>
+          <option value="reward">奖励</option>
+          <option value="penalty">惩罚</option>
+          <option value="bomb">💣炸弹</option>
+          <option value="start">起点</option>
+          <option value="end">终点</option>
+        </select>
+      </div>
+      <div class="gmp-ep-field">
+        <label>图标</label>
+        <input id="gmpEditEmoji" type="text" maxlength="4" oninput="gmMonoEmojiPickerUpdate()">
+        <div class="gmp-ep-emoji-picker" id="gmpEditEmojiPicker"></div>
+      </div>
+      <div class="gmp-ep-field">
+        <label>名称/效果</label>
+        <input id="gmpEditLabel" type="text" placeholder="名称或效果描述">
+      </div>
+    </div>
+    <div class="gmp-ep-footer">
+      <button id="gmpEditDelete" class="gmp-ep-delete" onclick="gmMonoPopupDelete()">🗑 删除</button>
+      <button id="gmpEditSave" class="gmp-ep-save" onclick="gmMonoSaveTile()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
 <script src="games.js"></script>
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>

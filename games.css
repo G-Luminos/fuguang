@@ -615,7 +615,276 @@
   cursor: pointer; font-family: inherit;
 }
 
-/* 大富翁 Emoji 选择器 */
+/* ============================================
+   编辑模式 — 仅PC端可见
+   ============================================ */
+.gmp-edit-toggle { display: none }
+.gmp-edit-btn {
+  padding: 8px 16px; border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px; background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7); font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+}
+.gmp-edit-btn:hover { border-color: #FB7299; color: #FFF }
+.gmp-edit-btn.active { background: #FB7299; border-color: #FB7299; color: #FFF }
+
+/* Board tile edit overlay */
+.gmp-tile-edit-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s;
+  border-radius: inherit;
+  z-index: 3;
+}
+.gmp-tile.editing:hover .gmp-tile-edit-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.gmp-tile.editing .gmp-tile-edit-overlay {
+  pointer-events: auto;
+}
+
+.gmp-edit-icon, .gmp-del-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0;
+}
+.gmp-edit-icon {
+  background: rgba(59,130,246,.7);
+  color: #FFF;
+}
+.gmp-edit-icon:hover {
+  background: rgba(59,130,246,1);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(59,130,246,.5);
+}
+.gmp-del-icon {
+  background: rgba(239,68,68,.7);
+  color: #FFF;
+}
+.gmp-del-icon:hover {
+  background: rgba(239,68,68,1);
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(239,68,68,.5);
+}
+
+/* Insert button between tiles */
+.gmp-insert-btn {
+  grid-column: span 1;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 2px dashed rgba(255,255,255,.2);
+  background: rgba(255,255,255,.03);
+  color: rgba(255,255,255,.4);
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 700;
+  transition: all .15s;
+  font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.gmp-insert-btn:hover {
+  border-color: #10B981;
+  color: #10B981;
+  background: rgba(16,185,129,.08);
+  transform: scale(1.05);
+}
+.gmp-insert-btn:active { transform: scale(.96) }
+
+/* ============================================
+   Edit Popup (Tile Editor Modal)
+   ============================================ */
+.gmp-edit-popup {
+  position: fixed; inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+}
+.gmp-edit-popup.show { display: flex }
+
+.gmp-ep-card {
+  background: linear-gradient(180deg, #1e1e3a 0%, #16213e 100%);
+  border-radius: 20px;
+  width: 90%; max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  animation: gmFadeIn .25s ease;
+}
+
+.gmp-ep-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: rgba(251,114,153,.08);
+  border-radius: 20px 20px 0 0;
+}
+.gmp-ep-header span {
+  font-size: 17px; font-weight: 700; color: #FFF;
+}
+.gmp-ep-close {
+  background: none; border: none; color: rgba(255,255,255,.5);
+  font-size: 22px; cursor: pointer; padding: 4px; line-height: 1;
+  font-family: inherit;
+}
+.gmp-ep-close:hover { color: #FFF }
+
+.gmp-ep-body {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.gmp-ep-field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.gmp-ep-field label {
+  font-size: 13px; color: rgba(255,255,255,.5);
+  font-weight: 600;
+}
+.gmp-ep-field select,
+.gmp-ep-field input {
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  color: #FFF;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+}
+.gmp-ep-field select:focus,
+.gmp-ep-field input:focus {
+  border-color: #FB7299;
+}
+
+/* Emoji picker in popup */
+.gmp-ep-emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+.gmp-ep-emoji-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  cursor: pointer;
+  font-size: 20px;
+  font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  transition: all .12s;
+}
+.gmp-ep-emoji-btn:hover {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.3);
+  transform: scale(1.1);
+}
+.gmp-ep-emoji-btn.active {
+  border-color: #FB7299;
+  box-shadow: 0 0 10px rgba(251,114,153,.4);
+  background: rgba(251,114,153,.15);
+}
+
+.gmp-ep-footer {
+  display: flex; gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.gmp-ep-delete {
+  flex: 0 0 auto;
+  padding: 10px 18px;
+  border: 1px solid rgba(239,68,68,.3);
+  border-radius: 10px;
+  background: rgba(239,68,68,.1);
+  color: #EF4444;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.gmp-ep-delete:hover {
+  background: rgba(239,68,68,.2);
+  border-color: rgba(239,68,68,.5);
+}
+.gmp-ep-save {
+  flex: 1;
+  padding: 10px;
+  border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #10B981, #34D399);
+  color: #FFF;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.gmp-ep-save:hover { filter: brightness(1.1); transform: translateY(-1px) }
+.gmp-ep-save:active { transform: scale(.97) }
+
+/* ============================================
+   Board Manager (save/load toolbar)
+   ============================================ */
+.gmp-board-manager {
+  display: flex; gap: 8px; align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.gmp-board-manager select {
+  flex: 1; min-width: 140px; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: #2a2a3a; color: #e0e0e0;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  outline: none; min-height: 36px;
+}
+.gmp-board-manager select:focus {
+  border-color: #FB7299;
+}
+
+.gmp-ep-save-btn {
+  padding: 8px 16px; border: none; border-radius: 8px;
+  background: linear-gradient(135deg, #10B981, #34D399);
+  color: #FFF;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.gmp-ep-save-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
+.gmp-ep-save-btn:active { transform: scale(.96) }
+
+.gmp-ep-del-btn {
+  padding: 8px 16px; border: none; border-radius: 8px;
+  background: linear-gradient(135deg, #EF4444, #F87171);
+  color: #FFF;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.gmp-ep-del-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
+.gmp-ep-del-btn:active { transform: scale(.96) }
+
+/* ===== 大富翁 Emoji 选择器 (for legacy use in any other context) ===== */
 .gmp-emoji-picker {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -639,158 +908,6 @@
   box-shadow: 0 0 10px rgba(251,114,153,.4);
   background: rgba(251,114,153,.15);
 }
-
-/* 大富翁保存/加载面板 */
-.gmp-board-manager {
-  display: flex; gap: 8px; align-items: center;
-  margin-bottom: 12px; flex-wrap: wrap;
-}
-.gmp-board-manager input {
-  flex: 1; min-width: 120px; padding: 8px 12px;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 8px; background: rgba(255,255,255,.04);
-  color: #FFF; font-size: 13px; font-family: inherit; outline: none;
-}
-.gmp-board-manager input:focus { border-color: #FB7299 }
-.gmp-board-manager .gmp-mgr-btn {
-  padding: 8px 14px; border: none; border-radius: 8px;
-  font-size: 12px; font-weight: 600; cursor: pointer;
-  font-family: inherit; transition: all .15s;
-  color: #FFF;
-}
-.gmp-board-manager .gmp-mgr-save {
-  background: linear-gradient(135deg, #10B981, #34D399);
-}
-.gmp-board-manager .gmp-mgr-load {
-  background: linear-gradient(135deg, #3B82F6, #60A5FA);
-}
-.gmp-board-manager .gmp-mgr-delete {
-  background: linear-gradient(135deg, #EF4444, #F87171);
-}
-.gmp-board-manager .gmp-mgr-btn:hover { filter: brightness(1.1); transform: translateY(-1px) }
-.gmp-board-manager .gmp-mgr-btn:active { transform: scale(.96) }
-
-/* 编辑模式 — 仅PC端可见 */
-.gmp-edit-toggle { display: none }
-.gmp-edit-btn {
-  padding: 8px 16px; border: 1px solid rgba(255,255,255,.2);
-  border-radius: 20px; background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.7); font-size: 12px; cursor: pointer;
-  font-family: inherit; transition: all .15s;
-}
-.gmp-edit-btn:hover { border-color: #FB7299; color: #FFF }
-.gmp-edit-btn.active { background: #FB7299; border-color: #FB7299; color: #FFF }
-
-.gmp-editor {
-  display: none; width: 100%; max-width: 480px; margin: 0 auto 16px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 12px;
-  padding: 12px;
-}
-.gmp-editor.show { display: block }
-.gmp-editor-title {
-  font-size: 14px; color: rgba(255,255,255,.7); margin-bottom: 8px;
-  display: flex; align-items: center; gap: 6px;
-}
-
-/* 编辑器表格布局 */
-.gmp-editor-table { display: flex; flex-direction: column; gap: 2px }
-.gmp-editor-header {
-  display: flex; gap: 8px; align-items: center;
-  padding: 6px 10px;
-  font-size: 12px; color: rgba(255,255,255,.35);
-  font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
-}
-.gmp-editor-header span:nth-child(1) { width: 24px }
-.gmp-editor-header span:nth-child(2) { width: 72px }
-.gmp-editor-header span:nth-child(3) { flex: 0 0 140px }
-.gmp-editor-header span:nth-child(4) { flex: 1 }
-.gmp-editor-header span:nth-child(5) { width: 32px }
-
-.gmp-editor-row {
-  display: flex; gap: 8px; align-items: center;
-  background: rgba(255,255,255,.03);
-  border-radius: 8px; padding: 8px 10px;
-  border: 1px solid rgba(255,255,255,.04);
-  transition: all .15s;
-}
-.gmp-editor-row:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1) }
-.gmp-editor-num {
-  width: 24px; text-align: center;
-  font-size: 13px; color: rgba(255,255,255,.35); font-weight: 700;
-}
-.gmp-editor-row select {
-  width: 72px; padding: 6px 4px; border-radius: 6px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: #2a2a3a; color: #e0e0e0;
-  font-size: 13px; font-family: inherit; outline: none;
-  min-height: 34px; cursor: pointer;
-}
-.gmp-editor-emoji {
-  flex: 0 0 140px;
-  display: flex; flex-direction: column; gap: 4px;
-}
-.gmp-editor-emoji input {
-  width: 44px; text-align: center; padding: 6px;
-  border-radius: 6px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.06); color: #FFF;
-  font-size: 15px; font-family: inherit; outline: none;
-  min-height: 34px;
-}
-.gmp-editor-row > input {
-  flex: 1; min-width: 100px; padding: 6px 8px; border-radius: 6px;
-  border: 1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.06); color: #FFF;
-  font-size: 13px; font-family: inherit; outline: none;
-  min-height: 34px;
-}
-.gmp-editor-row input:focus,
-.gmp-editor-row select:focus { border-color: #FB7299 }
-
-.gmp-editor-del {
-  background: none; border: none; color: #EF4444;
-  cursor: pointer; font-size: 20px; padding: 0 4px;
-  width: 32px; text-align: center;
-  line-height: 1; font-family: inherit;
-}
-.gmp-editor-del:hover { color: #F87171; transform: scale(1.15) }
-
-.gmp-editor-add {
-  margin-top: 8px; width: 100%; padding: 10px;
-  border: 1px dashed rgba(255,255,255,.2); border-radius: 8px;
-  background: none; color: rgba(255,255,255,.5);
-  cursor: pointer; font-family: inherit; font-size: 14px;
-  transition: all .2s;
-}
-.gmp-editor-add:hover { border-color: #FB7299; color: #FB7299; background: rgba(251,114,153,.06) }
-
-/* Emoji picker in table (compact row) */
-.gmp-editor-row .gmp-emoji-picker {
-  display: flex; flex-wrap: wrap; gap: 2px;
-}
-.gmp-editor-row .gmp-emoji-btn {
-  width: 24px; height: 24px; border-radius: 4px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.03);
-  cursor: pointer; font-size: 13px;
-  font-family: inherit; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .12s;
-}
-.gmp-editor-row .gmp-emoji-btn:hover {
-  background: rgba(255,255,255,.12); transform: scale(1.12);
-}
-.gmp-editor-row .gmp-emoji-btn.active {
-  border-color: #FB7299; background: rgba(251,114,153,.2);
-  box-shadow: 0 0 6px rgba(251,114,153,.3);
-}
-
-/* Old grid editor — hidden (replaced by table) */
-.gmp-editor-grid { display: none }
-.gmp-editor-item { display: none }
 
 /* ===== 共享 ===== */
 .gm-empty {
@@ -823,9 +940,16 @@
   .gmp-board { grid-template-columns: repeat(5,1fr); gap: 3px }
   .gmp-tile { font-size: 9px }
   .gmp-tile .gmp-tile-emoji { font-size: 12px }
-  .gmp-editor-grid { grid-template-columns: repeat(1,1fr) }
   .gmp-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
   .gmp-emoji-picker .gmp-emoji-btn { width: 32px; height: 32px; font-size: 16px }
+  .gmp-ep-card { width: 95%; max-width: 360px; max-height: 90vh }
+  .gmp-ep-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 4px }
+  .gmp-ep-emoji-btn { font-size: 18px }
+  .gmp-ep-field select,
+  .gmp-ep-field input { font-size: 14px; padding: 8px 10px }
+  .gmp-board-manager { flex-direction: column; align-items: stretch }
+  .gmp-board-manager select { min-width: auto }
+  .gmp-ep-save-btn, .gmp-ep-del-btn { font-size: 12px }
 }
 
 @media(max-width:360px) {
@@ -844,6 +968,8 @@
   .gdc-face .gdc-fox-face { font-size: 36px }
   .gmp-emoji-picker { grid-template-columns: repeat(4, 1fr); gap: 3px }
   .gmp-emoji-picker .gmp-emoji-btn { width: 28px; height: 28px; font-size: 14px }
+  .gmp-ep-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 3px }
+  .gmp-ep-emoji-btn { font-size: 16px }
 }
 
 /* ===== PC 桌面端优化 ===== */
@@ -870,29 +996,24 @@
   .gmp-edit-toggle { display: block }
   .gmp-edit-btn { font-size: 14px; padding: 10px 20px }
   
-  /* 编辑器表格 PC 放大 */
-  .gmp-editor {
-    background: rgba(255,255,255,.04);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 16px;
-    padding: 16px;
-    max-width: 680px;
-  }
-  .gmp-editor-header { font-size: 13px; padding: 8px 14px }
-  .gmp-editor-header span:nth-child(1) { width: 28px }
-  .gmp-editor-header span:nth-child(2) { width: 80px }
-  .gmp-editor-header span:nth-child(3) { flex: 0 0 180px }
+  /* Edit overlay PC sizing */
+  .gmp-edit-icon, .gmp-del-icon { width: 40px; height: 40px; font-size: 20px }
+  .gmp-insert-btn { font-size: 28px; border-radius: 12px; min-height: 100px }
   
-  .gmp-editor-row { padding: 10px 14px; gap: 10px }
-  .gmp-editor-num { width: 28px; font-size: 14px }
-  .gmp-editor-row select { width: 80px; font-size: 14px; min-height: 38px; padding: 8px 6px }
-  .gmp-editor-emoji { flex: 0 0 180px }
-  .gmp-editor-emoji input { width: 50px; font-size: 16px; min-height: 38px }
-  .gmp-editor-row > input { font-size: 14px; min-height: 38px; padding: 8px 10px }
-  .gmp-editor-row .gmp-emoji-btn { width: 28px; height: 28px; font-size: 15px }
-  .gmp-editor-add { font-size: 15px; padding: 12px }
+  /* Edit popup PC */
+  .gmp-ep-card { max-width: 480px }
+  .gmp-ep-header span { font-size: 18px }
+  .gmp-ep-field label { font-size: 14px }
+  .gmp-ep-field select,
+  .gmp-ep-field input { font-size: 16px; padding: 12px 14px }
+  .gmp-ep-emoji-picker { grid-template-columns: repeat(6, 1fr); gap: 8px }
+  .gmp-ep-emoji-btn { font-size: 24px; border-radius: 12px }
+  .gmp-ep-save, .gmp-ep-delete { font-size: 16px; padding: 12px 20px }
+  
+  /* Board manager PC */
+  .gmp-board-manager { padding: 14px 16px; gap: 10px }
+  .gmp-board-manager select { font-size: 14px; min-height: 40px; padding: 10px 12px }
+  .gmp-ep-save-btn, .gmp-ep-del-btn { font-size: 14px; padding: 10px 18px }
   
   /* 数字炸弹 */
   .gnb-numpad { max-width: 420px; gap: 10px }

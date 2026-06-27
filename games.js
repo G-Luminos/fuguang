@@ -423,6 +423,7 @@
   var mpEditing = false;
   var mpMoving = false;
   var mpCurrentBoardName = '__default__';
+  var mpEditIdx = -1; // currently editing tile index
 
   var mpPresetEmojis = ['🏁','🌲','🌸','🌙','⭐','🍗','🎁','💣','😈','❓','🎉','✨','🔥','💎','🎪','🎯','🌈','🦊','🐾','🍀','👑','💫','🧩','🎈'];
 
@@ -456,7 +457,7 @@
 
   window.gmLaunchMonopoly = function() {
     gmCurrentGame = 'monopoly';
-    mpEditing = false; mpMoving = false; mpPos = 0; mpDice = 0;
+    mpEditing = false; mpMoving = false; mpPos = 0; mpDice = 0; mpEditIdx = -1;
     var body = $('gmGameBody');
     if (!body) return;
     showFullGame(true);
@@ -474,27 +475,50 @@
     html += '<div class="gmp-board" style="grid-template-columns:repeat(' + gridCols + ',1fr);position:relative;z-index:1">';
     for (var i = 0; i < mpTiles.length; i++) {
       var t = mpTiles[i];
+      var isStart = (t.type === 'start');
+      var isEnd = (t.type === 'end');
+      var isLast = (i === mpTiles.length - 1);
       var cls = 'gmp-tile gmp-t-' + t.type;
       if (i === mpPos) cls += ' gmp-current';
-      html += '<div class="' + cls + '" onclick="gmMonoClick(' + i + ')">'
+      if (mpEditing) cls += ' editing';
+
+      /* Insert button before last tile (end) and optionally between tiles */
+      if (mpEditing && isLast) {
+        html += '<button class="gmp-insert-btn" onclick="gmMonoInsertTile(' + i + ')" title="在终点前插入新格子">+</button>';
+      }
+
+      html += '<div class="' + cls + '" onclick="' + (mpEditing ? 'gmMonoEditTile(' + i + ')' : 'gmMonoClick(' + i + ')') + '">'
         + '<span class="gmp-tile-emoji">' + esc(t.emoji) + '</span>'
         + '<span class="gmp-tile-label">' + esc(t.label).replace(/\n/g,' ') + '</span>'
-        + (i === mpPos ? '<span class="gmp-player">🦊</span>' : '')
-        + '</div>';
+        + (i === mpPos ? '<span class="gmp-player">🦊</span>' : '');
+
+      /* Edit overlay */
+      if (mpEditing) {
+        html += '<div class="gmp-tile-edit-overlay">'
+          + '<button class="gmp-edit-icon" onclick="event.stopPropagation();gmMonoEditTile(' + i + ')" title="编辑">✏️</button>';
+        if (!isStart && !isEnd) {
+          html += '<button class="gmp-del-icon" onclick="event.stopPropagation();gmMonoDeleteTile(' + i + ')" title="删除">×</button>';
+        }
+        html += '</div>';
+      }
+
+      html += '</div>';
     }
     html += '</div>';
 
-    /* Controls */
-    html += '<div class="gmp-controls" style="position:relative;z-index:1">'
-      + '<div class="gmp-dice-display" id="mpDice">' + (mpDice > 0 ? mpDice : '?') + '</div>'
-      + '<button class="gmp-roll-btn" id="mpRollBtn" onclick="gmMonoRoll()"'
-      + (mpMoving ? ' disabled style="opacity:.5;pointer-events:none"' : '')
-      + '>'
-      + (mpDice > 0 ? '🎲 走' + mpDice + '步' : '🎲 掷骰子')
-      + '</button>'
-      + '</div>'
-      + '<div class="gmp-pos" style="position:relative;z-index:1">🦊 位置：第' + (mpPos + 1) + '格 '
-      + esc(mpTiles[mpPos].label).replace(/\n/g,' ') + '</div>';
+    /* Controls — hidden when editing */
+    if (!mpEditing) {
+      html += '<div class="gmp-controls" style="position:relative;z-index:1">'
+        + '<div class="gmp-dice-display" id="mpDice">' + (mpDice > 0 ? mpDice : '?') + '</div>'
+        + '<button class="gmp-roll-btn" id="mpRollBtn" onclick="gmMonoRoll()"'
+        + (mpMoving ? ' disabled style="opacity:.5;pointer-events:none"' : '')
+        + '>'
+        + (mpDice > 0 ? '🎲 走' + mpDice + '步' : '🎲 掷骰子')
+        + '</button>'
+        + '</div>'
+        + '<div class="gmp-pos" style="position:relative;z-index:1">🦊 位置：第' + (mpPos + 1) + '格 '
+        + esc(mpTiles[mpPos].label).replace(/\n/g,' ') + '</div>';
+    }
 
     /* Edit toggle */
     html += '<div style="margin-top:12px;text-align:center;position:relative;z-index:1">'
@@ -502,49 +526,10 @@
       + (mpEditing ? '✓ 完成编辑' : '✏️ 编辑棋盘')
       + '</button></div>';
 
-    /* Editor — table layout */
-    html += '<div class="gmp-editor' + (mpEditing ? ' show' : '') + '" id="mpEditor" style="position:relative;z-index:1">'
-      + '<div class="gmp-editor-title">🦊 编辑棋盘格子</div>';
-
-    /* Save/Load controls */
-    html += mpSaveLoadUI();
-
-    /* Column headers */
-    html += '<div class="gmp-editor-table">'
-      + '<div class="gmp-editor-header">'
-      + '<span>#</span><span>类型</span><span>图标</span><span>名称/效果</span><span></span>'
-      + '</div>';
-
-    /* Editor rows */
-    for (var j = 0; j < mpTiles.length; j++) {
-      var t = mpTiles[j];
-      var canDelete = (j > 0 && j < mpTiles.length - 1);
-      html += '<div class="gmp-editor-row">'
-        + '<span class="gmp-editor-num">' + (j + 1) + '</span>'
-        + '<select onchange="gmMonoSet(' + j + ',\'type\',this.value)" style="' + SELECT_STYLE + '">'
-        + '<option value="normal"' + (t.type==='normal'?' selected':'') + '>普通</option>'
-        + '<option value="reward"' + (t.type==='reward'?' selected':'') + '>奖励</option>'
-        + '<option value="penalty"' + (t.type==='penalty'?' selected':'') + '>惩罚</option>'
-        + '<option value="bomb"' + (t.type==='bomb'?' selected':'') + '>💣炸弹</option>'
-        + '<option value="start"' + (t.type==='start'?' selected':'') + '>起点</option>'
-        + '<option value="end"' + (t.type==='end'?' selected':'') + '>终点</option>'
-        + '</select>'
-        + '<div class="gmp-editor-emoji">'
-        + '<input value="' + escA(t.emoji) + '" onchange="gmMonoSet(' + j + ',\'emoji\',this.value)" style="width:44px;text-align:center;' + INPUT_STYLE + '" maxlength="4">'
-        + '<div class="gmp-emoji-picker">';
-      for (var k = 0; k < mpPresetEmojis.length; k++) {
-        var e = mpPresetEmojis[k];
-        var isActive = (e === t.emoji);
-        html += '<button onclick="gmMonoSetEmoji(' + j + ',\'' + e + '\')" class="gmp-emoji-btn' + (isActive ? ' active' : '') + '">' + e + '</button>';
-      }
-      html += '</div></div>'
-        + '<input value="' + escA(t.label) + '" onchange="gmMonoSet(' + j + ',\'label\',this.value)" placeholder="名称/效果" style="flex:1;min-width:100px;' + INPUT_STYLE + '">'
-        + (canDelete ? '<button onclick="gmMonoDel(' + j + ')" class="gmp-editor-del">×</button>' : '<span style="width:32px"></span>')
-        + '</div>';
+    /* Board Manager (save/load) — only when editing */
+    if (mpEditing) {
+      html += '<div style="position:relative;z-index:1">' + mpSaveLoadUI() + '</div>';
     }
-    html += '</div>'
-      + '<button onclick="gmMonoAdd()" class="gmp-editor-add">+ 添加格子</button>'
-      + '</div>';
 
     html += '</div>';
     return html;
@@ -578,40 +563,174 @@
     var boards = getMonoBoards();
     var boardNames = Object.keys(boards);
     var html = ''
-    + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap">'
-    + '  <span style="font-size:13px;color:rgba(255,255,255,.5)">棋盘：</span>'
-    + '  <select id="mpBoardSelect" onchange="gmMonoLoadBoard(this.value)" style="' + SELECT_STYLE + '">'
-    + '    <option value="">加载棋盘</option>'
+    + '<div class="gmp-board-manager">'
+    + '  <select id="mpBoardSelect" onchange="gmMonoLoadBoard(this.value)" style="flex:1;min-width:140px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:#2a2a3a;color:#e0e0e0;font-size:13px;font-family:inherit;cursor:pointer;outline:none;min-height:36px">'
     + '    <option value="__default__"' + (mpCurrentBoardName === '__default__' ? ' selected' : '') + '>🦊 默认棋盘</option>';
     for (var b = 0; b < boardNames.length; b++) {
       html += '<option value="' + escA(boardNames[b]) + '"' + (mpCurrentBoardName === boardNames[b] ? ' selected' : '') + '>' + esc(boardNames[b]) + '</option>';
     }
     html += '  </select>'
-    + '  <input id="mpBoardSaveName" placeholder="名称" style="width:90px;' + INPUT_STYLE + '">'
-    + '  <button onclick="gmMonoSaveBoard()" style="font-size:14px;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.7);cursor:pointer;font-family:inherit;min-height:28px">💾 保存</button>'
-    + '  <button onclick="gmMonoDeleteBoard()" style="font-size:14px;padding:4px 10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#EF4444;cursor:pointer;font-family:inherit;min-height:28px">🗑 删除</button>'
-    + '</div>';
+      + '  <button class="gmp-ep-save-btn" onclick="gmMonoSaveBoard()">💾 保存棋盘</button>'
+      + '  <button class="gmp-ep-del-btn" onclick="gmMonoDeleteBoard()">🗑 删除棋盘</button>'
+      + '</div>';
     return html;
   }
 
-  /* Trigger emoji set when clicking preset */
-  window.gmMonoSetEmoji = function(idx, emoji) {
+  /* ================================================================
+     Edit Popup Functions
+     ================================================================ */
+
+  /* Open edit popup for tile at index */
+  window.gmMonoEditTile = function(idx) {
     if (!mpEditing) return;
-    mpTiles[idx].emoji = emoji;
+    mpEditIdx = idx;
+    var t = mpTiles[idx];
+    var isStart = (t.type === 'start');
+    var isEnd = (t.type === 'end');
+
+    var popup = $('gmpEditPopup');
+    if (!popup) return;
+
+    $('gmpEditTitle').textContent = '编辑第' + (idx + 1) + '格';
+
+    /* Type selector: hide start/end for non-start/end; lock start/end types */
+    var typeSel = $('gmpEditType');
+    if (isStart) {
+      typeSel.value = 'start';
+      typeSel.style.display = 'none';
+    } else if (isEnd) {
+      typeSel.value = 'end';
+      typeSel.style.display = 'none';
+    } else {
+      typeSel.style.display = '';
+      typeSel.value = t.type;
+      /* Hide start/end options for middle tiles */
+      var opts = typeSel.options;
+      for (var o = 0; o < opts.length; o++) {
+        if (opts[o].value === 'start' || opts[o].value === 'end') {
+          opts[o].disabled = true;
+        } else {
+          opts[o].disabled = false;
+        }
+      }
+    }
+
+    /* Emoji */
+    $('gmpEditEmoji').value = t.emoji;
+
+    /* Label */
+    $('gmpEditLabel').value = t.label;
+
+    /* Emoji picker */
+    renderEmojiPicker(t.emoji);
+
+    /* Delete button visibility */
+    var delBtn = $('gmpEditDelete');
+    if (isStart || isEnd) {
+      delBtn.style.display = 'none';
+    } else {
+      delBtn.style.display = '';
+    }
+
+    popup.classList.add('show');
+  };
+
+  /* Render emoji picker grid in popup */
+  function renderEmojiPicker(currentEmoji) {
+    var picker = $('gmpEditEmojiPicker');
+    if (!picker) return;
+    var html = '';
+    for (var k = 0; k < mpPresetEmojis.length; k++) {
+      var e = mpPresetEmojis[k];
+      var isActive = (e === currentEmoji);
+      html += '<button class="gmp-ep-emoji-btn' + (isActive ? ' active' : '') + '" onclick="gmMonoPickEmoji(\'' + e + '\')">' + e + '</button>';
+    }
+    picker.innerHTML = html;
+  }
+
+  /* Pick emoji from picker */
+  window.gmMonoPickEmoji = function(emoji) {
+    var inp = $('gmpEditEmoji');
+    if (inp) inp.value = emoji;
+    renderEmojiPicker(emoji);
+  };
+
+  /* Update emoji picker highlight when typing */
+  window.gmMonoEmojiPickerUpdate = function() {
+    var inp = $('gmpEditEmoji');
+    if (inp) renderEmojiPicker(inp.value);
+  };
+
+  /* Save tile from popup */
+  window.gmMonoSaveTile = function() {
+    if (mpEditIdx < 0) return;
+    var t = mpTiles[mpEditIdx];
+    var isStart = (t.type === 'start');
+    var isEnd = (t.type === 'end');
+
+    var newType = isStart ? 'start' : (isEnd ? 'end' : $('gmpEditType').value);
+    var newEmoji = $('gmpEditEmoji').value || t.emoji;
+    var newLabel = $('gmpEditLabel').value || t.label;
+
+    mpTiles[mpEditIdx].type = newType;
+    mpTiles[mpEditIdx].emoji = newEmoji;
+    mpTiles[mpEditIdx].label = newLabel;
+
+    gmMonoCloseEditPopup();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
+  /* Delete tile from popup */
+  window.gmMonoPopupDelete = function() {
+    if (mpEditIdx <= 0 || mpEditIdx >= mpTiles.length - 1) return;
+    gmMonoDeleteTile(mpEditIdx);
+  };
+
+  /* Close edit popup */
+  window.gmMonoCloseEditPopup = function() {
+    mpEditIdx = -1;
+    var popup = $('gmpEditPopup');
+    if (popup) popup.classList.remove('show');
+  };
+
+  /* Delete tile by index (from board overlay) */
+  window.gmMonoDeleteTile = function(idx) {
+    if (!mpEditing) return;
+    if (idx <= 0 || idx >= mpTiles.length - 1) return;
+    mpTiles.splice(idx, 1);
+    if (mpPos >= mpTiles.length) mpPos = mpTiles.length - 1;
+    gmMonoCloseEditPopup();
+    $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  /* Insert tile before index */
+  window.gmMonoInsertTile = function(idx) {
+    if (!mpEditing) return;
+    mpTiles.splice(idx, 0, { type:'normal', emoji:'❓', label:'新格子' });
+    $('gmGameBody').innerHTML = renderMonopolyUI();
+  };
+
+  /* ================================================================
+     Save / Load / Delete Board
+     ================================================================ */
+
   /* Save current board */
   window.gmMonoSaveBoard = function() {
-    var nameInput = $('mpBoardSaveName');
-    var name = nameInput ? nameInput.value.trim() : '';
-    if (!name) { name = '棋盘' + (Object.keys(getMonoBoards()).length + 1); }
-    if (name === '__default__') { name = name + '_copy'; }
-    var boards = getMonoBoards();
-    boards[name] = JSON.parse(JSON.stringify(mpTiles));
-    saveMonoBoards(boards);
-    mpCurrentBoardName = name;
-    if (nameInput) nameInput.value = '';
+    if (mpCurrentBoardName === '__default__') {
+      /* Need a name — prompt via inline input */
+      var name = prompt('请输入棋盘名称：', '我的棋盘');
+      if (!name || !name.trim()) return;
+      name = name.trim();
+      if (name === '__default__') name = name + '_copy';
+      var boards = getMonoBoards();
+      boards[name] = JSON.parse(JSON.stringify(mpTiles));
+      saveMonoBoards(boards);
+      mpCurrentBoardName = name;
+    } else {
+      var boards2 = getMonoBoards();
+      boards2[mpCurrentBoardName] = JSON.parse(JSON.stringify(mpTiles));
+      saveMonoBoards(boards2);
+    }
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
@@ -629,6 +748,7 @@
     }
     mpPos = 0;
     mpDice = 0;
+    mpEditIdx = -1;
     mpCurrentBoardName = name;
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
@@ -641,6 +761,7 @@
     if (!name || name === '__default__') return;
     var boards = getMonoBoards();
     if (!boards[name]) return;
+    if (!confirm('确定要删除棋盘「' + name + '」吗？此操作不可撤销。')) return;
     delete boards[name];
     saveMonoBoards(boards);
     mpCurrentBoardName = '__default__';
@@ -757,27 +878,11 @@
 
   window.gmMonoToggleEdit = function() {
     mpEditing = !mpEditing;
+    mpEditIdx = -1;
+    gmMonoCloseEditPopup();
     $('gmGameBody').innerHTML = renderMonopolyUI();
   };
 
-  window.gmMonoSet = function(idx, field, val) {
-    if (!mpEditing) return;
-    mpTiles[idx][field] = val;
-    $('gmGameBody').innerHTML = renderMonopolyUI();
-  };
-
-  window.gmMonoDel = function(idx) {
-    if (!mpEditing) return;
-    if (idx <= 0 || idx >= mpTiles.length - 1) return;
-    mpTiles.splice(idx, 1);
-    if (mpPos >= mpTiles.length) mpPos = mpTiles.length - 1;
-    $('gmGameBody').innerHTML = renderMonopolyUI();
-  };
-
-  window.gmMonoAdd = function() {
-    if (!mpEditing) return;
-    mpTiles.splice(mpTiles.length - 1, 0, { type:'normal', emoji:'❓', label:'新格子' });
-    $('gmGameBody').innerHTML = renderMonopolyUI();
-  };
+  /* Removed: gmMonoSet, gmMonoDel, gmMonoAdd, gmMonoSetEmoji — replaced by popup editor */
 
 })();
