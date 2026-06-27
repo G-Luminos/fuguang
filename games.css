@@ -683,18 +683,19 @@
 .gmp-insert-btn {
   grid-column: span 1;
   width: 100%;
-  aspect-ratio: 1;
+  height: 32px;
   border-radius: 8px;
   border: 2px dashed rgba(255,255,255,.2);
   background: rgba(255,255,255,.03);
   color: rgba(255,255,255,.4);
   cursor: pointer;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
   transition: all .15s;
   font-family: inherit;
   display: flex; align-items: center; justify-content: center;
   padding: 0;
+  align-self: center;
 }
 .gmp-insert-btn:hover {
   border-color: #10B981;
@@ -1022,7 +1023,7 @@
   .gmp-board-manager { flex-direction: column; align-items: stretch }
   .gmp-board-manager select { min-width: auto }
   .gmp-ep-save-btn, .gmp-ep-del-btn { font-size: 12px }
-  .gmp-insert-btn { font-size: 14px; border-radius: 6px; aspect-ratio: auto; min-height: auto; padding: 4px 6px }
+  .gmp-insert-btn { height: 24px; font-size: 12px; border-radius: 4px }
 }
 
 @media(max-width:360px) {
@@ -1043,7 +1044,7 @@
   .gmp-emoji-picker .gmp-emoji-btn { width: 28px; height: 28px; font-size: 14px }
   .gmp-ep-emoji-picker { grid-template-columns: repeat(5, 1fr); gap: 3px }
   .gmp-ep-emoji-btn { font-size: 16px }
-  .gmp-insert-btn { font-size: 12px; aspect-ratio: auto; min-height: auto; padding: 2px 4px; border-radius: 4px }
+  .gmp-insert-btn { height: 20px; font-size: 10px; border-radius: 3px }
 }
 
 /* ===== PC 桌面端优化 ===== */
@@ -1072,7 +1073,7 @@
   
   /* Edit overlay PC sizing */
   .gmp-edit-icon, .gmp-del-icon { width: 40px; height: 40px; font-size: 20px }
-  .gmp-insert-btn { font-size: 28px; border-radius: 12px; min-height: 100px }
+  .gmp-insert-btn { height: 40px; font-size: 20px; border-radius: 8px }
   
   /* Edit popup PC */
   .gmp-ep-card { max-width: 480px }
