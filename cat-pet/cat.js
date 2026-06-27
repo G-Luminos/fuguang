@@ -354,7 +354,7 @@
     zzzTimer++;
     if (zzzTimer % 60 === 0 && cat.state === 'sleep') {
       var bubble = document.createElement('div');
-      bubble.className = 'bubble';
+      bubble.className = 'cat-bubble';
       bubble.textContent = 'z'.repeat(1 + Math.floor(Math.random() * 3));
       bubble.style.left = (cat.x + dpr(14) * cat.facing + (Math.random() - 0.5) * 20) + 'px';
       bubble.style.top = (cat.y - dpr(HEAD_H) - dpr(BODY_H * 0.35) - 10) + 'px';

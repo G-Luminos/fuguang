@@ -1,99 +1,26 @@
 /* ================================================================
-   浮光小黑猫 - 东方短毛猫网页宠物
-   Canvas 纯代码绘制 · 黑色瘦长 · 独立页面
+   浮光小黑猫 - 嵌入主页背景层
+   东方短毛猫 Canvas 纯代码绘制 · 黑色瘦长
    ================================================================ */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-:root {
-  --cat-black: #1a1a1a;
-  --cat-dark: #2d2d2d;
-  --cat-ear: #1e1e1e;
-  --cat-eye: #c4a43e;
-  --cat-eye-dark: #8b7220;
-  --cat-nose: #e8a0a0;
-  --cat-collar: #c0392b;
-  --bg: #faf8f5;
-}
-
-body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: var(--bg);
-  min-height: 100vh;
-  overflow-x: hidden;
-  cursor: default;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-/* 猫咪画布层 - 铺满全屏，pointer-events:none 让点击穿透 */
+/* 猫咪画布 - 全屏固定，穿透点击 */
 #cat-canvas {
   position: fixed; inset: 0;
   z-index: 9999;
   pointer-events: none;
 }
 
-/* 演示页面 UI */
-.demo-ui {
-  position: relative; z-index: 1;
-  min-height: 100vh;
-  display: flex; flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 40px 20px;
-}
-
-.demo-title {
-  font-size: clamp(24px, 5vw, 40px);
-  font-weight: 300;
-  color: #333;
-  letter-spacing: 2px;
-}
-.demo-title .emoji { font-size: 1.3em }
-
-.demo-sub {
-  font-size: 14px; color: #999;
-  margin-top: -16px;
-}
-
-.btn-row {
-  display: flex; gap: 12px; flex-wrap: wrap;
-  justify-content: center;
-}
-
-.demo-btn {
-  padding: 12px 28px;
-  border: none; border-radius: 30px;
-  font-size: 16px; font-weight: 600;
-  font-family: inherit; cursor: pointer;
-  transition: all .2s;
-  position: relative;
-}
-
-.demo-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.15) }
-.demo-btn:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.1) }
-
-.btn-primary { background: #333; color: #fff }
-.btn-secondary { background: #eee; color: #555 }
-.btn-accent { background: #e74c3c; color: #fff }
-
-/* Zzz 气泡 */
-.bubble {
+/* Zzz 打盹气泡 */
+.cat-bubble {
   position: fixed; z-index: 9998;
   pointer-events: none;
   font-size: 18px; color: #666;
-  animation: bubbleUp 2s ease-out forwards;
+  animation: cbUp 2s ease-out forwards;
   font-weight: 300;
   letter-spacing: 1px;
 }
-@keyframes bubbleUp {
+@keyframes cbUp {
   0% { opacity: 0; transform: translateY(0) scale(.5) }
   20% { opacity: 1; transform: translateY(-20px) scale(1) }
   100% { opacity: 0; transform: translateY(-80px) scale(.3) }
-}
-
-/* 响应式 */
-@media(max-width:600px) {
-  .demo-btn { padding: 10px 20px; font-size: 14px }
-  .btn-row { gap: 8px }
 }
