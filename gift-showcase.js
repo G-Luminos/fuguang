@@ -745,5 +745,8 @@ window.closeMonthDetail = closeMonthDetail;
 window.openUploadDialog = openUploadDialog;
 window.deleteImage = deleteImage;
 window.toggleSection = toggleSection;
+window.openImageLightbox = openImageLightbox;
+window.closeImageLightbox = closeImageLightbox;
+window.navigateLightbox = navigateLightbox;
 
 })();
