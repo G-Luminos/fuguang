@@ -82,6 +82,10 @@ body {
   pointer-events: none;
   animation: skHeart 1.2s ease-out forwards;
 }
+.sk-cat-name {
+  text-align: center; font-size: 16px; font-weight: 700;
+  margin-top: 4px; color: var(--sk-txt);
+}
 @keyframes skHeart {
   0% { opacity: 1; transform: translateY(0) scale(.6); }
   100% { opacity: 0; transform: translateY(-70px) scale(1.4); }

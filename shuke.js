@@ -598,14 +598,14 @@
 
   /* ============ 初始化 ============ */
   function init() {
-    // 名字设置
-    const savedName = SAVE.user.name;
-    $('skName').textContent = savedName;
-    // 挂载到 window 供 onclick 使用
+    // 挂载到 window 供 onclick 使用（必须先执行，避免 SK is not defined）
     window.SK = {
       switchPage, doPet, doFeed, doGacha, claimProduction, doCheckin,
       craftSkin, equipSkin, doExchange, closeGachaResult
     };
+    // 名字设置
+    const savedName = SAVE.user.name;
+    $('skName').textContent = savedName;
     // 绑定事件（也可用 onclick，这里用委托确保稳健）
     document.querySelectorAll('.sk-tab').forEach(t => {
       t.addEventListener('click', () => switchPage(t.dataset.page));
