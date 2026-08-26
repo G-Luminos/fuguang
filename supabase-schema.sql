@@ -198,3 +198,37 @@ CREATE POLICY "Allow delete monopoly boards" ON monopoly_boards FOR DELETE USING
 -- monopoly_boards updated_at 触发器
 DROP TRIGGER IF EXISTS monopoly_boards_updated_at ON monopoly_boards;
 CREATE TRIGGER monopoly_boards_updated_at BEFORE UPDATE ON monopoly_boards FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ========== 8. 自动续舰字段（records 表新增） ==========
+ALTER TABLE records ADD COLUMN IF NOT EXISTS auto_renew BOOLEAN DEFAULT false;
+
+-- ========== 9. 续舰舰长名单表（主页背景名字墙 + 管理员后台管理） ==========
+CREATE TABLE IF NOT EXISTS renew_captains (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nickname TEXT NOT NULL UNIQUE,
+  phone_enc TEXT,
+  province TEXT,
+  city TEXT,
+  district TEXT,
+  address_enc TEXT,
+  note TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_renew_captains_created ON renew_captains(created_at DESC);
+
+ALTER TABLE renew_captains ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow select renew captains" ON renew_captains;
+CREATE POLICY "Allow select renew captains" ON renew_captains FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow insert renew captains" ON renew_captains;
+CREATE POLICY "Allow insert renew captains" ON renew_captains FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow update renew captains" ON renew_captains;
+CREATE POLICY "Allow update renew captains" ON renew_captains FOR UPDATE USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow delete renew captains" ON renew_captains;
+CREATE POLICY "Allow delete renew captains" ON renew_captains FOR DELETE USING (true);
+
+-- renew_captains updated_at 触发器
+DROP TRIGGER IF EXISTS renew_captains_updated_at ON renew_captains;
+CREATE TRIGGER renew_captains_updated_at BEFORE UPDATE ON renew_captains FOR EACH ROW EXECUTE FUNCTION update_updated_at();

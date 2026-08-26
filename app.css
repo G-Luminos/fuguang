@@ -173,3 +173,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .btn-e{border:none;background:var(--err);color:#FFF;border-radius:9px}
 .btn-e:hover{opacity:.9}
 .btn-e:active{transform:scale(.97)}
+
+/* ===== 自动续舰开关 ===== */
+.renew-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg);transition:all .15s;user-select:none}
+.renew-toggle:hover{border-color:var(--p)}
+.renew-toggle input{display:none}
+.renew-toggle-box{width:40px;height:22px;border-radius:11px;background:#C4C9CF;position:relative;flex-shrink:0;transition:background .2s}
+.renew-toggle-box::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#FFF;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.renew-toggle input:checked + .renew-toggle-box{background:var(--p)}
+.renew-toggle input:checked + .renew-toggle-box::after{transform:translateX(18px)}
+.renew-toggle-txt{font-size:13px;font-weight:600;color:var(--txt);display:flex;flex-direction:column;align-items:flex-start}
+.renew-toggle-txt em{font-style:normal;font-size:11px;font-weight:400;color:var(--ts);margin-top:2px}
+
+/* ===== 首页背景名字墙 ===== */
+.name-wall{position:absolute;inset:0;pointer-events:none;z-index:1;perspective:800px;overflow:hidden}
+.nw-name{position:absolute;font-weight:700;color:rgba(255,255,255,.16);letter-spacing:2px;white-space:nowrap;animation:nwFloat 8s ease-in-out infinite;transition:transform .15s ease-out;will-change:transform;text-shadow:0 0 12px rgba(0,161,214,.25)}
+@keyframes nwFloat{0%,100%{margin-top:0}50%{margin-top:-14px}}

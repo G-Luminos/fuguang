@@ -28,6 +28,7 @@
     <button class="btn-game" onclick="openGameCenter()">🎮 互动游戏</button>
     <div class="admin-link" onclick="openAdminLogin()">管理入口 ▸</div>
   </div>
+  <div class="name-wall" id="nameWall"></div>
 </div>
 
 <!-- Admin Login Modal -->
@@ -74,6 +75,7 @@
       <button class="btn-cotton-hd" onclick="openCottonCandy()">🍬 投稿</button>
       <button class="btn-o" onclick="openGiftShowcase()">🎁 舰礼</button>
       <button class="btn-o" id="btnHist" onclick="openHistory()">历史</button>
+      <button class="btn-o" id="btnRenew" onclick="openRenewAdmin()">续舰名单</button>
       <button class="btn-o" id="btnExport" onclick="exportData()">导出</button>
     </div>
   </div>
@@ -98,6 +100,13 @@
     <div class="fg"><label>区县</label><select id="fd" disabled><option value="">请先选城市</option></select></div>
     <div class="fg"><label>详细地址 <span style="color:var(--err)">*</span></label><input id="fa" type="text" placeholder="详细地址（加密存储）" required></div>
     <div class="fg"><label>备注</label><textarea id="fnote" rows="2" placeholder="备注（选填）"></textarea></div>
+    <div class="fg">
+      <label class="renew-toggle">
+        <input type="checkbox" id="fauto" onchange="onAutoRenewToggle()">
+        <span class="renew-toggle-box"></span>
+        <span class="renew-toggle-txt">🔄 自动续舰 <em>下月自动续填地址，免重复填写</em></span>
+      </label>
+    </div>
   </div>
   <div class="m-ft">
     <button class="cancel" onclick="closeForm()">取消</button>
@@ -122,6 +131,21 @@
   </div>
   <div class="m-ft">
     <button class="cancel" onclick="closeHistory()" style="flex:1">关闭</button>
+  </div>
+</div></div>
+
+<!-- Renew Captains Admin Modal -->
+<div class="mo" id="rm"><div class="m">
+  <div class="m-hd"><h2>🔄 续舰名单管理</h2><button onclick="closeRenewAdmin()">✕</button></div>
+  <div class="m-bd">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="rn" type="text" placeholder="昵称" maxlength="20" style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:15px">
+      <button class="btn-p" style="flex:none" onclick="addRenewCaptain()">新增</button>
+    </div>
+    <div id="rmBody" style="max-height:50vh;overflow-y:auto"></div>
+  </div>
+  <div class="m-ft">
+    <button class="cancel" onclick="closeRenewAdmin()" style="flex:1">关闭</button>
   </div>
 </div></div>
 

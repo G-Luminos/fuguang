@@ -133,6 +133,38 @@ async function dbGetMonths() {
   return months;
 }
 
+/* ============ 续舰名单 (renew_captains) ============ */
+async function dbGetRenewCaptains() {
+  if (!window.sb) return [];
+  const { data, error } = await window.sb
+    .from('renew_captains')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { return []; }
+  return data || [];
+}
+
+async function dbUpsertRenewCaptain(cap) {
+  if (!window.sb) return null;
+  const { data, error } = await window.sb
+    .from('renew_captains')
+    .upsert(cap, { onConflict: 'nickname' })
+    .select()
+    .single();
+  if (error) { return null; }
+  return data;
+}
+
+async function dbDeleteRenewCaptain(id) {
+  if (!window.sb) return false;
+  const { error } = await window.sb
+    .from('renew_captains')
+    .delete()
+    .eq('id', id);
+  if (error) { return false; }
+  return true;
+}
+
 /* ================================================================
    Utility
    ================================================================ */
@@ -204,6 +236,7 @@ function enterApp() {
   document.getElementById('app').classList.add('show');
   const isA = window.role ==='admin';
   document.getElementById('btnHist').style.display = isA ? '' : 'none';
+  document.getElementById('btnRenew').style.display = isA ? '' : 'none';
   document.getElementById('btnExport').style.display = isA ? '' : 'none';
   document.getElementById('statsRow').style.display = isA ? 'grid' : 'none';
   document.getElementById('srch').style.display = isA ? '' : 'none';
@@ -378,6 +411,7 @@ async function openForm(id) {
       document.getElementById('fph').value = await decrypt(r.phone_enc || '');
       document.getElementById('fa').value = await decrypt(r.address_enc || '');
       document.getElementById('fnote').value = r.note || '';
+      document.getElementById('fauto').checked = !!r.auto_renew;
       if (r.province) {
         document.getElementById('fp').value = r.province;
         selProvince = r.province;
@@ -419,6 +453,7 @@ async function openForm(id) {
     document.getElementById('fd').innerHTML = '<option value="">请先选城市</option>'; document.getElementById('fd').disabled = true;
     document.getElementById('fa').value = '';
     document.getElementById('fnote').value = '';
+    document.getElementById('fauto').checked = false;
   }
   document.getElementById('fm').classList.add('show');
 }
@@ -440,23 +475,72 @@ async function saveForm() {
 
   const phone_enc = await encrypt(ph);
   const address_enc = await encrypt(fa);
+  const auto_renew = document.getElementById('fauto').checked;
 
   if (editingId) {
     const ok = await dbUpdateRecord(editingId, {
-      nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn
+      nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn, auto_renew
     });
-    if (ok) { closeForm(); render(); toast('已更新 ✅','s'); }
+    if (ok) {
+      if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
+      else await removeRenewCaptainByName(n);
+      closeForm(); render(); toast('已更新 ✅','s');
+    }
     else { toast('更新失败','e'); }
   } else {
     const rec = {
       nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn,
-      month: getCurMonth()
+      month: getCurMonth(), auto_renew
     };
     const result = await dbInsertRecord(rec);
-    if (result) { closeForm(); render(); toast('已添加 ✅','s'); }
+    if (result) {
+      if (auto_renew) {
+        await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
+        await copyToNextMonth(n, phone_enc, fp, fc, fd, address_enc, fn);
+      }
+      closeForm(); render(); toast('已添加 ✅','s');
+    }
     else { toast('添加失败','e'); }
   }
 }
+
+function getNextMonth() {
+  const n = new Date();
+  const y = n.getFullYear(), m = n.getMonth() + 1;
+  const nm = m === 12 ? 1 : m + 1;
+  const ny = m === 12 ? y + 1 : y;
+  return ny + '-' + String(nm).padStart(2, '0');
+}
+
+async function copyToNextMonth(nickname, phone_enc, province, city, district, address_enc, note) {
+  if (!window.sb) return;
+  const next = getNextMonth();
+  // 检查下月是否已有同名记录，有则更新，无则插入
+  const { data: existing } = await window.sb.from('records').select('id').eq('month', next).eq('nickname', nickname);
+  if (existing && existing.length > 0) {
+    await window.sb.from('records').update({ phone_enc, province, city, district, address_enc, note })
+      .eq('id', existing[0].id);
+  } else {
+    await window.sb.from('records').insert({ nickname, phone_enc, province, city, district, address_enc, note, month: next, auto_renew: true });
+  }
+}
+
+async function syncRenewCaptain(nickname, phone, province, city, district, address, note) {
+  if (!window.sb) return;
+  const phone_enc = await encrypt(phone);
+  const address_enc = await encrypt(address);
+  await dbUpsertRenewCaptain({ nickname, phone_enc, province, city, district, address_enc, note });
+}
+
+async function removeRenewCaptainByName(nickname) {
+  if (!window.sb) return;
+  const { data } = await window.sb.from('renew_captains').select('id').eq('nickname', nickname);
+  if (data && data.length > 0) {
+    await dbDeleteRenewCaptain(data[0].id);
+  }
+}
+
+function onAutoRenewToggle() {}
 
 function editR(id) { openForm(id) }
 
@@ -507,6 +591,53 @@ async function exportHistory(m) {
     r._address = await decrypt(r.address_enc || '');
   }
   doExport(recs, m);
+}
+
+/* ================================================================
+   Renew Captains Admin (续舰名单后台管理)
+   ================================================================ */
+async function openRenewAdmin() {
+  if (window.role !== 'admin') return;
+  await renderRenewAdmin();
+  document.getElementById('rm').classList.add('show');
+  document.getElementById('rn').value = '';
+}
+function closeRenewAdmin() { document.getElementById('rm').classList.remove('show') }
+
+async function renderRenewAdmin() {
+  const caps = await dbGetRenewCaptains();
+  const body = document.getElementById('rmBody');
+  if (caps.length === 0) {
+    body.innerHTML = '<div style="text-align:center;padding:24px;color:#61666D;font-size:13px">暂无续舰名单，添加后这里会显示</div>';
+    return;
+  }
+  body.innerHTML = caps.map(c => {
+    return '<div class="hist-item">'+
+      '<div><div class="mon">'+esc(c.nickname)+'</div><div class="cnt">'+(c.province?'地址已存':'仅名字')+'</div></div>'+
+      '<button onclick="delRenewCaptain(\''+c.id+'\')" style="border-color:var(--err);color:var(--err)">删除</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function addRenewCaptain() {
+  if (window.role !== 'admin') return;
+  const n = document.getElementById('rn').value.trim();
+  if (!n) { toast('请输入昵称','e'); return; }
+  const result = await dbUpsertRenewCaptain({ nickname: n });
+  if (result) {
+    document.getElementById('rn').value = '';
+    await renderRenewAdmin();
+    toast('已新增 ✅','s');
+  } else { toast('新增失败（可能重名）','e'); }
+}
+
+async function delRenewCaptain(id) {
+  if (window.role !== 'admin') return;
+  const ok = await dbDeleteRenewCaptain(id);
+  if (ok) {
+    await renderRenewAdmin();
+    toast('已删除','i');
+  } else { toast('删除失败','e'); }
 }
 
 /* ================================================================
@@ -605,6 +736,58 @@ document.getElementById('lu').addEventListener('keydown', e => { if(e.key==='Ent
 document.getElementById('gnInput').addEventListener('keydown', e => { if(e.key==='Enter') submitGuestNick() });
 
 /* ================================================================
+   Name Wall - 首页背景续舰名单名字墙（跟随鼠标摆动）
+   ================================================================ */
+window.renderNameWall = async function() {
+  const wall = document.getElementById('nameWall');
+  if (!wall) return;
+  const caps = await dbGetRenewCaptains();
+  if (caps.length === 0) { wall.innerHTML = ''; return; }
+  const w = window.innerWidth, h = window.innerHeight;
+  wall.innerHTML = caps.map((c, i) => {
+    const left = 8 + ((i * 37) % 84);
+    const top = 12 + ((i * 53) % 72);
+    const size = 14 + ((i * 7) % 12);
+    const dur = 6 + ((i * 3) % 6);
+    const delay = (i * 0.8) % 5;
+    return '<span class="nw-name" data-i="'+i+'" style="left:'+left+'%;top:'+top+'%;font-size:'+size+'px;animation-duration:'+dur+'s;animation-delay:'+delay+'s">'+esc(c.nickname)+'</span>';
+  }).join('');
+};
+
+window.setupNameWallMouse = function() {
+  const wall = document.getElementById('nameWall');
+  if (!wall) return;
+  const names = function(){ return wall.querySelectorAll('.nw-name'); };
+  let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+  let raf = null;
+  document.addEventListener('mousemove', function(e) {
+    mx = e.clientX; my = e.clientY;
+    if (!raf) {
+      raf = requestAnimationFrame(function() {
+        raf = null;
+        const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+        const dx = (mx - cx) / cx;
+        const dy = (my - cy) / cy;
+        names().forEach(function(el) {
+          const depth = parseFloat(el.dataset.i || 0);
+          const factor = 1 + depth * 0.06;
+          const tx = dx * (8 + depth * 2) * factor;
+          const ty = dy * (8 + depth * 2) * factor;
+          const rx = dy * (3 + depth * 0.4);
+          const ry = -dx * (3 + depth * 0.4);
+          el.style.transform = 'translate3d('+tx+'px,'+ty+'px,0) rotateX('+rx+'deg) rotateY('+ry+'deg)';
+        });
+      });
+    }
+  });
+};
+
+window.loadNameWall = function() {
+  window.renderNameWall();
+  window.setupNameWallMouse();
+};
+
+/* ================================================================
    Init
    ================================================================ */
 initProvinces();
@@ -612,6 +795,8 @@ initProvinces();
 (function() {
   // 始终初始化 Supabase，匿名投稿等非登录功能也需要
   initSB();
+  // 加载首页背景名字墙（续舰名单）
+  window.loadNameWall();
   const r = localStorage.getItem(SK+'_role');
   if (r === 'admin') {
     window.role = 'admin';
