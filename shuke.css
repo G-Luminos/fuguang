@@ -1,0 +1,269 @@
+/* ================================================================
+   舒克养成 · 开箱打卡 样式
+   响应式：手机竖屏 + PC 横屏
+   ================================================================ */
+:root {
+  --sk-p: #00A1D6;
+  --sk-pd: #0084B5;
+  --sk-al: #FB7299;
+  --sk-gold: #FFB23E;
+  --sk-bg: #0d1524;
+  --sk-card: #16213a;
+  --sk-card2: #1b2942;
+  --sk-bd: #24354f;
+  --sk-txt: #eef3fa;
+  --sk-ts: #8b99b3;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--sk-bg);
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(0,161,214,.18) 0%, transparent 45%),
+    radial-gradient(circle at 80% 100%, rgba(251,114,153,.15) 0%, transparent 45%);
+  color: var(--sk-txt);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== 顶部栏 ===== */
+.sk-topbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(13,21,36,.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--sk-bd);
+}
+.sk-topbar-left { display: flex; align-items: center; gap: 6px; }
+.sk-topbar-cat { font-size: 22px; }
+.sk-topbar-title { font-weight: 700; font-size: 16px; }
+.sk-topbar-right { display: flex; gap: 10px; }
+.sk-res { font-size: 12px; color: var(--sk-ts); }
+.sk-res b { color: var(--sk-txt); font-weight: 700; }
+
+/* ===== 页面容器 ===== */
+.sk-pages { max-width: 520px; margin: 0 auto; padding: 16px 14px 96px; }
+.sk-page { display: none; }
+.sk-page.active { display: block; animation: skFade .25s ease; }
+@keyframes skFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ===== 卡片 ===== */
+.sk-card {
+  background: var(--sk-card);
+  border: 1px solid var(--sk-bd);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* ===== 主页 · 猫 ===== */
+.sk-cat-wrap {
+  position: relative;
+  display: flex; justify-content: center;
+  padding: 24px 0 8px;
+}
+.sk-cat {
+  font-size: 96px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition: transform .3s ease;
+  filter: drop-shadow(0 8px 24px rgba(0,161,214,.35));
+}
+.sk-cat.petting { animation: skPet .5s ease; }
+.sk-cat.feeding { animation: skFeed .7s ease; }
+@keyframes skPet { 0%,100% { transform: scale(1) } 30% { transform: scale(1.15) rotate(-4deg) } 60% { transform: scale(1.08) rotate(4deg) } }
+@keyframes skFeed { 0%,100% { transform: translateY(0) } 40% { transform: translateY(-12px) } 70% { transform: translateY(0) scale(1.1) } }
+
+.sk-heart {
+  position: absolute; bottom: 40%;
+  font-size: 22px;
+  pointer-events: none;
+  animation: skHeart 1.2s ease-out forwards;
+}
+@keyframes skHeart {
+  0% { opacity: 1; transform: translateY(0) scale(.6); }
+  100% { opacity: 0; transform: translateY(-70px) scale(1.4); }
+}
+
+.sk-level-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.sk-level { font-size: 12px; font-weight: 700; color: var(--sk-gold); flex-shrink: 0; }
+.sk-expbar { flex: 1; height: 8px; background: var(--sk-bd); border-radius: 4px; overflow: hidden; }
+.sk-expbar-fill { height: 100%; background: linear-gradient(90deg, var(--sk-p), #4FC3F7); border-radius: 4px; transition: width .3s; }
+.sk-exptext { font-size: 11px; color: var(--sk-ts); flex-shrink: 0; }
+
+.sk-mood { text-align: center; color: var(--sk-ts); font-size: 13px; margin-top: 12px; }
+.sk-streak { text-align: center; color: var(--sk-gold); font-size: 12px; margin-top: 4px; }
+
+/* ===== 按钮 ===== */
+.sk-actions { display: flex; gap: 10px; margin-top: 16px; }
+.sk-btn {
+  border: none; border-radius: 12px; padding: 12px 16px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+}
+.sk-btn:active { transform: scale(.96); }
+.sk-btn:disabled { opacity: .4; cursor: not-allowed; }
+.sk-btn-primary { flex: 1; background: linear-gradient(135deg, var(--sk-p), #23ADE5); color: #fff; box-shadow: 0 4px 14px rgba(0,161,214,.3); }
+.sk-btn-accent { flex: 1; background: linear-gradient(135deg, var(--sk-al), #FF9CBB); color: #fff; box-shadow: 0 4px 14px rgba(251,114,153,.3); }
+
+/* ===== 挂机产出 ===== */
+.sk-prod-card {
+  margin-top: 16px; background: var(--sk-card);
+  border: 1px solid var(--sk-bd); border-radius: 16px; padding: 14px;
+}
+.sk-prod-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--sk-ts); }
+.sk-prod-head b { color: var(--sk-gold); }
+.sk-prod-amount { margin: 10px 0; font-size: 14px; }
+.sk-prod-amount b { font-size: 20px; color: var(--sk-gold); }
+.sk-btn-claim { width: 100%; background: linear-gradient(135deg, #10B981, #34D399); color: #fff; }
+
+/* ===== 签到 ===== */
+.sk-checkin-head { text-align: center; margin-bottom: 14px; }
+.sk-streak-big { font-size: 18px; }
+.sk-streak-big b { color: #FF6B6B; }
+.sk-streak-bonus { font-size: 12px; color: var(--sk-ts); margin-top: 4px; }
+.sk-streak-bonus b { color: var(--sk-gold); }
+.sk-checkin-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 14px; }
+.sk-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; font-size: 12px; color: var(--sk-ts);
+  background: var(--sk-card2); border: 1px solid var(--sk-bd);
+}
+.sk-day.done { background: linear-gradient(135deg, #00C091, #34D399); color: #fff; border-color: transparent; }
+.sk-day.today { border-color: var(--sk-gold); color: var(--sk-gold); }
+.sk-checkin-btn { width: 100%; }
+.sk-checkin-tip { text-align: center; font-size: 11px; color: var(--sk-ts); margin-top: 10px; }
+
+/* ===== 开箱 ===== */
+.sk-gacha-card { text-align: center; }
+.sk-gacha-box { font-size: 84px; cursor: pointer; animation: skBoxFloat 2.5s ease-in-out infinite; margin: 8px 0; }
+@keyframes skBoxFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+.sk-gacha-box:active { animation: skBoxShake .5s ease; }
+@keyframes skBoxShake { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-8deg) } 50% { transform: rotate(8deg) } 75% { transform: rotate(-6deg) } }
+.sk-gacha-label { color: var(--sk-ts); font-size: 13px; margin: 8px 0; }
+.sk-gacha-label b { color: var(--sk-gold); }
+.sk-gacha-btn { width: 100%; margin-top: 6px; }
+.sk-pity { margin-top: 18px; text-align: left; }
+.sk-pity-text { font-size: 12px; color: var(--sk-ts); margin-bottom: 6px; }
+.sk-pity-text b { color: var(--sk-gold); }
+.sk-pity-bar { height: 8px; background: var(--sk-bd); border-radius: 4px; overflow: hidden; }
+.sk-pity-fill { height: 100%; background: linear-gradient(90deg, var(--sk-gold), #FFD580); border-radius: 4px; transition: width .3s; }
+.sk-total { font-size: 12px; color: var(--sk-ts); margin-top: 10px; }
+
+/* ===== 图鉴 ===== */
+.sk-section-title { font-size: 15px; font-weight: 700; margin: 16px 0 10px; }
+.sk-col-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media(min-width:600px){ .sk-col-grid { grid-template-columns: repeat(3, 1fr); } }
+.sk-col-item {
+  background: var(--sk-card); border: 1px solid var(--sk-bd);
+  border-radius: 14px; padding: 12px; text-align: center;
+}
+.sk-col-icon { font-size: 40px; margin-bottom: 6px; }
+.sk-col-name { font-size: 13px; font-weight: 700; }
+.sk-col-tag { font-size: 11px; color: var(--sk-ts); margin-top: 3px; }
+.sk-craft-btn {
+  margin-top: 8px; width: 100%; padding: 7px; border: none; border-radius: 8px;
+  background: var(--sk-card2); color: var(--sk-ts); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.sk-craft-btn.ready { background: linear-gradient(135deg, var(--sk-gold), #FFD580); color: #3a2a00; }
+.sk-craft-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ===== 兑换 ===== */
+.sk-points-banner {
+  background: linear-gradient(135deg, #2a3a5c, #3a4a6c);
+  border-radius: 14px; padding: 16px; text-align: center; font-size: 15px; margin-bottom: 12px;
+}
+.sk-points-banner b { font-size: 28px; color: var(--sk-gold); display: block; margin-top: 4px; }
+.sk-ex-list { display: flex; flex-direction: column; gap: 10px; }
+.sk-ex-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--sk-card); border: 1px solid var(--sk-bd);
+  border-radius: 14px; padding: 12px;
+}
+.sk-ex-icon { font-size: 32px; }
+.sk-ex-info { flex: 1; }
+.sk-ex-name { font-size: 14px; font-weight: 700; }
+.sk-ex-cost { font-size: 12px; color: var(--sk-gold); margin-top: 2px; }
+.sk-ex-btn {
+  padding: 9px 14px; border: none; border-radius: 9px;
+  background: linear-gradient(135deg, var(--sk-p), #23ADE5); color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.sk-ex-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ===== 排行 ===== */
+.sk-rank-list { display: flex; flex-direction: column; gap: 8px; }
+.sk-rank-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--sk-card); border: 1px solid var(--sk-bd);
+  border-radius: 12px; padding: 11px 14px;
+}
+.sk-rank-item.me { border-color: var(--sk-p); background: rgba(0,161,214,.1); }
+.sk-rank-no { width: 28px; text-align: center; font-size: 16px; font-weight: 700; }
+.sk-rank-name { flex: 1; font-size: 14px; }
+.sk-rank-pts { font-size: 14px; font-weight: 700; color: var(--sk-gold); }
+
+/* ===== 我的 ===== */
+.sk-me-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.sk-me-field { display: flex; gap: 8px; align-items: center; }
+.sk-me-field label { font-size: 13px; color: var(--sk-ts); flex-shrink: 0; }
+.sk-me-field input {
+  flex: 1; padding: 10px; border: 1px solid var(--sk-bd); border-radius: 9px;
+  background: var(--sk-card2); color: var(--sk-txt); font-size: 14px; font-family: inherit;
+}
+.sk-me-field .sk-btn { padding: 10px 14px; }
+.sk-me-note { font-size: 11px; color: var(--sk-ts); margin-top: 12px; line-height: 1.6; }
+
+/* ===== 底部导航 ===== */
+.sk-tabbar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  display: flex; justify-content: space-around;
+  background: rgba(13,21,36,.92);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--sk-bd);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.sk-tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: none; border: none; color: var(--sk-ts);
+  font-size: 11px; cursor: pointer; font-family: inherit; padding: 4px 0;
+}
+.sk-tab span { font-size: 10px; }
+.sk-tab.active { color: var(--sk-p); }
+.sk-tab.active span { color: var(--sk-p); }
+
+/* ===== 开箱结果弹窗 ===== */
+.sk-gacha-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,.72); display: none;
+  align-items: center; justify-content: center;
+}
+.sk-gacha-overlay.show { display: flex; }
+.sk-gacha-result {
+  background: var(--sk-card); border: 1px solid var(--sk-bd);
+  border-radius: 18px; padding: 28px 24px; text-align: center;
+  width: calc(100% - 64px); max-width: 320px;
+  animation: skPop .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes skPop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.sk-gacha-icon { font-size: 72px; }
+.sk-gacha-rarity { font-size: 18px; font-weight: 800; margin-top: 8px; }
+.sk-gacha-name { font-size: 14px; color: var(--sk-ts); margin: 6px 0 16px; }
+.sk-gacha-result .sk-btn { width: 100%; }
+
+/* ===== Toast ===== */
+.sk-toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 200; background: rgba(30,40,60,.95); color: #fff;
+  padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s;
+}
+.sk-toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+/* ===== PC 适配 ===== */
+@media(min-width:600px) {
+  .sk-pages { max-width: 560px; }
+  .sk-cat { font-size: 120px; }
+}

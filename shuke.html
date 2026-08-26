@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>舒克养成 · 开箱打卡</title>
+<link rel="stylesheet" href="shuke.css">
+</head>
+<body>
+
+<!-- 顶部栏 -->
+<div class="sk-topbar">
+  <div class="sk-topbar-left">
+    <span class="sk-topbar-cat">🐈‍⬛</span>
+    <span class="sk-topbar-title">舒克养成</span>
+  </div>
+  <div class="sk-topbar-right">
+    <span class="sk-res">🧶 <b id="skCoins">0</b></span>
+    <span class="sk-res">⭐ <b id="skPoints">0</b></span>
+    <span class="sk-res">🍖 <b id="skFood">0</b></span>
+  </div>
+</div>
+
+<!-- 页面容器 -->
+<div class="sk-pages">
+
+  <!-- ===== 主页 ===== -->
+  <div class="sk-page active" id="sk-page-home">
+    <div class="sk-cat-wrap" id="skCatWrap">
+      <div class="sk-cat" id="skCat">🐈‍⬛</div>
+    </div>
+    <div class="sk-level-row">
+      <span class="sk-level" id="skLevel">Lv.1</span>
+      <div class="sk-expbar"><div class="sk-expbar-fill" id="skExpBar"></div></div>
+      <span class="sk-exptext" id="skExpText">0/80</span>
+    </div>
+    <div class="sk-mood" id="skMood">今天也要好好吃饭哦~</div>
+    <div class="sk-streak" id="skStreak">连签 0 天</div>
+
+    <div class="sk-actions">
+      <button class="sk-btn sk-btn-primary" id="skPetBtn" onclick="SK.doPet()">撸猫 (3/3)</button>
+      <button class="sk-btn sk-btn-accent" onclick="SK.doFeed()">🍖 喂猫</button>
+    </div>
+
+    <div class="sk-prod-card">
+      <div class="sk-prod-head">⏱ 挂机产出 <span>满仓 <b id="skProdCap">200</b></span></div>
+      <div class="sk-prod-amount">已产出 <b id="skProdAmount">0</b> 猫毛球</div>
+      <button class="sk-btn sk-btn-claim" id="skProdBtn" onclick="SK.claimProduction()">领取猫毛球</button>
+    </div>
+  </div>
+
+  <!-- ===== 签到 ===== -->
+  <div class="sk-page" id="sk-page-checkin">
+    <div class="sk-card">
+      <div class="sk-checkin-head">
+        <div class="sk-streak-big">🔥 连续签到 <b id="skStreakNum">0</b> 天</div>
+        <div class="sk-streak-bonus">挂机产出加成 <b id="skStreakBonus">+0%</b></div>
+      </div>
+      <div class="sk-checkin-grid" id="skCheckinGrid"></div>
+      <button class="sk-btn sk-btn-primary sk-checkin-btn" id="skCheckinBtn" onclick="SK.doCheckin();SK.switchPage('checkin')">签到领奖励</button>
+      <div class="sk-checkin-tip">断签会清零加成哦，记得每天来~</div>
+    </div>
+  </div>
+
+  <!-- ===== 开箱 ===== -->
+  <div class="sk-page" id="sk-page-gacha">
+    <div class="sk-card sk-gacha-card">
+      <div class="sk-gacha-box" id="skGachaBox" onclick="SK.doGacha()">🎁</div>
+      <div class="sk-gacha-label">开箱消耗 <b id="skGachaCost">50</b> 猫毛球</div>
+      <button class="sk-btn sk-btn-primary sk-gacha-btn" onclick="SK.doGacha()">🎁 开箱</button>
+      <div class="sk-pity">
+        <div class="sk-pity-text">距离传说保底还差 <b id="skPity">30</b> 箱</div>
+        <div class="sk-pity-bar"><div class="sk-pity-fill" id="skPityBar"></div></div>
+      </div>
+      <div class="sk-total">已开箱 <b id="skTotalOpened">0</b> 次</div>
+    </div>
+  </div>
+
+  <!-- ===== 图鉴 ===== -->
+  <div class="sk-page" id="sk-page-collection">
+    <div class="sk-section-title">🐈‍⬛ 皮肤</div>
+    <div class="sk-col-grid" id="skSkins"></div>
+    <div class="sk-section-title">✨ 表情 & 装扮</div>
+    <div class="sk-col-grid" id="skOthers"></div>
+  </div>
+
+  <!-- ===== 兑换 ===== -->
+  <div class="sk-page" id="sk-page-exchange">
+    <div class="sk-points-banner">⭐ 我的积分 <b id="skPointsBig">0</b></div>
+    <div class="sk-ex-list" id="skExchangeList"></div>
+  </div>
+
+  <!-- ===== 排行 ===== -->
+  <div class="sk-page" id="sk-page-rank">
+    <div class="sk-section-title">🏆 积分排行</div>
+    <div class="sk-rank-list" id="skRankList"></div>
+  </div>
+
+  <!-- ===== 我的 ===== -->
+  <div class="sk-page" id="sk-page-me">
+    <div class="sk-card">
+      <div class="sk-me-title">我的信息</div>
+      <div class="sk-me-field">
+        <label>昵称</label>
+        <input id="skUserName" type="text" maxlength="12">
+        <button class="sk-btn sk-btn-primary" id="skSaveName">保存</button>
+      </div>
+      <div class="sk-me-note">存档保存在本地浏览器（localStorage），刷新不丢失。</div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部导航 -->
+<div class="sk-tabbar">
+  <button class="sk-tab active" data-page="home">🏠<span>首页</span></button>
+  <button class="sk-tab" data-page="checkin">📅<span>签到</span></button>
+  <button class="sk-tab" data-page="gacha">🎁<span>开箱</span></button>
+  <button class="sk-tab" data-page="collection">📖<span>图鉴</span></button>
+  <button class="sk-tab" data-page="exchange">🎁<span>兑换</span></button>
+  <button class="sk-tab" data-page="rank">🏆<span>排行</span></button>
+  <button class="sk-tab" data-page="me">🙋<span>我的</span></button>
+</div>
+
+<!-- 开箱结果弹窗 -->
+<div class="sk-gacha-overlay" id="skGachaOverlay" onclick="SK.closeGachaResult()">
+  <div class="sk-gacha-result" onclick="event.stopPropagation()">
+    <div class="sk-gacha-icon" id="skGachaIcon">✨</div>
+    <div class="sk-gacha-rarity" id="skGachaRarity">稀有</div>
+    <div class="sk-gacha-name" id="skGachaName"></div>
+    <button class="sk-btn sk-btn-primary" onclick="SK.closeGachaResult()">收下</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="sk-toast" id="skToast"></div>
+
+<script src="shuke.js"></script>
+</body>
+</html>
