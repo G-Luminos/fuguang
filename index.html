@@ -385,20 +385,22 @@
 <script data-cat="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif" src="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.js"></script>
 <script>
 (function(){
+  var hidden = false;
+  function hideCat(){
+    var c = document.getElementById('oneko');
+    if(!c || hidden) return;
+    hidden = true;
+    c.style.display = 'none';
+  }
   function bind(){
     var c = document.getElementById('oneko');
     if(!c) return setTimeout(bind, 200);
-    c.addEventListener('click',function(e){
+    function onHide(e){
       e.stopPropagation();
-      c.style.transform='scale(2.2) translateY(-6px)';
-      setTimeout(function(){ c.style.transform='scale(2)'; }, 150);
-      var h=document.createElement('span');
-      h.style.cssText='position:fixed;z-index:2147483648;pointer-events:none;font-size:20px;left:'+(e.clientX-10)+'px;top:'+(e.clientY-10)+'px;transition:all 1s ease-out;opacity:1;';
-      h.textContent='💚';
-      document.body.appendChild(h);
-      requestAnimationFrame(function(){ h.style.transform='translateY(-60px)'; h.style.opacity='0'; });
-      setTimeout(function(){ h.remove(); }, 1100);
-    });
+      hideCat();
+    }
+    c.addEventListener('click', onHide);
+    c.addEventListener('touchend', onHide, { passive: true });
   }
   bind();
 })();
