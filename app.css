@@ -160,6 +160,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .cx-act .cc{border:1.5px solid var(--bd);background:transparent;color:var(--txt)}
 .cx-act .ck{background:var(--err);color:#FFF}
 
+/* ===== 自动续舰提示弹框 ===== */
+.arh-icon{font-size:44px;line-height:1;margin-bottom:8px;animation:arhBounce 1.2s ease infinite}
+@keyframes arhBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.arh-title{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--p)}
+.arh-desc{font-size:13px;line-height:1.6;color:var(--ts);margin-bottom:18px}
+
 /* ===== Toast ===== */
 .tc{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
 .to{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;color:#FFF;box-shadow:0 4px 12px rgba(0,0,0,.12);animation:ti .25s ease,to .25s ease 2.5s forwards;pointer-events:auto}
@@ -177,15 +183,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .btn-e:active{transform:scale(.97)}
 
 /* ===== 自动续舰开关 ===== */
-.renew-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg);transition:all .15s;user-select:none}
+.renew-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 14px;border:1.5px solid var(--bd);border-radius:10px;background:var(--bg);transition:all .15s;user-select:none}
 .renew-toggle:hover{border-color:var(--p)}
 .renew-toggle input{display:none}
-.renew-toggle-box{width:40px;height:22px;border-radius:11px;background:#C4C9CF;position:relative;flex-shrink:0;transition:background .2s}
-.renew-toggle-box::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#FFF;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.renew-toggle-box{width:46px;height:26px;border-radius:13px;background:#C4C9CF;position:relative;flex-shrink:0;transition:background .2s}
+.renew-toggle-box::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#FFF;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .renew-toggle input:checked + .renew-toggle-box{background:var(--p)}
-.renew-toggle input:checked + .renew-toggle-box::after{transform:translateX(18px)}
-.renew-toggle-txt{font-size:13px;font-weight:600;color:var(--txt);display:flex;flex-direction:column;align-items:flex-start}
-.renew-toggle-txt em{font-style:normal;font-size:11px;font-weight:400;color:var(--ts);margin-top:2px}
+.renew-toggle input:checked + .renew-toggle-box::after{transform:translateX(20px)}
+.renew-toggle-txt{font-size:14px;font-weight:600;color:var(--txt);display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.renew-toggle-txt em{font-style:normal;font-size:11px;font-weight:500;color:var(--ts);transition:color .15s}
+/* 选中态：整行高亮 */
+.renew-toggle.on{border-color:var(--p);background:#E6F7FC}
+.renew-toggle.on .renew-toggle-txt{color:var(--p)}
 
 /* ===== 首页背景名字墙 ===== */
 .name-wall{position:absolute;inset:0;pointer-events:none;z-index:1;perspective:800px;overflow:hidden}

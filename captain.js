@@ -412,6 +412,7 @@ async function openForm(id) {
       document.getElementById('fa').value = await decrypt(r.address_enc || '');
       document.getElementById('fnote').value = r.note || '';
       document.getElementById('fauto').checked = !!r.auto_renew;
+      refreshAutoRenewUI();
       if (r.province) {
         document.getElementById('fp').value = r.province;
         selProvince = r.province;
@@ -454,6 +455,7 @@ async function openForm(id) {
     document.getElementById('fa').value = '';
     document.getElementById('fnote').value = '';
     document.getElementById('fauto').checked = false;
+    refreshAutoRenewUI();
   }
   document.getElementById('fm').classList.add('show');
 }
@@ -494,34 +496,10 @@ async function saveForm() {
     };
     const result = await dbInsertRecord(rec);
     if (result) {
-      if (auto_renew) {
-        await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
-        await copyToNextMonth(n, phone_enc, fp, fc, fd, address_enc, fn);
-      }
+      if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
       closeForm(); render(); toast('已添加 ✅','s');
     }
     else { toast('添加失败','e'); }
-  }
-}
-
-function getNextMonth() {
-  const n = new Date();
-  const y = n.getFullYear(), m = n.getMonth() + 1;
-  const nm = m === 12 ? 1 : m + 1;
-  const ny = m === 12 ? y + 1 : y;
-  return ny + '-' + String(nm).padStart(2, '0');
-}
-
-async function copyToNextMonth(nickname, phone_enc, province, city, district, address_enc, note) {
-  if (!window.sb) return;
-  const next = getNextMonth();
-  // 检查下月是否已有同名记录，有则更新，无则插入
-  const { data: existing } = await window.sb.from('records').select('id').eq('month', next).eq('nickname', nickname);
-  if (existing && existing.length > 0) {
-    await window.sb.from('records').update({ phone_enc, province, city, district, address_enc, note })
-      .eq('id', existing[0].id);
-  } else {
-    await window.sb.from('records').insert({ nickname, phone_enc, province, city, district, address_enc, note, month: next, auto_renew: true });
   }
 }
 
@@ -540,7 +518,32 @@ async function removeRenewCaptainByName(nickname) {
   }
 }
 
-function onAutoRenewToggle() {}
+function refreshAutoRenewUI() {
+  const checked = document.getElementById('fauto').checked;
+  const txt = document.getElementById('fautoTxt');
+  const label = document.querySelector('.renew-toggle');
+  if (label) label.classList.toggle('on', checked);
+  if (txt) {
+    txt.textContent = checked ? '已开启 · 后续每月自动带出地址' : '未开启 · 仅本月有效';
+    txt.style.color = checked ? 'var(--ok)' : '';
+  }
+}
+
+function onAutoRenewToggle() {
+  refreshAutoRenewUI();
+  // 从「未勾选」切到「勾选」时，弹提示框
+  if (document.getElementById('fauto').checked) {
+    openAutoRenewHint();
+  }
+}
+
+function openAutoRenewHint() {
+  document.getElementById('arh').classList.add('show');
+}
+
+function closeAutoRenewHint() {
+  document.getElementById('arh').classList.remove('show');
+}
 
 function editR(id) { openForm(id) }
 
@@ -640,20 +643,43 @@ async function delRenewCaptain(id) {
   } else { toast('删除失败','e'); }
 }
 
+async function exportRenewList() {
+  if (window.role !== 'admin') return;
+  const caps = await dbGetRenewCaptains();
+  if (caps.length === 0) { toast('续舰名单为空','e'); return; }
+  for (const c of caps) {
+    c._phone = await decrypt(c.phone_enc || '');
+    c._address = await decrypt(c.address_enc || '');
+  }
+  // 复用柔造格式导出
+  doExport(caps, '续舰名单');
+}
+
 /* ================================================================
    Export
    ================================================================ */
 async function exportData() {
   if (window.role !== 'admin') return;
   const recs = await dbGetRecords(getCurMonth());
-  if (recs.length === 0) { toast('本月无数据','e'); return; }
   for (const r of recs) {
     r._phone = await decrypt(r.phone_enc || '');
     r._address = await decrypt(r.address_enc || '');
   }
-  const comp = recs.filter(r => r._phone && r.province && r.city && r.district);
-  if (comp.length < recs.length) {
-    document.getElementById('cm').textContent = (recs.length-comp.length)+' 条信息不全，是否只导出 '+comp.length+' 条完整记录？';
+  // 合并续舰名单（自动续舰的人一起导出，避免漏发）
+  const caps = await dbGetRenewCaptains();
+  const merged = recs.slice();
+  for (const c of caps) {
+    c._phone = await decrypt(c.phone_enc || '');
+    c._address = await decrypt(c.address_enc || '');
+    // 若本月 records 已有同名，跳过（以 records 为准）
+    const dup = merged.find(r => r.nickname === c.nickname);
+    if (dup) continue;
+    merged.push(c);
+  }
+  if (merged.length === 0) { toast('本月无数据','e'); return; }
+  const comp = merged.filter(r => r._phone && r.province && r.city && r.district);
+  if (comp.length < merged.length) {
+    document.getElementById('cm').textContent = (merged.length-comp.length)+' 条信息不全，是否只导出 '+comp.length+' 条完整记录？';
     document.getElementById('cd').classList.add('show');
     document.getElementById('cok').onclick = () => { closeConfirm(); doExport(comp, getCurMonth()) };
     return;

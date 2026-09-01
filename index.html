@@ -105,7 +105,7 @@
       <label class="renew-toggle">
         <input type="checkbox" id="fauto" onchange="onAutoRenewToggle()">
         <span class="renew-toggle-box"></span>
-        <span class="renew-toggle-txt">🔄 自动续舰 <em>下月自动续填地址，免重复填写</em></span>
+        <span class="renew-toggle-txt">🔄 自动续舰 <em id="fautoTxt">未开启 · 仅本月有效</em></span>
       </label>
     </div>
   </div>
@@ -121,6 +121,16 @@
   <div class="cx-act">
     <button class="cc" onclick="closeConfirm()">取消</button>
     <button class="ck" id="cok">确定</button>
+  </div>
+</div></div>
+
+<!-- Auto Renew Hint Modal -->
+<div class="cd" id="arh"><div class="cx" style="max-width:340px">
+  <div class="arh-icon">🐱</div>
+  <p class="arh-title">已开启自动续舰 🎉</p>
+  <p class="arh-desc">勾选后，接下来每个月都不再需要重复填写地址，会自动带出哦～如有疑问，可咨询小光 💫</p>
+  <div class="cx-act">
+    <button class="ck" style="background:var(--p);color:#FFF" onclick="closeAutoRenewHint()">知道啦</button>
   </div>
 </div></div>
 
@@ -142,6 +152,7 @@
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <input id="rn" type="text" placeholder="昵称" maxlength="20" style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:15px">
       <button class="btn-p" style="flex:none" onclick="addRenewCaptain()">新增</button>
+      <button class="btn-p" style="flex:none" onclick="exportRenewList()">导出</button>
     </div>
     <div id="rmBody" style="max-height:50vh;overflow-y:auto"></div>
   </div>

@@ -37,6 +37,13 @@ body {
   border-bottom: 1px solid var(--sk-bd);
 }
 .sk-topbar-left { display: flex; align-items: center; gap: 6px; }
+.sk-back-btn {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--sk-bd);
+  background: var(--sk-card2); color: var(--sk-txt); font-size: 20px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.sk-back-btn:hover { background: var(--sk-p); color: #fff; border-color: transparent }
 .sk-topbar-cat { font-size: 22px; }
 .sk-topbar-title { font-weight: 700; font-size: 16px; }
 .sk-topbar-right { display: flex; gap: 10px; }
