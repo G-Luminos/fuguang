@@ -165,6 +165,18 @@ async function dbDeleteRenewCaptain(id) {
   return true;
 }
 
+async function dbUpdateRenewCaptain(id, updates) {
+  if (!window.sb) return null;
+  const { data, error } = await window.sb
+    .from('renew_captains')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) { return null; }
+  return data;
+}
+
 /* ================================================================
    Utility
    ================================================================ */
@@ -237,7 +249,6 @@ function enterApp() {
   const isA = window.role ==='admin';
   document.getElementById('btnHist').style.display = isA ? '' : 'none';
   document.getElementById('btnRenew').style.display = isA ? '' : 'none';
-  document.getElementById('btnExport').style.display = isA ? '' : 'none';
   document.getElementById('statsRow').style.display = isA ? 'grid' : 'none';
   document.getElementById('srch').style.display = isA ? '' : 'none';
   document.getElementById('gb').style.display = isA ? 'none' : '';
@@ -411,8 +422,7 @@ async function openForm(id) {
       document.getElementById('fph').value = await decrypt(r.phone_enc || '');
       document.getElementById('fa').value = await decrypt(r.address_enc || '');
       document.getElementById('fnote').value = r.note || '';
-      document.getElementById('fauto').checked = !!r.auto_renew;
-      refreshAutoRenewUI();
+      setRenewModeRaw(!!r.auto_renew ? 1 : 0);
       if (r.province) {
         document.getElementById('fp').value = r.province;
         selProvince = r.province;
@@ -454,8 +464,7 @@ async function openForm(id) {
     document.getElementById('fd').innerHTML = '<option value="">请先选城市</option>'; document.getElementById('fd').disabled = true;
     document.getElementById('fa').value = '';
     document.getElementById('fnote').value = '';
-    document.getElementById('fauto').checked = false;
-    refreshAutoRenewUI();
+    setRenewModeRaw(0);
   }
   document.getElementById('fm').classList.add('show');
 }
@@ -477,7 +486,7 @@ async function saveForm() {
 
   const phone_enc = await encrypt(ph);
   const address_enc = await encrypt(fa);
-  const auto_renew = document.getElementById('fauto').checked;
+  const auto_renew = document.getElementById('fauto').value === '1';
 
   if (editingId) {
     const ok = await dbUpdateRecord(editingId, {
@@ -518,22 +527,29 @@ async function removeRenewCaptainByName(nickname) {
   }
 }
 
-function refreshAutoRenewUI() {
-  const checked = document.getElementById('fauto').checked;
-  const txt = document.getElementById('fautoTxt');
-  const label = document.querySelector('.renew-toggle');
-  if (label) label.classList.toggle('on', checked);
-  if (txt) {
-    txt.textContent = checked ? '已开启 · 后续每月自动带出地址' : '未开启 · 仅本月有效';
-    txt.style.color = checked ? 'var(--ok)' : '';
+function setRenewMode(val) {
+  // 用户点击分段按钮
+  if (val === 1) {
+    openAutoRenewHint(); // 切到自动续舰时弹提示框
   }
+  setRenewModeRaw(val);
 }
 
-function onAutoRenewToggle() {
-  refreshAutoRenewUI();
-  // 从「未勾选」切到「勾选」时，弹提示框
-  if (document.getElementById('fauto').checked) {
-    openAutoRenewHint();
+function setRenewModeRaw(val) {
+  // 仅设置状态和 UI，不弹框（回填用）
+  const seg = document.getElementById('renewSeg');
+  const fauto = document.getElementById('fauto');
+  const txt = document.getElementById('fautoTxt');
+  if (fauto) fauto.value = val ? '1' : '0';
+  if (seg) {
+    seg.querySelectorAll('.renew-seg-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.val, 10) === val);
+    });
+  }
+  if (txt) {
+    txt.textContent = val
+      ? '自动续舰：后续每月自动带出地址，无需重复填写'
+      : '手动填写：本月只填一次，下月需重新填写';
   }
 }
 
@@ -601,6 +617,9 @@ async function exportHistory(m) {
    ================================================================ */
 async function openRenewAdmin() {
   if (window.role !== 'admin') return;
+  editingRenewId = null;
+  document.getElementById('rn').placeholder = '昵称';
+  document.getElementById('rmAddBtn').textContent = '新增';
   await renderRenewAdmin();
   document.getElementById('rm').classList.add('show');
   document.getElementById('rn').value = '';
@@ -617,21 +636,47 @@ async function renderRenewAdmin() {
   body.innerHTML = caps.map(c => {
     return '<div class="hist-item">'+
       '<div><div class="mon">'+esc(c.nickname)+'</div><div class="cnt">'+(c.province?'地址已存':'仅名字')+'</div></div>'+
+      '<div style="display:flex;gap:6px">'+
+      '<button onclick="editRenewCaptain(\''+c.id+'\')">编辑</button>'+
       '<button onclick="delRenewCaptain(\''+c.id+'\')" style="border-color:var(--err);color:var(--err)">删除</button>'+
+      '</div>'+
     '</div>';
   }).join('');
 }
+
+var editingRenewId = null;
 
 async function addRenewCaptain() {
   if (window.role !== 'admin') return;
   const n = document.getElementById('rn').value.trim();
   if (!n) { toast('请输入昵称','e'); return; }
-  const result = await dbUpsertRenewCaptain({ nickname: n });
+  let result;
+  const wasEditing = !!editingRenewId;
+  if (editingRenewId) {
+    result = await dbUpdateRenewCaptain(editingRenewId, { nickname: n });
+  } else {
+    result = await dbUpsertRenewCaptain({ nickname: n });
+  }
   if (result) {
+    editingRenewId = null;
     document.getElementById('rn').value = '';
+    document.getElementById('rn').placeholder = '昵称';
+    document.getElementById('rmAddBtn').textContent = '新增';
     await renderRenewAdmin();
-    toast('已新增 ✅','s');
-  } else { toast('新增失败（可能重名）','e'); }
+    toast(wasEditing ? '已保存 ✅' : '已新增 ✅','s');
+  } else { toast('操作失败（可能重名）','e'); }
+}
+
+async function editRenewCaptain(id) {
+  if (window.role !== 'admin') return;
+  const caps = await dbGetRenewCaptains();
+  const c = caps.find(x => x.id === id);
+  if (!c) return;
+  editingRenewId = id;
+  document.getElementById('rn').value = c.nickname || '';
+  document.getElementById('rn').placeholder = '编辑昵称...';
+  document.getElementById('rmAddBtn').textContent = '保存';
+  document.getElementById('rn').focus();
 }
 
 async function delRenewCaptain(id) {
@@ -641,18 +686,6 @@ async function delRenewCaptain(id) {
     await renderRenewAdmin();
     toast('已删除','i');
   } else { toast('删除失败','e'); }
-}
-
-async function exportRenewList() {
-  if (window.role !== 'admin') return;
-  const caps = await dbGetRenewCaptains();
-  if (caps.length === 0) { toast('续舰名单为空','e'); return; }
-  for (const c of caps) {
-    c._phone = await decrypt(c.phone_enc || '');
-    c._address = await decrypt(c.address_enc || '');
-  }
-  // 复用柔造格式导出
-  doExport(caps, '续舰名单');
 }
 
 /* ================================================================

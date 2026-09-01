@@ -75,9 +75,8 @@
       <button class="btn-o" onclick="backToLanding()">返回</button>
       <button class="btn-cotton-hd" onclick="openCottonCandy()">🍬 投稿</button>
       <button class="btn-o" onclick="openGiftShowcase()">🎁 舰礼</button>
-      <button class="btn-o" id="btnHist" onclick="openHistory()">历史</button>
+      <button class="btn-o" id="btnHist" onclick="openHistory()">📅 历史/导出</button>
       <button class="btn-o" id="btnRenew" onclick="openRenewAdmin()">续舰名单</button>
-      <button class="btn-o" id="btnExport" onclick="exportData()">导出</button>
     </div>
   </div>
   </div>
@@ -102,11 +101,17 @@
     <div class="fg"><label>详细地址 <span style="color:var(--err)">*</span></label><input id="fa" type="text" placeholder="详细地址（加密存储）" required></div>
     <div class="fg"><label>备注</label><textarea id="fnote" rows="2" placeholder="备注（选填）"></textarea></div>
     <div class="fg">
-      <label class="renew-toggle">
-        <input type="checkbox" id="fauto" onchange="onAutoRenewToggle()">
-        <span class="renew-toggle-box"></span>
-        <span class="renew-toggle-txt">🔄 自动续舰 <em id="fautoTxt">未开启 · 仅本月有效</em></span>
-      </label>
+      <label style="font-size:14px;font-weight:600;margin-bottom:6px;display:block">舰长类型</label>
+      <div class="renew-seg" id="renewSeg">
+        <button type="button" class="renew-seg-btn active" data-val="0" onclick="setRenewMode(0)">
+          <span class="seg-ico">📝</span> 手动填写
+        </button>
+        <button type="button" class="renew-seg-btn" data-val="1" onclick="setRenewMode(1)">
+          <span class="seg-ico">🔄</span> 自动续舰
+        </button>
+      </div>
+      <input type="hidden" id="fauto" value="0">
+      <div class="renew-seg-hint" id="fautoTxt">手动填写：本月只填一次，下月需重新填写</div>
     </div>
   </div>
   <div class="m-ft">
@@ -136,8 +141,9 @@
 
 <!-- History Modal -->
 <div class="mo" id="hm"><div class="m">
-  <div class="m-hd"><h2>历史月份</h2><button onclick="closeHistory()">✕</button></div>
+  <div class="m-hd"><h2>📅 历史记录</h2><button onclick="closeHistory()">✕</button></div>
   <div class="m-bd">
+    <button class="btn-p" style="width:100%;margin-bottom:12px" onclick="exportData()">📤 导出当月舰长 + 续费舰长</button>
     <div id="hmBody"></div>
   </div>
   <div class="m-ft">
@@ -151,8 +157,7 @@
   <div class="m-bd">
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <input id="rn" type="text" placeholder="昵称" maxlength="20" style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:15px">
-      <button class="btn-p" style="flex:none" onclick="addRenewCaptain()">新增</button>
-      <button class="btn-p" style="flex:none" onclick="exportRenewList()">导出</button>
+      <button class="btn-p" id="rmAddBtn" style="flex:none" onclick="addRenewCaptain()">新增</button>
     </div>
     <div id="rmBody" style="max-height:50vh;overflow-y:auto"></div>
   </div>
