@@ -354,11 +354,12 @@ async function render() {
   decrypted.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
   list.innerHTML = decrypted.map(r => {
     const ad = fullAd(r);
-    return '<div class="gc" id="c-'+r.id+'">'+
+    const isRenew = !!r.auto_renew;
+    return '<div class="gc'+(isRenew?' gc-renew':'')+'" id="c-'+r.id+'">'+
       '<div class="gc-hd" onclick="toggleD(\''+r.id+'\')">'+
         '<div class="gc-av">'+(r.nickname||'?').charAt(0)+'</div>'+
         '<div class="gc-info">'+
-          '<div class="gc-nm">'+esc(r.nickname)+'</div>'+
+          '<div class="gc-nm">'+esc(r.nickname)+(isRenew?'<span class="gc-renew-tag">自动续费</span>':'')+'</div>'+
           '<div class="gc-meta">📱 '+(r._phone||'未填')+'</div>'+
         '</div>'+
         (isA ? '<div class="gc-act" onclick="event.stopPropagation()"><button onclick="editR(\''+r.id+'\')">✏️</button><button onclick="delR(\''+r.id+'\')">🗑️</button></div>' : '')+
@@ -368,6 +369,7 @@ async function render() {
         '<p><strong>手机：</strong>'+(r._phone||'未填')+'</p>'+
         '<p><strong>地址：</strong>'+(ad||'未填')+'</p>'+
         (r.note ? '<p><strong>备注：</strong>'+esc(r.note)+'</p>' : '')+
+        (isRenew ? '<p class="gc-renew-line">🔄 自动续费：下月自动带出地址</p>' : '')+
       '</div>'+
     '</div>';
   }).join('');
