@@ -93,21 +93,36 @@ async function dbGetRecords(month) {
 
 async function dbInsertRecord(rec) {
   if (!window.sb) return null;
-  const { data, error } = await window.sb
+  let { data, error } = await window.sb
     .from('records')
     .insert(rec)
     .select()
     .single();
+  if (error && error.message && error.message.indexOf('auto_renew') >= 0) {
+    // 数据库尚未建 auto_renew 字段，去掉该字段重试（自动续舰功能待建表后生效）
+    const safe = Object.assign({}, rec);
+    delete safe.auto_renew;
+    const retry = await window.sb.from('records').insert(safe).select().single();
+    if (retry.error) { return null; }
+    return retry.data;
+  }
   if (error) { return null; }
   return data;
 }
 
 async function dbUpdateRecord(id, updates) {
   if (!window.sb) return false;
-  const { error } = await window.sb
+  let { error } = await window.sb
     .from('records')
     .update(updates)
     .eq('id', id);
+  if (error && error.message && error.message.indexOf('auto_renew') >= 0) {
+    const safe = Object.assign({}, updates);
+    delete safe.auto_renew;
+    const retry = await window.sb.from('records').update(safe).eq('id', id);
+    if (retry.error) { return false; }
+    return true;
+  }
   if (error) { return false; }
   return true;
 }
