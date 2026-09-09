@@ -160,7 +160,7 @@ async function loadGiftImages() {
     });
 
   } catch (err) {
-    console.error('加载礼物图片出错:', err);
+    // 图片列表加载失败（可能尚未上传图片）
   }
 }
 
@@ -535,10 +535,10 @@ async function handleImageUpload(files) {
     return;
   }
   
-  showToast(`正在处理 ${files.length} 张图片...`, 'i');
-  
-  for (const file of files) {
-    try {
+  if (typeof window.showLoading === 'function') window.showLoading('⏳ 正在上传 ' + files.length + ' 张图片...');
+  try {
+    for (const file of files) {
+      try {
       // 1. 添加水印
       const watermarkedBlob = await addWatermark(file);
       
@@ -586,8 +586,11 @@ async function handleImageUpload(files) {
       giftImages[currentMonthId].push(dbData);
       
     } catch (err) {
-      console.error('处理图片失败:', err);
+      // 单张图片处理失败，跳过继续
     }
+    }
+  } finally {
+    if (typeof window.hideLoading === 'function') window.hideLoading();
   }
   
   showToast('上传完成', 's');
@@ -680,6 +683,7 @@ async function deleteImage(imageId) {
     return;
   }
   
+  if (typeof window.showLoading === 'function') window.showLoading('⏳ 删除中...');
   try {
     const images = giftImages[currentMonthId];
     if (!images) return;
@@ -717,6 +721,8 @@ async function deleteImage(imageId) {
     
   } catch (err) {
     showToast('删除失败', 'e');
+  } finally {
+    if (typeof window.hideLoading === 'function') window.hideLoading();
   }
 }
 

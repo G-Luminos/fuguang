@@ -200,4 +200,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 /* ===== 首页背景名字墙 ===== */
 .name-wall{position:absolute;inset:0;pointer-events:none;z-index:1;perspective:800px;overflow:hidden}
 .nw-name{position:absolute;font-weight:700;color:rgba(255,255,255,.16);letter-spacing:2px;white-space:nowrap;animation:nwFloat 8s ease-in-out infinite;transition:transform .15s ease-out;will-change:transform;text-shadow:0 0 12px rgba(0,161,214,.25)}
-@keyframes nwFloat{0%,100%{margin-top:0}50%{margin-top:-14px}}
+/* ===== 全局 Loading 遮罩 ===== */
+.g-loading{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(2px)}
+.g-loading.show{display:flex}
+.g-loading-box{background:#FFF;border-radius:14px;padding:26px 30px;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.2);animation:gloadIn .2s ease}
+@keyframes gloadIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.g-loading-spinner{width:34px;height:34px;border:3px solid rgba(0,161,214,.2);border-top-color:var(--p);border-radius:50%;animation:gloadSpin .8s linear infinite}
+@keyframes gloadSpin{to{transform:rotate(360deg)}}
+.g-loading-text{font-size:13px;color:var(--ts);font-weight:600}

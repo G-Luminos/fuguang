@@ -208,7 +208,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s||''
 function openAdminLogin() { document.getElementById('alm').classList.add('show'); document.getElementById('le').style.display='none' }
 function closeAdminLogin() { document.getElementById('alm').classList.remove('show'); document.getElementById('lu').value=''; document.getElementById('lpw').value='' }
 
-function doLogin() {
+async function doLogin() {
   const u = document.getElementById('lu').value.trim();
   const p = document.getElementById('lpw').value;
   if (u===ADMIN_U && p===ADMIN_P) {
@@ -216,7 +216,8 @@ function doLogin() {
     localStorage.setItem(SK+'_role','admin');
     closeAdminLogin();
     if (!initSB()) return;
-    enterApp();
+    showLoading('⏳ 登录中...');
+    try { await enterApp(); } finally { hideLoading(); }
   } else {
     const e = document.getElementById('le'); e.style.display='block';
     setTimeout(()=>e.style.display='none', 3000);
@@ -232,7 +233,7 @@ function doGuest() {
 function openGuestNick() { doGuest(); }
 function closeGuestNick() { document.getElementById('gnm').classList.remove('show') }
 
-function submitGuestNick() {
+async function submitGuestNick() {
   const nm = document.getElementById('gnInput').value.trim();
   if (!nm) { document.getElementById('gne').style.display='block'; return; }
   window.role ='guest'; guestName=nm;
@@ -240,7 +241,8 @@ function submitGuestNick() {
   localStorage.setItem(SK+'_gn', guestName);
   closeGuestNick();
   if (!initSB()) return;
-  enterApp();
+  showLoading('⏳ 进入中...');
+  try { await enterApp(); } finally { hideLoading(); }
 }
 
 function doLogout() {
@@ -258,7 +260,7 @@ function backToLanding() {
   closeGiftShowcase();
 }
 
-function enterApp() {
+async function enterApp() {
   document.getElementById('lp').style.display='none';
   document.getElementById('app').classList.add('show');
   const isA = window.role ==='admin';
@@ -270,7 +272,7 @@ function enterApp() {
   if (!isA) document.getElementById('guestName').textContent = guestName;
   document.getElementById('hdTitle').textContent = isA ? '舰长信息管理' : '我的登记信息';
   document.getElementById('hdSub').textContent = isA ? ('管理员 · ' + getCurMonth()) : '舰长';
-  render();
+  await render();
 }
 
 /* ================================================================
@@ -373,7 +375,6 @@ async function render() {
       '</div>'+
     '</div>';
   }).join('');
-  if (window.role === 'admin') await renderStats();
 }
 
 async function getVisible() {
@@ -501,31 +502,36 @@ async function saveForm() {
   if (!/^1[3-9]\d{9}$/.test(ph)) { toast('请输入正确的11位手机号','e'); return; }
   if (!fa) { toast('请输入详细地址','e'); return; }
 
-  const phone_enc = await encrypt(ph);
-  const address_enc = await encrypt(fa);
-  const auto_renew = document.getElementById('fauto').value === '1';
+  showLoading('⏳ 保存中...');
+  try {
+    const phone_enc = await encrypt(ph);
+    const address_enc = await encrypt(fa);
+    const auto_renew = document.getElementById('fauto').value === '1';
 
-  if (editingId) {
-    const ok = await dbUpdateRecord(editingId, {
-      nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn, auto_renew
-    });
-    if (ok) {
-      if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
-      else await removeRenewCaptainByName(n);
-      closeForm(); render(); toast('已更新 ✅','s');
+    if (editingId) {
+      const ok = await dbUpdateRecord(editingId, {
+        nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn, auto_renew
+      });
+      if (ok) {
+        if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
+        else await removeRenewCaptainByName(n);
+        closeForm(); await render(); toast('已更新 ✅','s');
+      }
+      else { toast('更新失败','e'); }
+    } else {
+      const rec = {
+        nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn,
+        month: getCurMonth(), auto_renew
+      };
+      const result = await dbInsertRecord(rec);
+      if (result) {
+        if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
+        closeForm(); await render(); toast('已添加 ✅','s');
+      }
+      else { toast('添加失败','e'); }
     }
-    else { toast('更新失败','e'); }
-  } else {
-    const rec = {
-      nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn,
-      month: getCurMonth(), auto_renew
-    };
-    const result = await dbInsertRecord(rec);
-    if (result) {
-      if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
-      closeForm(); render(); toast('已添加 ✅','s');
-    }
-    else { toast('添加失败','e'); }
+  } finally {
+    hideLoading();
   }
 }
 
@@ -590,10 +596,13 @@ async function delR(id) {
   document.getElementById('cm').textContent = '确定删除「'+(r?r.nickname:'此记录')+'」？';
   document.getElementById('cd').classList.add('show');
   document.getElementById('cok').onclick = async () => {
-    const ok = await dbDeleteRecord(id);
-    closeConfirm();
-    if (ok) { render(); toast('已删除','i'); }
-    else { toast('删除失败','e'); }
+    showLoading('⏳ 删除中...');
+    try {
+      const ok = await dbDeleteRecord(id);
+      closeConfirm();
+      if (ok) { await render(); toast('已删除','i'); }
+      else { toast('删除失败','e'); }
+    } finally { hideLoading(); }
   };
 }
 function closeConfirm() { document.getElementById('cd').classList.remove('show') }
@@ -603,30 +612,36 @@ function closeConfirm() { document.getElementById('cd').classList.remove('show')
    ================================================================ */
 async function openHistory() {
   if (window.role !== 'admin') return;
-  const months = await dbGetMonths();
-  let html = '';
-  if (months.length === 0) {
-    html = '<div style="text-align:center;padding:24px;color:#61666D;font-size:13px">暂无历史记录</div>';
-  } else {
-    for (const m of months) {
-      const recs = await dbGetRecords(m);
-      html += '<div class="hist-item"><div><div class="mon">'+m+'</div><div class="cnt">'+recs.length+' 条记录</div></div>'+
-        '<button onclick="exportHistory(\''+m+'\')">导出 xlsx</button></div>';
+  showLoading('⏳ 加载历史...');
+  try {
+    const months = await dbGetMonths();
+    let html = '';
+    if (months.length === 0) {
+      html = '<div style="text-align:center;padding:24px;color:#61666D;font-size:13px">暂无历史记录</div>';
+    } else {
+      for (const m of months) {
+        const recs = await dbGetRecords(m);
+        html += '<div class="hist-item"><div><div class="mon">'+m+'</div><div class="cnt">'+recs.length+' 条记录</div></div>'+
+          '<button onclick="exportHistory(\''+m+'\')">导出 xlsx</button></div>';
+      }
     }
-  }
-  document.getElementById('hmBody').innerHTML = html;
-  document.getElementById('hm').classList.add('show');
+    document.getElementById('hmBody').innerHTML = html;
+    document.getElementById('hm').classList.add('show');
+  } finally { hideLoading(); }
 }
 function closeHistory() { document.getElementById('hm').classList.remove('show') }
 
 async function exportHistory(m) {
-  const recs = await dbGetRecords(m);
-  if (recs.length === 0) { toast('该月无数据','e'); return; }
-  for (const r of recs) {
-    r._phone = await decrypt(r.phone_enc || '');
-    r._address = await decrypt(r.address_enc || '');
-  }
-  doExport(recs, m);
+  showLoading('⏳ 导出中...');
+  try {
+    const recs = await dbGetRecords(m);
+    if (recs.length === 0) { toast('该月无数据','e'); return; }
+    for (const r of recs) {
+      r._phone = await decrypt(r.phone_enc || '');
+      r._address = await decrypt(r.address_enc || '');
+    }
+    doExport(recs, m);
+  } finally { hideLoading(); }
 }
 
 /* ================================================================
@@ -637,9 +652,12 @@ async function openRenewAdmin() {
   editingRenewId = null;
   document.getElementById('rn').placeholder = '昵称';
   document.getElementById('rmAddBtn').textContent = '新增';
-  await renderRenewAdmin();
-  document.getElementById('rm').classList.add('show');
-  document.getElementById('rn').value = '';
+  showLoading('⏳ 加载中...');
+  try {
+    await renderRenewAdmin();
+    document.getElementById('rm').classList.add('show');
+    document.getElementById('rn').value = '';
+  } finally { hideLoading(); }
 }
 function closeRenewAdmin() { document.getElementById('rm').classList.remove('show') }
 
@@ -667,21 +685,25 @@ async function addRenewCaptain() {
   if (window.role !== 'admin') return;
   const n = document.getElementById('rn').value.trim();
   if (!n) { toast('请输入昵称','e'); return; }
-  let result;
-  const wasEditing = !!editingRenewId;
-  if (editingRenewId) {
-    result = await dbUpdateRenewCaptain(editingRenewId, { nickname: n });
-  } else {
-    result = await dbUpsertRenewCaptain({ nickname: n });
-  }
-  if (result) {
-    editingRenewId = null;
-    document.getElementById('rn').value = '';
-    document.getElementById('rn').placeholder = '昵称';
-    document.getElementById('rmAddBtn').textContent = '新增';
-    await renderRenewAdmin();
-    toast(wasEditing ? '已保存 ✅' : '已新增 ✅','s');
-  } else { toast('操作失败（可能重名）','e'); }
+  showLoading('⏳ 保存中...');
+  try {
+    let result;
+    const wasEditing = !!editingRenewId;
+    if (editingRenewId) {
+      result = await dbUpdateRenewCaptain(editingRenewId, { nickname: n });
+    } else {
+      result = await dbUpsertRenewCaptain({ nickname: n });
+    }
+    if (result) {
+      editingRenewId = null;
+      document.getElementById('rn').value = '';
+      document.getElementById('rn').placeholder = '昵称';
+      document.getElementById('rmAddBtn').textContent = '新增';
+      await renderRenewAdmin();
+      await window.loadNameWall();
+      toast(wasEditing ? '已保存 ✅' : '已新增 ✅','s');
+    } else { toast('操作失败（可能重名）','e'); }
+  } finally { hideLoading(); }
 }
 
 async function editRenewCaptain(id) {
@@ -698,11 +720,15 @@ async function editRenewCaptain(id) {
 
 async function delRenewCaptain(id) {
   if (window.role !== 'admin') return;
-  const ok = await dbDeleteRenewCaptain(id);
-  if (ok) {
-    await renderRenewAdmin();
-    toast('已删除','i');
-  } else { toast('删除失败','e'); }
+  showLoading('⏳ 删除中...');
+  try {
+    const ok = await dbDeleteRenewCaptain(id);
+    if (ok) {
+      await renderRenewAdmin();
+      await window.loadNameWall();
+      toast('已删除','i');
+    } else { toast('删除失败','e'); }
+  } finally { hideLoading(); }
 }
 
 /* ================================================================
@@ -710,31 +736,34 @@ async function delRenewCaptain(id) {
    ================================================================ */
 async function exportData() {
   if (window.role !== 'admin') return;
-  const recs = await dbGetRecords(getCurMonth());
-  for (const r of recs) {
-    r._phone = await decrypt(r.phone_enc || '');
-    r._address = await decrypt(r.address_enc || '');
-  }
-  // 合并续舰名单（自动续舰的人一起导出，避免漏发）
-  const caps = await dbGetRenewCaptains();
-  const merged = recs.slice();
-  for (const c of caps) {
-    c._phone = await decrypt(c.phone_enc || '');
-    c._address = await decrypt(c.address_enc || '');
-    // 若本月 records 已有同名，跳过（以 records 为准）
-    const dup = merged.find(r => r.nickname === c.nickname);
-    if (dup) continue;
-    merged.push(c);
-  }
-  if (merged.length === 0) { toast('本月无数据','e'); return; }
-  const comp = merged.filter(r => r._phone && r.province && r.city && r.district);
-  if (comp.length < merged.length) {
-    document.getElementById('cm').textContent = (merged.length-comp.length)+' 条信息不全，是否只导出 '+comp.length+' 条完整记录？';
-    document.getElementById('cd').classList.add('show');
-    document.getElementById('cok').onclick = () => { closeConfirm(); doExport(comp, getCurMonth()) };
-    return;
-  }
-  doExport(comp, getCurMonth());
+  showLoading('⏳ 导出中...');
+  try {
+    const recs = await dbGetRecords(getCurMonth());
+    for (const r of recs) {
+      r._phone = await decrypt(r.phone_enc || '');
+      r._address = await decrypt(r.address_enc || '');
+    }
+    // 合并续舰名单（自动续舰的人一起导出，避免漏发）
+    const caps = await dbGetRenewCaptains();
+    const merged = recs.slice();
+    for (const c of caps) {
+      c._phone = await decrypt(c.phone_enc || '');
+      c._address = await decrypt(c.address_enc || '');
+      // 若本月 records 已有同名，跳过（以 records 为准）
+      const dup = merged.find(r => r.nickname === c.nickname);
+      if (dup) continue;
+      merged.push(c);
+    }
+    if (merged.length === 0) { toast('本月无数据','e'); return; }
+    const comp = merged.filter(r => r._phone && r.province && r.city && r.district);
+    if (comp.length < merged.length) {
+      document.getElementById('cm').textContent = (merged.length-comp.length)+' 条信息不全，是否只导出 '+comp.length+' 条完整记录？';
+      document.getElementById('cd').classList.add('show');
+      document.getElementById('cok').onclick = () => { closeConfirm(); doExport(comp, getCurMonth()) };
+      return;
+    }
+    doExport(comp, getCurMonth());
+  } finally { hideLoading(); }
 }
 
 function doExport(recs, month) {
@@ -803,6 +832,31 @@ function toast(msg, t) {
   c.appendChild(d);
   setTimeout(() => d.remove(), 3000);
 }
+
+/* ================================================================
+   全局 Loading 遮罩（所有保存/提交/删除等异步操作显示）
+   ================================================================ */
+function showLoading(msg) {
+  msg = msg || '⏳ 小光正在努力...';
+  let el = document.getElementById('gLoading');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'gLoading';
+    el.className = 'g-loading';
+    el.innerHTML = '<div class="g-loading-box"><div class="g-loading-spinner"></div><p class="g-loading-text">'+msg+'</p></div>';
+    document.body.appendChild(el);
+  } else {
+    const t = el.querySelector('.g-loading-text');
+    if (t) t.textContent = msg;
+  }
+  el.classList.add('show');
+}
+function hideLoading() {
+  const el = document.getElementById('gLoading');
+  if (el) el.classList.remove('show');
+}
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
 
 /* ================================================================
    Keyboard
