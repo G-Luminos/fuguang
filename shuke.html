@@ -7,9 +7,12 @@
 <script>
 /* 旧地址迁移：GitHub Pages 无法直连新后端（后端只放行本站域名），旧站一律跳转 */
 (function () {
-  var NEW_SITE = 'https://fuguang-luminos.app.workbuddy.host/?sharecode=7M44HIDFCE';
+  var SITE = 'https://fuguang-luminos.app.workbuddy.host';
+  var SHARE = 'sharecode=7M44HIDFCE';
   if (!/\.github\.io$/i.test(location.hostname || '')) return;
-  try { location.replace(NEW_SITE); } catch (e) { location.href = NEW_SITE; }
+  var path = (location.pathname || '/').replace(/^\/fuguang(?=\/|$)/i, '') || '/';
+  var url = SITE + path + (path.indexOf('?') >= 0 ? '&' : '?') + SHARE + (location.hash || '');
+  try { location.replace(url); } catch (e) { location.href = url; }
 })();
 </script>
 <link rel="stylesheet" href="shuke.css">

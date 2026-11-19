@@ -23,7 +23,9 @@
      index.html 已有同样守卫，这里是第二道，防止只缓存了 HTML 的情况。 */
   var _host = (global.location && global.location.hostname) || '';
   if (/\.github\.io$/i.test(_host)) {
-    global.location.replace('https://fuguang-luminos.app.workbuddy.host/?sharecode=7M44HIDFCE');
+    var _loc = global.location;
+    var _path = (_loc.pathname || '/').replace(/^\/fuguang(?=\/|$)/i, '') || '/';
+    _loc.replace('https://fuguang-luminos.app.workbuddy.host' + _path + '?sharecode=7M44HIDFCE' + (_loc.hash || ''));
     return;
   }
 

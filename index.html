@@ -12,10 +12,14 @@
 -->
 <script>
 (function () {
-  var NEW_SITE = 'https://fuguang-luminos.app.workbuddy.host/?sharecode=7M44HIDFCE';
+  var SITE = 'https://fuguang-luminos.app.workbuddy.host';
+  var SHARE = 'sharecode=7M44HIDFCE';
   var host = location.hostname || '';
   if (!/\.github\.io$/i.test(host)) return;          // 本站域名不动，正常跑应用
-  try { location.replace(NEW_SITE); } catch (e) { location.href = NEW_SITE; }
+  // 保留子页面（如 /fuguang/shuke.html），否则收藏了子页的人会被丢回首页
+  var path = (location.pathname || '/').replace(/^\/fuguang(?=\/|$)/i, '') || '/';
+  var url = SITE + path + (path.indexOf('?') >= 0 ? '&' : '?') + SHARE + (location.hash || '');
+  try { location.replace(url); } catch (e) { location.href = url; }
 })();
 </script>
 <link rel="preconnect" href="https://fuguang-luminos.app.workbuddy.host" crossorigin>
