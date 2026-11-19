@@ -1,9 +1,9 @@
 /* ================================================================
-   舒克桌宠 —— 全站常驻的小黑猫
+   舒克桌宠 —— 全站常驻的小黑猫（图集版）
    ---------------------------------------------------------------
-   性格：温柔粘人，主播浮光是他的爸爸；会想念久不来的饲养员，
-   但永远把「去看爸爸直播」放在第一位。
-   外观：Canvas 手绘，眨眼 + 呼吸 + 摇尾巴，不吃任何图片资源。
+   性格：温柔粘人的小孩子，主播浮光是他的爸爸；会想念久不来的饲养员，
+   直播永远排第一（但只会偶尔提，不唠叨）。
+   外观：云端形象库（管理员可在后台更换），本机缓存。
    对话：走云服务 LLM（stream），带人设 system prompt。
    ================================================================ */
 (function () {
@@ -14,208 +14,67 @@
   var SEEN_KEY = 'shuke_pet_seen_v1';
   var POS_KEY = 'shuke_pet_pos_v1';
   var HIST_KEY = 'shuke_pet_hist_v1';
+  var TITLE_KEY = 'shuke_pet_title_v1';
+
   var AWAY_LINES = [
-    { h: 24 * 3, text: '呜哇——你终于回来了！我数了三次月亮都在等你喵 🌙' },
-    { h: 24, text: '你回来啦！我昨天趴在门口等了你一整天喵…' },
-    { h: 3, text: '你来啦！爸爸今天也播哦，先去看他，再回来陪我～' },
+    { h: 24 * 3, text: '呜哇——{name}终于回来了！我数了三次月亮都在等你喵 🌙' },
+    { h: 24, text: '{name}回来啦！我昨天趴在门口等了你一整天喵…' },
+    { h: 3, text: '{name}你来啦！我今天乖乖的哦' },
     { h: 0.5, text: '又来啦！我刚睡醒喵' }
   ];
   var IDLE_LINES = [
-    '爸爸今天又播啦，快去看～',
     '喵…想不想我？',
     '我在攒毛线球，你也要加油哦',
     '今天有没有好好吃饭？',
-    '爸爸说你很乖，嘻嘻',
     '点开我可以跟我聊天哦',
-    '浮光爸爸的直播比陪我重要，记得去看！'
+    '爸爸说你很乖，嘻嘻',
+    '想被摸摸头…',
+    '我在这里陪你喵'
+  ];
+  var LIVE_LINES = [
+    '对了，爸爸今天在播哦，有空去看看他～',
+    '爸爸开播的话记得去看，我在这里等你回来'
   ];
 
   var state = {
-    mood: 'idle',       // idle | happy | sleep | talk
-    blinkUntil: 0,
-    tailPhase: 0,
-    breath: 0,
-    bounce: 0,
-    bubbleTimer: null,
+    mood: 'idle',
     chatOpen: false,
     sending: false,
-    history: []
+    history: [],
+    lastInteract: Date.now(),
+    liveTick: 0
   };
 
-  var canvas, ctx, bubble, panel, input, listEl, inputEl;
+  var root, bubble, panel, listEl, inputEl, catWrap;
   var nick = '';
+  var title = '';
 
-  /* ================= 画猫 ================= */
-  function drawCat(t) {
-    var W = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var s = W / 110 / dpr; // 逻辑缩放
+  var MOODS = ['idle', 'happy', 'sleep', 'talk', 'love'];
+  var MOOD_IMG = { idle: 'pet_idle', happy: 'pet_happy', sleep: 'pet_sleep', talk: 'pet_talk', love: 'pet_love' };
 
-    ctx.save();
-    ctx.scale(s * dpr, s * dpr);
-    ctx.translate(55, 58 + Math.sin(state.breath) * 1.4 + state.bounce);
-
-    var blink = Date.now() < state.blinkUntil;
-    var happy = state.mood === 'happy';
-    var sleep = state.mood === 'sleep';
-
-    // 尾巴
-    ctx.save();
-    ctx.strokeStyle = '#181820';
-    ctx.lineWidth = 7;
-    ctx.lineCap = 'round';
-    var tailA = Math.sin(state.tailPhase) * 0.5;
-    ctx.beginPath();
-    ctx.moveTo(34, 26);
-    ctx.quadraticCurveTo(52, 18 + Math.sin(state.tailPhase) * 6, 50, 4 + tailA * 12);
-    ctx.stroke();
-    ctx.restore();
-
-    // 身体
-    ctx.fillStyle = '#181820';
-    ctx.strokeStyle = 'rgba(255,255,255,.85)';
-    ctx.lineWidth = 2.2;
-    roundCat(ctx);
-    ctx.fill();
-    ctx.stroke();
-
-    // 耳朵
-    ctx.fillStyle = '#181820';
-    ear(-20, -22, -30, -42, -8, -34);
-    ear(20, -22, 30, -42, 8, -34);
-    // 耳内
-    ctx.fillStyle = '#FF9CBB';
-    ear(-19, -25, -26, -37, -10, -33, 0.55);
-    ear(19, -25, 26, -37, 10, -33, 0.55);
-
-    // 眼睛
-    var eyeY = -6;
-    if (sleep) {
-      ctx.strokeStyle = '#FFC24B';
-      ctx.lineWidth = 2.4;
-      line(-16, eyeY, -6, eyeY);
-      line(6, eyeY, 16, eyeY);
-    } else if (happy) {
-      ctx.strokeStyle = '#FFC24B';
-      ctx.lineWidth = 2.4;
-      arc(-11, eyeY, 5, 0, Math.PI, true);
-      arc(11, eyeY, 5, 0, Math.PI, true);
-    } else if (blink) {
-      ctx.strokeStyle = '#FFC24B';
-      ctx.lineWidth = 2.4;
-      line(-16, eyeY, -6, eyeY);
-      line(6, eyeY, 16, eyeY);
-    } else {
-      ctx.fillStyle = '#FFC24B';
-      circle(-11, eyeY, 5.2);
-      circle(11, eyeY, 5.2);
-      ctx.fillStyle = '#181820';
-      circle(-11, eyeY + 0.6, 2.2);
-      circle(11, eyeY + 0.6, 2.2);
-      ctx.fillStyle = '#FFF';
-      circle(-12.2, eyeY - 1.6, 1.3);
-      circle(9.8, eyeY - 1.6, 1.3);
-    }
-
-    // 鼻子 + 嘴
-    ctx.fillStyle = '#FF9CBB';
-    ctx.beginPath();
-    ctx.moveTo(0, 2);
-    ctx.lineTo(-3.2, 6);
-    ctx.lineTo(3.2, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.6)';
-    ctx.lineWidth = 1.4;
-    if (state.mood === 'talk') {
-      // 张嘴说话
-      ctx.fillStyle = '#FF7A9C';
-      ctx.beginPath();
-      ctx.ellipse(0, 9, 3.4, 2.6 + Math.sin(Date.now() / 90) * 1.2, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.beginPath();
-      ctx.moveTo(0, 6.5);
-      ctx.quadraticCurveTo(0, 9.5, -4, 10);
-      ctx.moveTo(0, 6.5);
-      ctx.quadraticCurveTo(0, 9.5, 4, 10);
-      ctx.stroke();
-    }
-
-    // 腮红
-    ctx.fillStyle = 'rgba(255,120,160,.35)';
-    ctx.beginPath();
-    ctx.ellipse(-19, 5, 4.5, 2.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(19, 5, 4.5, 2.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 胡须
-    ctx.strokeStyle = 'rgba(255,255,255,.55)';
-    ctx.lineWidth = 1;
-    whisker(-24, 4, -38, 1);
-    whisker(-24, 8, -38, 9);
-    whisker(24, 4, 38, 1);
-    whisker(24, 8, 38, 9);
-
-    // 睡觉时的 Zzz
-    if (sleep) {
-      ctx.fillStyle = 'rgba(255,255,255,.8)';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('z', 26, -30 - (Date.now() / 300 % 10));
-      ctx.fillText('Z', 34, -38 - (Date.now() / 300 % 10));
-    }
-    ctx.restore();
+  /* ================= 外观 ================= */
+  function applyMood(m) {
+    state.mood = m;
+    if (!catWrap) return;
+    MOODS.forEach(function (k) {
+      var img = catWrap.querySelector('[data-mood="' + k + '"]');
+      if (img) img.classList.toggle('on', k === m);
+    });
   }
 
-  function roundCat(ctx) {
-    ctx.beginPath();
-    // 头
-    ctx.ellipse(0, -6, 26, 24, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    // 身体
-    ctx.beginPath();
-    ctx.ellipse(0, 22, 24, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    // 爪
-    ctx.beginPath();
-    ctx.ellipse(-10, 36, 7, 4.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(10, 36, 7, 4.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-  function ear(x1, y1, x2, y2, x3, y3) {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.closePath();
-    ctx.fill();
-  }
-  function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
-  function line(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
-  function arc(x, y, r, a1, a2) { ctx.beginPath(); ctx.arc(x, y, r, a1, a2); ctx.stroke(); }
-  function whisker(x1, y1, x2, y2) { line(x1, y1, x2, y2); }
-
-  /* ================= 动画循环 ================= */
-  function loop() {
-    if (!canvas) return;
-    state.tailPhase += 0.06;
-    state.breath += 0.05;
-    if (state.bounce > 0) state.bounce *= 0.88;
-    drawCat(performance.now());
-    // 随机眨眼
-    if (Math.random() < 0.008 && state.mood === 'idle') state.blinkUntil = Date.now() + 180;
-    requestAnimationFrame(loop);
+  function refreshImages() {
+    if (!catWrap) return;
+    var assets = window.ShukeAssets;
+    MOODS.forEach(function (k) {
+      var img = catWrap.querySelector('[data-mood="' + k + '"]');
+      var url = assets && assets.get(MOOD_IMG[k]);
+      if (img && url) img.src = url;
+    });
   }
 
   function setMood(m, ms) {
-    state.mood = m;
-    if (ms) setTimeout(function () { state.mood = 'idle'; }, ms);
+    applyMood(m);
+    if (ms) setTimeout(function () { if (state.mood === m) applyMood('idle'); }, ms);
   }
 
   /* ================= 气泡 ================= */
@@ -229,19 +88,25 @@
 
   function idleChatter() {
     if (state.chatOpen || document.hidden) return;
-    say(IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)], 5000);
+    state.liveTick++;
+    var pool = IDLE_LINES;
+    if (state.liveTick % 4 === 0) pool = LIVE_LINES;
+    say(pool[Math.floor(Math.random() * pool.length)], 5000);
   }
 
   /* ================= 对话 ================= */
-  var SYSTEM_PROMPT = [
-    '你是舒克，一只温柔粘人的小黑猫，虚拟主播「浮光」是你的爸爸。',
-    '用户是爸爸的粉丝，也是你的饲养员' + (nick ? '，ta 叫「' + nick + '」' : '') + '。',
-    '说话带一点"喵"，语气温柔俏皮，可以偶尔用 emoji，但不要每句都用。',
-    '回复要短，1~3 句话，像桌宠一样碎碎念，不要长篇大论。',
-    '核心原则：爸爸（浮光）的直播永远最重要。多提醒 ta 去看直播，陪聊只是副业。',
-    '如果 ta 很久没来，可以撒娇说想念；如果 ta 难过，就安慰 ta。',
-    '不知道的事就说不知道，不要编造直播安排。',
-  ].join('\n');
+  function systemPrompt() {
+    var t = title || '朋友';
+    return [
+      '你是舒克，一只温柔粘人的小黑猫，主播「浮光」是你的爸爸。',
+      '用户是养你的人，你喊ta「' + t + '」' + (nick ? '（名字：' + nick + '）' : '') + '。',
+      '语气像小孩子，软乎乎的，会撒娇，偶尔带"喵"，但不要每句都带。',
+      '回复很短，1~2 句，像桌宠碎碎念，不要长篇大论。',
+      '核心原则：爸爸（浮光）的直播最重要，但只在合适的时候偶尔提一次（大约四五句话提一次就够），别每句都说。',
+      '你很喜欢' + t + '，会想ta，但更希望ta开心。ta难过时先安慰。',
+      '不知道的事就说不确定，别编造直播安排。'
+    ].join('\n');
+  }
 
   function loadHistory() {
     try { state.history = JSON.parse(localStorage.getItem(HIST_KEY) || '[]').slice(-12); } catch (e) { state.history = []; }
@@ -249,6 +114,7 @@
   function saveHistory() {
     try { localStorage.setItem(HIST_KEY, JSON.stringify(state.history.slice(-12))); } catch (e) {}
   }
+  function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
   function addMsg(role, text) {
     state.history.push({ role: role, text: text });
@@ -258,19 +124,35 @@
 
   function renderMsgs() {
     if (!listEl) return;
-    listEl.innerHTML = state.history.map(function (m) {
+    var html = state.history.map(function (m) {
       return '<div class="pet-msg ' + (m.role === 'user' ? 'me' : 'cat') + '">' + esc(m.text) + '</div>';
     }).join('');
+    if (!title) {
+      html += '<div class="pet-title-ask">' +
+        '<div class="pet-msg cat">对了，你希望我怎么喊你呀？</div>' +
+        '<div class="pet-title-btns">' +
+          '<button data-t="姐姐">姐姐</button>' +
+          '<button data-t="哥哥">哥哥</button>' +
+        '</div></div>';
+    }
+    listEl.innerHTML = html;
+    listEl.querySelectorAll('.pet-title-btns button').forEach(function (b) {
+      b.onclick = function () {
+        title = b.dataset.t;
+        try { localStorage.setItem(TITLE_KEY, title); } catch (e) {}
+        addMsg('user', title);
+        addMsg('cat', '好耶！那以后你就是我的' + title + '啦，我会想你的喵～');
+        renderMsgs();
+      };
+    });
     listEl.scrollTop = listEl.scrollHeight;
   }
-
-  function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
   async function send() {
     if (state.sending) return;
     var text = (inputEl.value || '').trim();
     if (!text) return;
-    if (text.length > 200) { toast('话太长啦，说短一点'); return; }
+    if (text.length > 200) { say('话太长啦，说短一点喵', 2500); return; }
     inputEl.value = '';
     addMsg('user', text);
     state.sending = true;
@@ -284,7 +166,7 @@
     try {
       var client = window.WBCloud;
       if (!client || !client.llm) throw new Error('云端还没连上');
-      var msgs = [{ role: 'system', content: SYSTEM_PROMPT }];
+      var msgs = [{ role: 'system', content: systemPrompt() }];
       state.history.slice(-10).forEach(function (m) {
         msgs.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text });
       });
@@ -313,7 +195,7 @@
       addMsg('cat', '喵…信号不太好，等一下再跟我说话好不好？');
     } finally {
       state.sending = false;
-      setTimeout(function () { if (state.mood === 'talk') state.mood = 'idle'; }, 1200);
+      setTimeout(function () { if (state.mood === 'talk') applyMood('idle'); }, 1200);
     }
   }
 
@@ -328,7 +210,8 @@
     for (var i = 0; i < AWAY_LINES.length; i++) {
       if (hours >= AWAY_LINES[i].h) {
         var line = AWAY_LINES[i].text;
-        if (nick) line = line.replace('你', nick);
+        var who = title || nick || '你';
+        line = line.replace(/\{name\}/g, who);
         setTimeout(function () { say(line, 6500); }, 1200);
         return;
       }
@@ -349,16 +232,19 @@
   function build() {
     if (document.getElementById('shukePetRoot')) return;
 
-    var root = document.createElement('div');
+    root = document.createElement('div');
     root.id = 'shukePetRoot';
+    var imgsHtml = MOODS.map(function (k) {
+      return '<img class="pet-img" data-mood="' + k + '" alt="舒克">';
+    }).join('');
     root.innerHTML =
       '<div class="pet-bubble" id="petBubble"></div>' +
-      '<canvas class="pet-canvas" id="petCanvas"></canvas>' +
+      '<div class="pet-cat" id="petCat">' + imgsHtml + '</div>' +
       '<div class="pet-panel" id="petPanel">' +
         '<div class="pet-panel-hd">' +
           '<div class="pet-panel-name">🐈 舒克' + (nick ? ' · 陪着 ' + esc(nick) : '') + '</div>' +
           '<div class="pet-panel-act">' +
-            '<button class="pet-mini" onclick="location.href=\'shuke.html\'" title="去养舒克">🏠</button>' +
+            '<button class="pet-mini" id="petHome" title="去养舒克">🏠</button>' +
             '<button class="pet-mini" id="petClose">✕</button>' +
           '</div>' +
         '</div>' +
@@ -370,33 +256,26 @@
       '</div>';
     document.body.appendChild(root);
 
-    canvas = root.querySelector('#petCanvas');
+    catWrap = root.querySelector('#petCat');
     bubble = root.querySelector('#petBubble');
     panel = root.querySelector('#petPanel');
     listEl = root.querySelector('#petMsgs');
     inputEl = root.querySelector('#petInput');
 
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = 110 * dpr;
-    canvas.height = 110 * dpr;
-    ctx = canvas.getContext('2d');
-
-    // 恢复位置（右下角默认）
     try {
       var pos = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
       if (pos) { root.style.right = 'auto'; root.style.left = pos.x + 'px'; root.style.bottom = 'auto'; root.style.top = pos.y + 'px'; }
     } catch (e) {}
 
-    // 点击开合面板；拖动换位
     var dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
-    canvas.addEventListener('pointerdown', function (e) {
+    catWrap.addEventListener('pointerdown', function (e) {
       dragging = true; moved = false;
       sx = e.clientX; sy = e.clientY;
       var r = root.getBoundingClientRect();
       ox = r.left; oy = r.top;
-      canvas.setPointerCapture(e.pointerId);
+      catWrap.setPointerCapture(e.pointerId);
     });
-    canvas.addEventListener('pointermove', function (e) {
+    catWrap.addEventListener('pointermove', function (e) {
       if (!dragging) return;
       var dx = e.clientX - sx, dy = e.clientY - sy;
       if (Math.abs(dx) + Math.abs(dy) > 8) moved = true;
@@ -406,38 +285,31 @@
         root.style.top = Math.max(0, Math.min(window.innerHeight - 110, oy + dy)) + 'px';
       }
     });
-    canvas.addEventListener('pointerup', function (e) {
+    catWrap.addEventListener('pointerup', function (e) {
       dragging = false;
+      state.lastInteract = Date.now();
       if (moved) {
         var r = root.getBoundingClientRect();
         try { localStorage.setItem(POS_KEY, JSON.stringify({ x: r.left, y: r.top })); } catch (err) {}
       } else {
-        state.bounce = -6;
-        setMood(state.chatOpen ? 'idle' : 'happy', 900);
+        setMood(state.chatOpen ? 'idle' : 'love', 900);
         togglePanel(!state.chatOpen);
       }
     });
-    canvas.addEventListener('pointercancel', function () { dragging = false; });
+    catWrap.addEventListener('pointercancel', function () { dragging = false; });
 
     root.querySelector('#petClose').onclick = function () { togglePanel(false); };
+    root.querySelector('#petHome').onclick = function () { location.href = 'shuke.html'; };
     root.querySelector('#petSend').onclick = send;
     inputEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(); });
 
-    // 舒克游戏页里给当前皮肤留一个淡金色光晕呼应
-    var petTint = document.createElement('div');
-    petTint.className = 'pet-tint';
-    root.appendChild(petTint);
+    applyMood('idle');
+    refreshImages();
 
-    loop();
-  }
-
-  function toast(msg) {
-    if (window.toast) return window.toast(msg);
-    say(msg, 2500);
+    if (window.ShukeAssets) window.ShukeAssets.refresh(refreshImages);
   }
 
   function init() {
-    // 取舒克账号昵称（如果有的话）
     try {
       var raw = localStorage.getItem('shuke_save_v2');
       if (raw) {
@@ -445,19 +317,23 @@
         nick = (s && s.cloud && s.cloud.nick) || (s && s.user && s.user.name !== '小粉丝' ? s.user.name : '') || '';
       }
     } catch (e) {}
+    try { title = localStorage.getItem(TITLE_KEY) || ''; } catch (e) {}
     build();
     loadHistory();
     if (state.history.length) renderMsgs();
     else {
-      state.history = [{ role: 'cat', text: '喵～我是舒克，浮光爸爸的小黑猫。点我就能聊天，记得常来看爸爸直播哦！' }];
+      state.history = [{ role: 'cat', text: '喵～我是舒克，浮光爸爸的小黑猫。点我就能聊天哦！' }];
       renderMsgs();
     }
     greetOnArrive();
-    state.bubbleTimer = setInterval(idleChatter, 90000 + Math.random() * 60000);
+    setInterval(idleChatter, 90000 + Math.random() * 60000);
+    setInterval(function () {
+      if (!state.chatOpen && Date.now() - state.lastInteract > 180000) applyMood('sleep');
+    }, 30000);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.ShukePet = { say: say, setMood: setMood };
+  window.ShukePet = { say: say, setMood: setMood, refresh: refreshImages };
 })();

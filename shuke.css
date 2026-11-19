@@ -488,3 +488,4 @@ body::before{
 
 /* ===== 皮肤精灵缩略图 ===== */
 .sk-skin-sprite{margin:0 auto}
+.sk-skin-img{width:58px;height:58px;object-fit:contain}

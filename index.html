@@ -96,6 +96,7 @@
       <button class="btn-o" onclick="openGiftShowcase()">🎁 舰礼</button>
       <button class="btn-o" id="btnHist" onclick="openHistory()">📅 历史/导出</button>
       <button class="btn-o" id="btnRenew" onclick="openRenewAdmin()">续舰名单</button>
+      <button class="btn-o" id="btnAsset" onclick="openAssetAdmin()" style="display:none">🎨 形象</button>
     </div>
   </div>
   </div>
@@ -210,6 +211,16 @@
   </div>
 </div></div>
 
+<!-- 形象管理（管理员） -->
+<div class="mo" id="am"><div class="m" style="max-height:88vh;overflow-y:auto">
+  <div class="m-hd"><h2>🎨 形象管理</h2><button onclick="closeAssetAdmin()">✕</button></div>
+  <div class="m-bd">
+    <div class="rn-tip">💡 这里换的图全端生效（粉丝下次打开自动更新）。建议用正方形透明底的图。</div>
+    <div id="amBody"></div>
+  </div>
+  <div class="m-ft"><button class="cancel" onclick="closeAssetAdmin()" style="flex:1">关闭</button></div>
+</div></div>
+
 <!-- Toast -->
 <div id="tc" class="tc"></div>
 
@@ -231,6 +242,8 @@
 <script src="cloud-config.js"></script>
 <script src="media-util.js"></script>
 <script src="area-data.js"></script>
+<script src="shuke-assets.js"></script>
+<script src="asset-admin.js"></script>
 <script src="captain.js"></script>
 <!-- 棉花糖投稿弹窗 -->
 <div class="cc-overlay" id="ccOverlay" onclick="if(event.target===this)closeCottonCandy()">

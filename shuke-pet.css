@@ -19,7 +19,7 @@
   filter: blur(6px);
   pointer-events: none;
 }
-#shukePetRoot .pet-canvas {
+#shukePetRoot .pet-cat {
   position: absolute;
   inset: 0;
   width: 110px;
@@ -27,7 +27,30 @@
   pointer-events: auto;
   cursor: pointer;
   touch-action: none;
+  animation: petBob 3.4s ease-in-out infinite;
 }
+@keyframes petBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+#shukePetRoot .pet-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity .28s;
+  pointer-events: none;
+}
+#shukePetRoot .pet-img.on { opacity: 1 }
+
+/* 称呼选择 */
+#shukePetRoot .pet-title-ask { align-self: flex-start; max-width: 88% }
+#shukePetRoot .pet-title-btns { display: flex; gap: 8px; margin-top: 6px }
+#shukePetRoot .pet-title-btns button {
+  flex: 1; padding: 8px 14px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #9B6BFF, #FF6B9D); color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+#shukePetRoot .pet-title-btns button:active { transform: scale(.96) }
 #shukePetRoot .pet-bubble {
   position: absolute;
   right: 100px;

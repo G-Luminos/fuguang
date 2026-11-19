@@ -243,6 +243,7 @@ async function enterApp() {
   const isA = window.role ==='admin';
   document.getElementById('btnHist').style.display = isA ? '' : 'none';
   document.getElementById('btnRenew').style.display = isA ? '' : 'none';
+  document.getElementById('btnAsset').style.display = isA ? '' : 'none';
   document.getElementById('statsRow').style.display = isA ? 'grid' : 'none';
   document.getElementById('srch').style.display = isA ? '' : 'none';
   document.getElementById('gb').style.display = isA ? 'none' : '';

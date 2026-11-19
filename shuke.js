@@ -125,7 +125,30 @@
     if (s.sat && s.sat !== 1) f.push('saturate(' + s.sat + ')');
     return f.join(' ') || 'none';
   }
+  var skinImgCache = {};
+  function skinAssetImg(skin) {
+    var a = window.ShukeAssets;
+    if (!a) return null;
+    var url = a.get('skin_' + skin.id);
+    if (!url) return null;
+    if (!skinImgCache[skin.id]) {
+      var img = new Image();
+      img.src = url;
+      skinImgCache[skin.id] = img;
+    }
+    var im = skinImgCache[skin.id];
+    return (im.complete && im.naturalWidth) ? im : null;
+  }
+
   function drawNeko(ctx, cx, cy, size, frame, skin) {
+    var im = skinAssetImg(skin);
+    if (im) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(im, cx - size / 2, cy - size / 2, size, size);
+      ctx.restore();
+      return;
+    }
     if (!nekoReady) {
       ctx.font = Math.round(size * 0.8) + 'px serif';
       ctx.textAlign = 'center';
@@ -928,8 +951,12 @@
       if (s.need === 0) btn = '<button class="sk-skin-btn' + (cur ? ' cur' : '') + '" onclick="SK.equip(\'' + s.id + '\')">' + (cur ? '使用中' : '换上') + '</button>';
       else if (!owned) btn = '<button class="sk-skin-btn' + (canCraft(s) ? ' ready' : '') + '" ' + (canCraft(s) ? '' : 'disabled') + ' onclick="SK.craft(\'' + s.id + '\')">' + (canCraft(s) ? '合成' : (shard + '/' + s.need)) + '</button>';
       else btn = '<button class="sk-skin-btn' + (cur ? ' cur' : '') + '" onclick="SK.equip(\'' + s.id + '\')">' + (cur ? '使用中' : '换上') + '</button>';
+      var assetUrl = window.ShukeAssets && ShukeAssets.get('skin_' + s.id);
+      var thumb = assetUrl
+        ? '<img class="sk-skin-img" src="' + assetUrl + '" style="' + (owned ? '' : 'filter:grayscale(1) brightness(.55);') + '">'
+        : '<div class="sk-skin-sprite" style="' + skinSpriteStyle(s, 58, !owned) + '"></div>';
       return '<div class="sk-skin' + (owned ? ' owned' : '') + (cur ? ' equipped' : '') + '" style="--r:' + r.color + ';--g:' + r.glow + '">' +
-        '<div class="sk-skin-ico"><div class="sk-skin-sprite" style="' + skinSpriteStyle(s, 58, !owned) + '"></div></div>' +
+        '<div class="sk-skin-ico">' + thumb + '</div>' +
         '<div class="sk-skin-name">' + s.name + '</div>' +
         '<div class="sk-skin-rar">' + r.label + '</div>' +
         '<div class="sk-skin-bonus">' + (s.bonus > 0 ? '产出 +' + Math.round(s.bonus * 100) + '%' : '&nbsp;') + '</div>' +
@@ -1437,6 +1464,7 @@
     renderAll();
     loadLeaderboard();
     loadShop();
+    if (window.ShukeAssets) window.ShukeAssets.refresh(function () { renderCollection(); renderHome(); });
 
     setInterval(function () {
       tickIdle(); tickEnergy();
