@@ -101,14 +101,7 @@
     state.status = next;
     var text = STATUS_TEXT[next] || next;
 
-    var badge = document.getElementById('rtStatus');
-    if (badge) {
-      badge.setAttribute('data-status', next);
-      var label = badge.querySelector('.rt-text');
-      if (label) label.textContent = text;
-      badge.title = '数据同步状态：' + text + (reason ? '（' + reason + '）' : '');
-    }
-
+    // 状态只走事件与日志，界面不再显示角标（用户反馈那个"实时同步中"是多余信息）
     try {
       document.dispatchEvent(new CustomEvent('luminos:realtime-status', {
         detail: { status: next, text: text, reason: reason || '' }
