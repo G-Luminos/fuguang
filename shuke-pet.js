@@ -289,7 +289,7 @@
         msgs.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text });
       });
       var stream = await client.llm.chat.completions.create({
-        model: 'hy4flash-free',
+        model: 'fast-model',
         stream: true,
         messages: msgs
       });
