@@ -11,7 +11,7 @@
    3. SDK 加载失败时自动重新加载一次，并给出可读的错误提示
 
    注意：新后端不提供对象存储的「公开桶」，媒体文件改为内嵌到数据库
-   （见 media-util.js），storage 接口仅保留为兼容占位。
+   （见 media-util.js），因此兼容层不再提供 storage 接口。
    ================================================================ */
 (function (global) {
   'use strict';
@@ -47,37 +47,13 @@
     } catch (e) { /* 忽略 */ }
   }
 
-  /* ---------- 存储占位：新后端不支持公开桶 ---------- */
-  function makeStorageShim() {
-    function notSupported(bucket) {
-      return Promise.resolve({
-        data: null,
-        error: new Error('对象存储未启用（bucket: ' + bucket + '），媒体文件请使用内嵌存储')
-      });
-    }
-    return {
-      from: function (bucket) {
-        return {
-          upload: function () { return notSupported(bucket); },
-          update: function () { return notSupported(bucket); },
-          remove: function () { return notSupported(bucket); },
-          // 兼容旧代码：直接回传原路径，调用方应改用 dataURL
-          getPublicUrl: function (path) {
-            return { data: { publicUrl: path || '' } };
-          }
-        };
-      }
-    };
-  }
-
   /* ---------- 安装 supabase 兼容层 ---------- */
   function installBridge(client) {
     var bridge = {
       from: function (table) { return client.database.from(table); },
       rpc: function () {
         return client.database.rpc.apply(client.database, arguments);
-      },
-      storage: makeStorageShim()
+      }
     };
 
     global.WBCloud = client;

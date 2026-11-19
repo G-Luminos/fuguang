@@ -311,13 +311,4 @@
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
 
-  /* ===== 实时推送扩展钩子 =====
-     当前歌单数据源为静态 songs_data.js，未从 playlists 表读取，
-     故此处仅保留扩展点：若将来改为数据库驱动，可在此重新拉取并渲染。
-     为兼容实时订阅，歌单打开时做一次轻量重渲染（无网络开销）。 */
-  window.plRealtimeRefresh = function() {
-    var overlay = $('plOverlay');
-    if (overlay && overlay.classList.contains('show') && plLoaded) renderPlaylist();
-  };
-
 })();

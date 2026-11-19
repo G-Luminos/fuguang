@@ -205,10 +205,6 @@
     gmBombStart();
   };
 
-  window.gmBombRestart = function() {
-    gmLaunchBomb();
-  };
-
   /* ----- 全局重来 ----- */
   var gmCurrentGame = '';
   window.gmRestartGame = function() {
@@ -240,14 +236,6 @@
     $('gmGameTitle').innerHTML = '🦊 掷骰子';
     body.innerHTML = renderDiceUI();
   };
-
-  /* OBS-safe wrapper: ensure full-game container is visible during roll */
-  function ensureGameFullVisible() {
-    var el = $('gmGameFull');
-    if (el && !el.classList.contains('show')) {
-      el.classList.add('show');
-    }
-  }
 
   function renderDiceUI() {
     var bombBtnHtml = '';
@@ -409,11 +397,6 @@
     $('gdcBombPopup').classList.remove('show');
   };
 
-  window.gmDiceBackToCenter = function() {
-    showFullGame(false);
-    renderGameCenter();
-  };
-
   /* ================================================================
      Game 3: 狐狐大富翁
      ================================================================ */
@@ -427,9 +410,6 @@
   var mpCachedBoards = {};
 
   var mpPresetEmojis = ['🏁','🌲','🌸','🌙','⭐','🍗','🎁','💣','😈','❓','🎉','✨','🔥','💎','🎪','🎯','🌈','🦊','🐾','🍀','👑','💫','🧩','🎈'];
-
-  var SELECT_STYLE = 'font-size:14px;min-height:28px;padding:4px 8px;color:#e0e0e0;background:#2a2a3a;border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;font-family:inherit;max-width:100px;outline:none';
-  var INPUT_STYLE = 'font-size:14px;min-height:28px;padding:4px 8px;color:#e0e0e0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;font-family:inherit;outline:none';
 
   function cloneDefaultTiles() {
     return [

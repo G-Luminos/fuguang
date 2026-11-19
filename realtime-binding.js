@@ -75,17 +75,7 @@
       }
     }, { id: 'gift_images', debounce: 250 });
 
-    /* ---------- 5. 歌单 playlists / playlist_songs ----------
-       歌单弹窗打开时，交由 playlist.js 的全局钩子刷新（若提供） */
-    Hub.on(['playlists', 'playlist_songs'], function () {
-      try {
-        if (typeof window.plRealtimeRefresh === 'function') window.plRealtimeRefresh();
-      } catch (e) {
-        console.warn('[Realtime] playlist refresh error', e);
-      }
-    }, { id: 'playlists', debounce: 300 });
-
-    /* ---------- 6. 大富翁棋盘 monopoly_boards ----------
+    /* ---------- 5. 大富翁棋盘 monopoly_boards ----------
        静默刷新云端缓存，不打断正在进行中的游戏 */
     Hub.on(['monopoly_boards'], function () {
       try {

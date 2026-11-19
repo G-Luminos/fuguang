@@ -16,7 +16,6 @@
   var MAX_TOTAL_MEDIA = 6;
   var MAX_IMAGE_SIZE = 5 * 1024 * 1024;
   var MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-  var STORAGE_BUCKET = 'cotton-media';
   var TABLE_NAME = 'cotton_posts';
 
   /* ===== 状态 ===== */

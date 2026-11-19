@@ -79,9 +79,6 @@ const FLOWER_COLORS = {
 let giftImages = {}; // { monthId: [{id, url, sort_order}, ...] }
 let currentMonthId = null;
 
-// Supabase Storage bucket 名称
-const GIFT_BUCKET = 'gifts';
-
 /**
  * 检查是否为管理员
  */
