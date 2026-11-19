@@ -24,13 +24,20 @@
 
   // 锁定精确版本：@dev 这类浮动标签一旦上游发版，全站可能直接白屏且无预警
   // 升级时手动改这里的版本号，并回归验证（登录/读写/投稿）
-  var SDK_URL = 'https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@0.1.4/lib/index.global.js';
+  // 多 CDN 兜底：jsDelivr 在国内偶发不可达，失败后自动换 unpkg，避免整站停在"加载中"
+  var SDK_VERSION = '0.1.4';
+  var SDK_PATH = '/npm/@tencent-ai/workbuddy-cloud-sdk@' + SDK_VERSION + '/lib/index.global.js';
+  var SDK_URLS = [
+    'https://cdn.jsdelivr.net' + SDK_PATH,
+    'https://unpkg.com/@tencent-ai/workbuddy-cloud-sdk@' + SDK_VERSION + '/lib/index.global.js'
+  ];
+  // index.html 已经加载过第一个地址，兜底从第二个开始
+  var sdkIdx = 1;
 
   var state = {
     client: null,
     bridge: null,
-    error: null,
-    reloaded: false
+    error: null
   };
 
   var waiters = [];
@@ -90,26 +97,34 @@
     }
   }
 
-  /* ---------- SDK 未就绪时重新加载一次 ---------- */
+  /* ---------- SDK 未就绪时按 CDN 列表依次兜底重载 ---------- */
   function reloadSdk() {
-    if (state.reloaded) return;
-    state.reloaded = true;
-    log('warn', 'sdk missing, reloading', { url: SDK_URL });
+    if (sdkIdx >= SDK_URLS.length) {
+      log('error', 'sdk unavailable on all cdns', { tried: SDK_URLS });
+      return;
+    }
+    var url = SDK_URLS[sdkIdx];
+    log('warn', 'sdk missing, loading fallback', { url: url, attempt: sdkIdx + 1 });
     try {
       var s = document.createElement('script');
-      s.src = SDK_URL;
+      s.src = url;
       s.async = true;
       s.onload = function () {
         var c = buildClient();
-        if (c) installBridge(c);
-        else log('error', 'sdk reloaded but client unavailable', {});
+        if (c) { installBridge(c); return; }
+        sdkIdx++;
+        reloadSdk();
       };
       s.onerror = function () {
-        log('error', 'sdk reload failed', { url: SDK_URL });
+        log('error', 'sdk load failed', { url: url });
+        sdkIdx++;
+        reloadSdk();
       };
       document.head.appendChild(s);
     } catch (e) {
       log('error', 'sdk reload threw', { error: String(e && e.message || e) });
+      sdkIdx++;
+      reloadSdk();
     }
   }
 

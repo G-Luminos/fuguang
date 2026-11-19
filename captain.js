@@ -95,7 +95,7 @@ async function dbGetRecords(month) {
 }
 
 async function dbInsertRecord(rec) {
-  if (!window.sb) return null;
+  if (!window.sb) { window.__lastDbError = '云端连接未就绪'; return null; }
   let { data, error } = await window.sb
     .from('records')
     .insert(rec)
@@ -106,11 +106,18 @@ async function dbInsertRecord(rec) {
     const safe = Object.assign({}, rec);
     delete safe.auto_renew;
     const retry = await window.sb.from('records').insert(safe).select().single();
-    if (retry.error) { return null; }
+    if (retry.error) { reportDbError('records.insert', retry.error); return null; }
     return retry.data;
   }
-  if (error) { return null; }
+  if (error) { reportDbError('records.insert', error); return null; }
   return data;
+}
+
+/** 统一记录并暴露写库失败原因，避免界面只显示"失败"两个字 */
+function reportDbError(where, err) {
+  const msg = (err && (err.message || err.error_description || String(err))) || '未知错误';
+  window.__lastDbError = msg;
+  try { console.error('[DB] ' + where + ' 失败：' + msg, err); } catch (e) {}
 }
 
 async function dbUpdateRecord(id, updates) {
@@ -123,10 +130,10 @@ async function dbUpdateRecord(id, updates) {
     const safe = Object.assign({}, updates);
     delete safe.auto_renew;
     const retry = await window.sb.from('records').update(safe).eq('id', id);
-    if (retry.error) { return false; }
+    if (retry.error) { reportDbError('records.update', retry.error); return false; }
     return true;
   }
-  if (error) { return false; }
+  if (error) { reportDbError('records.update', error); return false; }
   return true;
 }
 
@@ -520,18 +527,19 @@ async function saveForm() {
         else await removeRenewCaptainByName(n);
         closeForm(); await render(); toast('已更新 ✅','s');
       }
-      else { toast('更新失败','e'); }
+      else { toast('更新失败：' + (window.__lastDbError || '未知错误'),'e'); }
     } else {
       const rec = {
         nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn,
         month: getCurMonth(), auto_renew
       };
+      window.__lastDbError = '';
       const result = await dbInsertRecord(rec);
       if (result) {
         if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
         closeForm(); await render(); toast('已添加 ✅','s');
       }
-      else { toast('添加失败','e'); }
+      else { toast('添加失败：' + (window.__lastDbError || '未知错误'),'e'); }
     }
   } finally {
     hideLoading();

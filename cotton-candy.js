@@ -181,11 +181,21 @@
   }
 
   /* ===== 提交投稿 ===== */
+  /** 把各种错误对象压成一句人能看懂的话（原先一律"请稍后重试"，等于没有信息） */
+  function formatErr(err) {
+    if (!err) return '未知错误';
+    var msg = err.message || err.error_description || err.details || String(err);
+    if (err.code) msg += '（' + err.code + '）';
+    return msg.length > 90 ? msg.slice(0, 90) + '…' : msg;
+  }
+
   window.ccSubmit = async function() {
     if (ccSubmitting) return;
     var text = $('ccText').value.trim();
     if (!text && ccFiles.length === 0) { showToast('请输入文字或上传图片/视频', 'e'); return; }
     if (text.length > MAX_TEXT) { showToast('文字超过 ' + MAX_TEXT + ' 字限制', 'e'); return; }
+    // 云端客户端还没就绪时要说清楚，否则用户会误判成"网络不好"
+    if (!window.sb) { showToast('云端连接未就绪，请刷新页面后重试', 'e'); return; }
 
     ccSubmitting = true;
     var btn = $('ccSubmit');
@@ -198,7 +208,16 @@
         content: text, media_urls: [], author_hash: generateAuthorHash()
       }).select().single();
 
-      if (insertResult.error) { showToast('投稿失败，请稍后重试', 'e'); return; }
+      if (insertResult.error) {
+        console.error('[投稿] 写入失败', insertResult.error);
+        showToast('投稿失败：' + formatErr(insertResult.error), 'e');
+        return;
+      }
+      if (!insertResult.data || !insertResult.data.id) {
+        console.error('[投稿] 写入未返回数据', insertResult);
+        showToast('投稿结果未确认，请刷新页面看是否已发出', 'e');
+        return;
+      }
 
       var mediaUrls = [];
       for (var i = 0; i < ccFiles.length; i++) {
@@ -214,7 +233,8 @@
       resetForm();
       if (window.role === 'admin') switchTab('list');
     } catch (err) {
-      showToast('投稿失败，请稍后重试', 'e');
+      console.error('[投稿] 异常', err);
+      showToast('投稿失败：' + formatErr(err), 'e');
     } finally {
       ccSubmitting = false;
       hideLoading();
