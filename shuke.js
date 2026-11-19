@@ -21,19 +21,17 @@
     gachaCost: 80,
     gacha10Cost: 720,
     pity: 60,
-    idleRateBase: 10,
-    idleCapBase: 200,
-    idleCapPerLevel: 20,
+    idleRateBase: 12,
+    idleCapBase: 240,
+    idleCapPerLevel: 24,
     idleMaxHours: 12,
     petDailyLimit: 3,
     petCoins: 3,
     petExp: 5,
     feedFoodCost: 1,
     feedExp: 50,
-    energyMax: 10,
-    energyRegenMs: 6 * 60 * 1000,
+    playDailyMax: 3,
     playSeconds: 30,
-    playDailyDouble: 3,
     expBase: 80,
     expGrowth: 40,
     rates: { normal: 0.62, rare: 0.28, epic: 0.08, ssr: 0.02 },
@@ -302,15 +300,7 @@
       SAVE.idle.at = now;
     }
   }
-  function tickEnergy() {
-    var now = Date.now();
-    if (SAVE.energy.v >= CONFIG.energyMax) { SAVE.energy.at = now; return; }
-    var gained = Math.floor((now - SAVE.energy.at) / CONFIG.energyRegenMs);
-    if (gained > 0) {
-      SAVE.energy.v = Math.min(CONFIG.energyMax, SAVE.energy.v + gained);
-      SAVE.energy.at = SAVE.energy.v >= CONFIG.energyMax ? now : SAVE.energy.at + gained * CONFIG.energyRegenMs;
-    }
-  }
+  function playsLeft() { return Math.max(0, CONFIG.playDailyMax - SAVE.play.games); }
 
   /* ================= 云端存档 ================= */
   function scheduleSync() {
@@ -376,8 +366,8 @@
     SAVE.checkin.streak = (SAVE.checkin.last === yStr) ? (SAVE.checkin.streak || 0) + 1 : 1;
     SAVE.checkin.last = t;
     SAVE.checkin.days[t] = true;
-    var coins = 20 + Math.min(SAVE.checkin.streak, 10) * 5;
-    var pts = 5 + Math.min(SAVE.checkin.streak, 10) * 2;
+    var coins = 30 + Math.min(SAVE.checkin.streak, 10) * 10;
+    var pts = 10 + Math.min(SAVE.checkin.streak, 10) * 2;
     SAVE.user.coins += coins;
     SAVE.user.points += pts;
     SAVE.user.food += 1;
@@ -398,9 +388,9 @@
     if (SAVE.pet.date !== t) { SAVE.pet.date = t; SAVE.pet.count = 0; }
   }
   var TASKS = [
-    { id: 'play', name: '抓 1 局毛线团', need: 1, coins: 25, pts: 10, icon: '🧶' },
-    { id: 'open', name: '开 1 次盲盒', need: 1, coins: 30, pts: 10, icon: '🎁' },
-    { id: 'pet', name: '撸猫 3 次', need: 3, coins: 20, pts: 10, icon: '🤲' }
+    { id: 'play', name: '抓 1 局毛线团', need: 1, coins: 40, pts: 12, icon: '🧶' },
+    { id: 'open', name: '开 1 次盲盒', need: 1, coins: 40, pts: 12, icon: '🎁' },
+    { id: 'pet', name: '撸猫 3 次', need: 3, coins: 40, pts: 12, icon: '🤲' }
   ];
   function taskDone(t) { return (SAVE.tasks.progress[t.id] || 0) >= t.need; }
   function claimTask(id) {
@@ -496,13 +486,13 @@
       var ssrPool = Math.random() < 0.6 ? ['s_05', 's_09'] : ['s_05', 's_09', 's_10'];
       var ssrId = ssrPool[Math.floor(Math.random() * ssrPool.length)];
       var ss = findMeta(ssrId);
-      return { type: 'shard', id: ssrId, emoji: ss.emoji, name: ss.name + '碎片', qty: 3 + Math.floor(Math.random() * 3), rarity: 'ssr' };
+      return { type: 'shard', id: ssrId, emoji: ss.emoji, name: ss.name + '碎片', qty: 4 + Math.floor(Math.random() * 3), rarity: 'ssr' };
     }
     if (rarity === 'epic') {
       var ePool = ['s_03', 's_04', 's_08'];
       var eId = ePool[Math.floor(Math.random() * ePool.length)];
       var se = findMeta(eId);
-      return { type: 'shard', id: eId, emoji: se.emoji, name: se.name + '碎片', qty: 2 + Math.floor(Math.random() * 2), rarity: 'epic' };
+      return { type: 'shard', id: eId, emoji: se.emoji, name: se.name + '碎片', qty: 3 + Math.floor(Math.random() * 2), rarity: 'epic' };
     }
     if (rarity === 'rare') {
       var rr = Math.random();
@@ -510,11 +500,11 @@
         var rarePool = ['s_02', 's_07'];
         var rId = rarePool[Math.floor(Math.random() * rarePool.length)];
         var sr = findMeta(rId);
-        return { type: 'shard', id: rId, emoji: sr.emoji, name: sr.name + '碎片', qty: 1 + Math.floor(Math.random() * 2), rarity: 'rare' };
+        return { type: 'shard', id: rId, emoji: sr.emoji, name: sr.name + '碎片', qty: 2 + Math.floor(Math.random() * 2), rarity: 'rare' };
       }
       if (rr < 0.75) {
         var it = ITEMS[Math.floor(Math.random() * ITEMS.length)];
-        return { type: 'shard', id: it.id, emoji: it.emoji, name: it.name + '碎片', qty: 1, rarity: 'rare' };
+        return { type: 'shard', id: it.id, emoji: it.emoji, name: it.name + '碎片', qty: 2, rarity: 'rare' };
       }
       return { type: 'food', qty: 2, emoji: '🍖', name: '猫粮 x2', rarity: 'rare' };
     }
@@ -522,7 +512,7 @@
     if (n < 0.35) return { type: 'coins', qty: 30 + Math.floor(Math.random() * 31), emoji: '🧶', name: '猫毛球', rarity: 'normal' };
     if (n < 0.6) return { type: 'food', qty: 1, emoji: '🍖', name: '猫粮 x1', rarity: 'normal' };
     var e = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-    return { type: 'shard', id: e.id, emoji: e.emoji, name: e.name + '碎片', qty: 1, rarity: 'normal' };
+    return { type: 'shard', id: e.id, emoji: e.emoji, name: e.name + '碎片', qty: 2, rarity: 'normal' };
   }
 
   function applyDrop(d) {
@@ -854,13 +844,13 @@
 
   /* ================= 渲染 ================= */
   function renderHome() {
-    tickIdle(); tickEnergy(); resetDaily();
+    tickIdle(); resetDaily();
     $('skName').textContent = SAVE.user.name;
     $('skLevel').textContent = 'Lv.' + SAVE.user.level;
     $('skMood').textContent = MOODS[hashStr(todayStr()) % MOODS.length];
     $('skCoins').textContent = nfmt(SAVE.user.coins);
     $('skPoints').textContent = nfmt(SAVE.user.points);
-    $('skEnergy').textContent = SAVE.energy.v;
+    $('skEnergy').textContent = playsLeft();
     if ($('skGems')) $('skGems').textContent = nfmt(SAVE.user.gems || 0);
 
     var need = expNeed(SAVE.user.level);
@@ -886,7 +876,7 @@
     var doneCount = TASKS.filter(function (t) { return SAVE.tasks.claimed[t.id]; }).length;
     $('skTaskHint').textContent = doneCount + '/3 已领';
     $('skRankHint').textContent = myRank ? ('我的名次 #' + myRank) : '登录后上榜';
-    $('skEnergyBig').textContent = SAVE.energy.v;
+
   }
 
   function renderGacha() {
@@ -1083,10 +1073,7 @@
 
   function startGame() {
     resetDaily();
-    tickEnergy();
-    if (SAVE.energy.v < 1) { toast('体力不足，等一会儿再玩'); return; }
-    SAVE.energy.v -= 1;
-    SAVE.energy.at = Date.now();
+    if (SAVE.play.games >= CONFIG.playDailyMax) { toast('今天玩够 3 局啦，明天再来陪我玩吧'); return; }
     scheduleSync();
 
     if (!G.canvas) fitGame();
@@ -1110,8 +1097,7 @@
     G.running = false;
     if (G.raf) cancelAnimationFrame(G.raf);
     $('skHud').classList.remove('show');
-    var double = SAVE.play.games < CONFIG.playDailyDouble;
-    var coins = Math.round(G.score * 2 * (double ? 2 : 1) * (1 + streakBonus() * 0.5));
+    var coins = Math.round(G.score * 3 * (1 + streakBonus() * 0.5));
     var pts = Math.max(1, Math.round(G.score / 20));
     SAVE.user.coins += coins;
     SAVE.user.points += pts;
@@ -1125,10 +1111,10 @@
     $('skStageOverlay').classList.remove('hide');
     $('skStageOverlay').innerHTML =
       '<div class="sk-stage-ico">' + (G.score > 60 ? '🎉' : G.score > 30 ? '✨' : '🐾') + '</div>' +
-      '<div class="sk-stage-title">本局 ' + G.score + ' 分' + (double ? ' · 双倍' : '') + '</div>' +
+      '<div class="sk-stage-title">本局 ' + G.score + ' 分</div>' +
       '<div class="sk-stage-desc">获得 <b>' + coins + ' 🧶</b> 和 <b>' + pts + ' ⭐</b><br>最高连击 ' + (G.maxCombo || 0) + '</div>' +
-      '<button class="sk-btn primary" id="skStartBtn" onclick="SK.startGame()">再来一局 · 1⚡</button>' +
-      '<div class="sk-stage-tip">' + (SAVE.play.games < CONFIG.playDailyDouble ? '今天还有 ' + (CONFIG.playDailyDouble - SAVE.play.games) + ' 局双倍' : '今天的双倍用完了') + '</div>';
+      '<button class="sk-btn primary" id="skStartBtn" onclick="SK.startGame()">再来一局</button>' +
+      '<div class="sk-stage-tip">今天还能玩 ' + playsLeft() + ' 局 · 每天 3 局</div>';
     if (window.ShukePet) window.ShukePet.gameNotify('game', { score: G.score });
     if (window.SKFX && G.score > 0) SKFX.confetti(null, null, { count: 50, spread: 0.7 });
     renderAll();
@@ -1411,7 +1397,7 @@
     bindGameInput();
     fitGame();
     resetDaily();
-    tickIdle(); tickEnergy();
+    tickIdle();
 
     if (window.whenCloudReady) {
       window.whenCloudReady(function () {
@@ -1433,9 +1419,9 @@
     if (window.ShukeAssets) window.ShukeAssets.refresh(function () { renderCollection(); renderHome(); });
 
     setInterval(function () {
-      tickIdle(); tickEnergy();
+      tickIdle();
       if (currentPage === 'home') renderHome();
-      if (currentPage === 'play') $('skEnergyBig').textContent = SAVE.energy.v;
+      if (currentPage === 'play') $('skEnergyBig').textContent = playsLeft();
     }, 15000);
     setInterval(function () { if (token) pushSave(); }, 45000);
 
@@ -1453,8 +1439,8 @@
       SAVE.play.chatRewardDate = SAVE.play.chatRewardDate || '';
       if (SAVE.play.chatRewardDate === t) return false;
       SAVE.play.chatRewardDate = t;
-      SAVE.user.coins += 10;
-      SAVE.user.points += 3;
+      SAVE.user.coins += 15;
+      SAVE.user.points += 5;
       scheduleSync();
       renderHome();
       return true;

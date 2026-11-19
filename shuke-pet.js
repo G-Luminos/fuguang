@@ -118,8 +118,8 @@
           return;
         }
       }
-      if (g.play && g.play.games < 3) {
-        say('抓毛线前 3 局双倍，还没打完呢，来陪我玩嘛～', 6000, { label: '去玩', fn: function () { location.href = 'shuke.html'; } });
+      if (g.play && (g.play.games || 0) < 3) {
+        say('今天还有毛线局没玩完，来陪我玩嘛～', 6000, { label: '去玩', fn: function () { location.href = 'shuke.html'; } });
         return;
       }
       // 碎片快够了就提醒
@@ -407,8 +407,8 @@
       if (g.play.chatRewardDate === t) return;
       g.play.chatRewardDate = t;
       g.user = g.user || {};
-      g.user.coins = (g.user.coins || 0) + 10;
-      g.user.points = (g.user.points || 0) + 3;
+      g.user.coins = (g.user.coins || 0) + 15;
+      g.user.points = (g.user.points || 0) + 5;
       localStorage.setItem('shuke_save_v2', JSON.stringify(g));
       say('送你 10 个猫毛球，这是我们的小秘密喵', 4000);
     } catch (e) {}
