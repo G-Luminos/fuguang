@@ -348,20 +348,39 @@ async function render() {
   }).join('');
 }
 
-/* ============ 访客页：看不到任何人的资料，只有一张狐狸卡片 ============ */
-function renderGuestCard(list) {
+/* ============ 访客页：只读自己、敏感打码；修改走狐狸提示 ============ */
+async function renderGuestCard(list) {
   if (!list) return;
+  list.innerHTML = '<div class="guest-lock"><div class="gl-fox">🦊</div><div class="gl-title">小光正在翻保险箱…</div></div>';
+  const res = await capPublic('lookup', { nickname: guestName });
+  const rows = (res && res.ok && res.rows) || [];
+  let cards = '';
+  if (rows.length) {
+    cards = '<div class="gl-mine">' + rows.map(r => {
+      const ad = [r.province, r.city, r.district].filter(Boolean).join(' ');
+      return '<div class="gl-card">' +
+        '<div class="gl-card-hd"><span class="gl-card-av">' + esc((r.nickname || '?').charAt(0)) + '</span>' +
+          '<div><b>' + esc(r.nickname) + '</b><small>' + esc(r.month || '') + (r.auto_renew ? ' · 自动续舰' : '') + '</small></div>' +
+        '</div>' +
+        '<div class="gl-card-row">📱 ' + (r.phone_mask ? esc(r.phone_mask) : '未填') + '</div>' +
+        '<div class="gl-card-row">📍 ' + esc((ad ? ad + ' ' : '') + (r.address_mask || '未填')) + '</div>' +
+        '<button class="gl-btn ghost" onclick="askXiaoguang()">💬 改这份资料</button>' +
+      '</div>';
+    }).join('') + '</div>';
+  }
   list.innerHTML =
     '<div class="guest-lock">' +
       '<div class="gl-fox">🦊</div>' +
-      '<div class="gl-title">资料进了小光的保险箱</div>' +
-      '<div class="gl-desc">你的手机号和地址已经加密锁好，<br>除了小光，谁也看不到、也改不了。</div>' +
+      '<div class="gl-title">' + (rows.length ? '找到你的登记啦' : '还没登记过哦') + '</div>' +
+      '<div class="gl-desc">' + (rows.length
+        ? '手机号和地址已经打码，只有小光能看完整版'
+        : '点下面「登记一份」，填完就会加密锁好，只有小光能看') + '</div>' +
       '<div class="gl-actions">' +
-        '<button class="gl-btn primary" onclick="openForm()">📝 重新登记一份</button>' +
+        '<button class="gl-btn primary" onclick="openForm()">' + (rows.length ? '📝 重新登记一份' : '📝 登记一份') + '</button>' +
         '<button class="gl-btn" onclick="askXiaoguang()">💬 我想改资料</button>' +
       '</div>' +
       '<div class="gl-foot">钥匙只有一把，在小光手里 🗝️</div>' +
-    '</div>';
+    '</div>' + cards;
 }
 
 window.askXiaoguang = function () {
