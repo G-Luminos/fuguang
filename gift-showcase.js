@@ -204,7 +204,7 @@ function renderGiftShowcase() {
             <div class="gift-title">${month.title}</div>
             <div class="gift-desc flower-desc-short">${month.flower} · ${month.meaning}</div>
             ${hasImages ? `<div class="gift-count">${monthImages.length} 张照片</div>` : ''}
-            ${isAdmin ? `<div class="gift-upload-hint" onclick="event.stopPropagation(); openMonthUpload('${month.id}')">+ 上传图片</div>` : ''}
+
           </div>
           ${hasImages ? `
             <div class="gift-preview">
@@ -251,7 +251,7 @@ function renderGiftShowcase() {
             ${month.special ? `<div class="gift-special-badge">${month.specialIcon} 特殊礼物</div>` : ''}
             ${month.special ? `<div class="gift-special-gift">${month.specialGift}</div>` : ''}
             ${hasImages ? `<div class="gift-count">${monthImages.length} 张照片</div>` : ''}
-            ${isAdmin ? `<div class="gift-upload-hint" onclick="event.stopPropagation(); openMonthUpload('${month.id}')">+ 上传图片</div>` : ''}
+
           </div>
           ${hasImages ? `
             <div class="gift-preview">

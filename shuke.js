@@ -53,15 +53,15 @@
 
   /* ================= 皮肤 / 装扮 / 表情 ================= */
   var SKINS = [
-    { id: 's_01', name: '原初舒克', rarity: 'default', need: 0,   emoji: '🐈',  bonus: 0,    desc: '刚睡醒的样子' },
-    { id: 's_02', name: '星空舒克', rarity: 'rare',    need: 20,  emoji: '🌌',  bonus: 0.05, desc: '毛里藏着星星' },
-    { id: 's_07', name: '雾凇舒克', rarity: 'rare',    need: 24,  emoji: '❄️',  bonus: 0.06, desc: '冬天的尾巴' },
-    { id: 's_03', name: '樱花舒克', rarity: 'epic',    need: 40,  emoji: '🌸',  bonus: 0.10, desc: '春天限定' },
-    { id: 's_04', name: '赛博舒克', rarity: 'epic',    need: 48,  emoji: '🤖',  bonus: 0.12, desc: '机械猫耳会发光' },
-    { id: 's_08', name: '熔岩舒克', rarity: 'epic',    need: 56,  emoji: '🌋',  bonus: 0.15, desc: '走路冒火星' },
-    { id: 's_05', name: '金龙舒克', rarity: 'ssr',     need: 80,  emoji: '🐉',  bonus: 0.20, desc: '传说级，出货率 2%' },
-    { id: 's_09', name: '星穹舒克', rarity: 'ssr',     need: 96,  emoji: '🌠',  bonus: 0.24, desc: '银河落在身上' },
-    { id: 's_10', name: '微光舒克', rarity: 'ssr',     need: 128, emoji: '✨',  bonus: 0.30, desc: '隐藏款，只出碎片' }
+    { id: 's_01', name: '原初舒克', rarity: 'default', need: 0,   emoji: '🐈',  anim: 'idle',        hue: 0,   bonus: 0,    desc: '刚睡醒的样子' },
+    { id: 's_02', name: '星空舒克', rarity: 'rare',    need: 20,  emoji: '🌌',  anim: 'sleeping',    hue: 200, bonus: 0.05, desc: '毛里藏着星星' },
+    { id: 's_07', name: '雾凇舒克', rarity: 'rare',    need: 24,  emoji: '❄️',  anim: 'alert',       hue: 185, bonus: 0.06, desc: '冬天的尾巴' },
+    { id: 's_03', name: '樱花舒克', rarity: 'epic',    need: 40,  emoji: '🌸',  anim: 'scratchSelf', hue: 320, bonus: 0.10, desc: '春天限定' },
+    { id: 's_04', name: '赛博舒克', rarity: 'epic',    need: 48,  emoji: '🤖',  anim: 'E',           hue: 160, bonus: 0.12, desc: '机械猫耳会发光' },
+    { id: 's_08', name: '熔岩舒克', rarity: 'epic',    need: 56,  emoji: '🌋',  anim: 'S',           hue: 15,  bonus: 0.15, desc: '走路冒火星' },
+    { id: 's_05', name: '金龙舒克', rarity: 'ssr',     need: 80,  emoji: '🐉',  anim: 'N',           hue: 45,  sat: 1.7, bonus: 0.20, desc: '传说级，出货率 2%' },
+    { id: 's_09', name: '星穹舒克', rarity: 'ssr',     need: 96,  emoji: '🌠',  anim: 'NW',          hue: 260, bonus: 0.24, desc: '银河落在身上' },
+    { id: 's_10', name: '微光舒克', rarity: 'ssr',     need: 128, emoji: '✨',  anim: 'alert',       hue: 280, sat: 0.6, bonus: 0.30, desc: '隐藏款，只出碎片' }
   ];
   var ITEMS = [
     { id: 'a_01', name: '蝴蝶结',   need: 4,  emoji: '🎀' },
@@ -99,6 +99,77 @@
     '喵~今天的毛线团攒了吗', '舒克在等你回家', '外面下雨了，还好有你在',
     '想和你一起看星星', '今天也要元气满满喵！', '毛线球给你，别难过啦'
   ];
+  /* ================= 小猫精灵（oneko 开源图集） ================= */
+  var ONEKO_URL = 'https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif';
+  var ONEKO = {
+    idle: [[3,3]], alert: [[7,3]], scratchSelf: [[5,0],[6,0],[7,0]],
+    tired: [[3,2]], sleeping: [[2,0],[2,1]],
+    N: [[1,2],[1,3]], NE: [[0,2],[0,3]], E: [[3,0],[3,1]], SE: [[5,1],[5,2]],
+    S: [[6,3],[7,2]], SW: [[5,3],[6,1]], W: [[4,2],[4,3]], NW: [[1,0],[1,1]]
+  };
+  var nekoImg = null, nekoReady = false;
+  (function loadNeko() {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () { nekoImg = img; nekoReady = true; };
+    img.onerror = function () { /* 加载失败时用 emoji 兜底 */ };
+    img.src = ONEKO_URL;
+  })();
+
+  function curSkin() {
+    return SKINS.filter(function (x) { return x.id === SAVE.shuke.skin; })[0] || SKINS[0];
+  }
+  function nekoFilter(s) {
+    var f = [];
+    if (s.hue) f.push('hue-rotate(' + s.hue + 'deg)');
+    if (s.sat && s.sat !== 1) f.push('saturate(' + s.sat + ')');
+    return f.join(' ') || 'none';
+  }
+  function drawNeko(ctx, cx, cy, size, frame, skin) {
+    if (!nekoReady) {
+      ctx.font = Math.round(size * 0.8) + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(skin.emoji, cx, cy);
+      return;
+    }
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    try { ctx.filter = nekoFilter(skin); } catch (e) {}
+    ctx.drawImage(nekoImg, frame[0] * 32, frame[1] * 32, 32, 32, cx - size / 2, cy - size / 2, size, size);
+    ctx.restore();
+  }
+  /** 皮肤卡片上的精灵缩略图（CSS background 方式） */
+  function skinSpriteStyle(s, size, locked) {
+    var scale = size / 32;
+    var f = (ONEKO[s.anim] || ONEKO.idle)[0];
+    var filter = locked ? 'grayscale(1) brightness(.55)' : nekoFilter(s);
+    return 'background-image:url(' + ONEKO_URL + ');background-size:' + Math.round(256 * scale) + 'px ' + Math.round(128 * scale) + 'px;' +
+      'background-position:-' + Math.round(f[0] * size) + 'px -' + Math.round(f[1] * size) + 'px;' +
+      'filter:' + filter + ';image-rendering:pixelated;width:' + size + 'px;height:' + size + 'px;';
+  }
+
+  /* 主页小猫动画 */
+  var heroAnimTimer = 0;
+  function startHeroAnim() {
+    var cv = $('skCat');
+    if (!cv || heroAnimTimer) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var css = 150;
+    cv.style.width = css + 'px'; cv.style.height = css + 'px';
+    cv.width = css * dpr; cv.height = css * dpr;
+    var ctx = cv.getContext('2d');
+    function tick() {
+      var skin = curSkin();
+      var frames = ONEKO[skin.anim] || ONEKO.idle;
+      var f = frames[Math.floor(Date.now() / 380) % frames.length];
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      drawNeko(ctx, cv.width / 2, cv.height / 2, cv.width * 0.78, f, skin);
+    }
+    tick();
+    heroAnimTimer = setInterval(tick, 120);
+  }
+
 
   /* ================= 存档 ================= */
   function todayStr() {
@@ -808,9 +879,9 @@
     $('skExpText').textContent = SAVE.user.exp + '/' + need;
     $('skStreak').textContent = '🔥 连签 ' + (SAVE.checkin.streak || 0) + ' 天 · 产出 +' + Math.round(streakBonus() * 100) + '%';
 
-    var skin = SKINS.filter(function (s) { return s.id === SAVE.shuke.skin; })[0] || SKINS[0];
-    $('skCat').textContent = skin.emoji;
+    var skin = curSkin();
     $('skLogo').textContent = skin.emoji;
+    if ($('skPetLeft')) startHeroAnim();
 
     $('skPetLeft').textContent = Math.max(0, CONFIG.petDailyLimit - SAVE.pet.count) + '/' + CONFIG.petDailyLimit;
     $('skFoodLeft').textContent = SAVE.user.food + ' 粮';
@@ -858,7 +929,7 @@
       else if (!owned) btn = '<button class="sk-skin-btn' + (canCraft(s) ? ' ready' : '') + '" ' + (canCraft(s) ? '' : 'disabled') + ' onclick="SK.craft(\'' + s.id + '\')">' + (canCraft(s) ? '合成' : (shard + '/' + s.need)) + '</button>';
       else btn = '<button class="sk-skin-btn' + (cur ? ' cur' : '') + '" onclick="SK.equip(\'' + s.id + '\')">' + (cur ? '使用中' : '换上') + '</button>';
       return '<div class="sk-skin' + (owned ? ' owned' : '') + (cur ? ' equipped' : '') + '" style="--r:' + r.color + ';--g:' + r.glow + '">' +
-        '<div class="sk-skin-ico">' + (owned ? s.emoji : '❔') + '</div>' +
+        '<div class="sk-skin-ico"><div class="sk-skin-sprite" style="' + skinSpriteStyle(s, 58, !owned) + '"></div></div>' +
         '<div class="sk-skin-name">' + s.name + '</div>' +
         '<div class="sk-skin-rar">' + r.label + '</div>' +
         '<div class="sk-skin-bonus">' + (s.bonus > 0 ? '产出 +' + Math.round(s.bonus * 100) + '%' : '&nbsp;') + '</div>' +
@@ -1123,7 +1194,12 @@
     var catY = H - 90 * G.dpr;
     var catX = G.catX * W;
     var basketW = 92 * G.dpr;
-    var curSkin = SKINS.filter(function (s) { return s.id === SAVE.shuke.skin; })[0] || SKINS[0];
+    var skin = curSkin();
+    if (typeof G.lastCatX !== 'number') G.lastCatX = G.catX;
+    var dir = G.catX > G.lastCatX + 0.003 ? 'E' : G.catX < G.lastCatX - 0.003 ? 'W' : 'idle';
+    G.lastCatX = G.catX;
+    var dirFrames = ONEKO[dir] || ONEKO.idle;
+    var dirFrame = dirFrames[Math.floor(Date.now() / 220) % dirFrames.length];
 
     for (var i = G.items.length - 1; i >= 0; i--) {
       var it = G.items[i];
@@ -1168,12 +1244,7 @@
       if (it.y > 1.1) G.items.splice(i, 1);
     }
 
-    ctx.save();
-    ctx.font = (52 * G.dpr) + 'px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(curSkin.emoji, catX, catY);
-    ctx.restore();
+    drawNeko(ctx, catX, catY, 84 * G.dpr, dirFrame, skin);
 
     // 接住粒子
     for (var pi = G.particles.length - 1; pi >= 0; pi--) {
@@ -1222,51 +1293,6 @@
     cv.addEventListener('pointerdown', move, { passive: true });
     cv.addEventListener('touchmove', move, { passive: true });
     window.addEventListener('resize', function () { if (!G.running) fitGame(); });
-  }
-
-  /* ================= 星空背景 ================= */
-  function initStars() {
-    var cv = $('skStars');
-    if (!cv) return;
-    var ctx = cv.getContext('2d');
-    var stars = [];
-    function resize() {
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      cv.width = window.innerWidth * dpr;
-      cv.height = window.innerHeight * dpr;
-      stars = [];
-      var count = Math.round(window.innerWidth * window.innerHeight / 12000);
-      for (var i = 0; i < count; i++) {
-        stars.push({
-          x: Math.random(), y: Math.random(),
-          r: Math.random() * 1.5 + 0.3,
-          a: Math.random() * 0.6 + 0.15,
-          sp: Math.random() * 0.00008 + 0.00002,
-          ph: Math.random() * 6.28
-        });
-      }
-    }
-    resize();
-    window.addEventListener('resize', resize);
-    var t0 = 0;
-    function loop(ts) {
-      if (ts - t0 > 33) {
-        t0 = ts;
-        ctx.clearRect(0, 0, cv.width, cv.height);
-        for (var i = 0; i < stars.length; i++) {
-          var s = stars[i];
-          s.y -= s.sp * 1000;
-          if (s.y < -0.02) { s.y = 1.02; s.x = Math.random(); }
-          var alpha = s.a * (0.6 + 0.4 * Math.sin(ts / 900 + s.ph));
-          ctx.beginPath();
-          ctx.arc(s.x * cv.width, s.y * cv.height, s.r * (window.devicePixelRatio || 1), 0, 6.283);
-          ctx.fillStyle = 'rgba(220,210,255,' + alpha.toFixed(3) + ')';
-          ctx.fill();
-        }
-      }
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
   }
 
   /* ================= 导航 ================= */
@@ -1391,7 +1417,6 @@
 
     bindGameInput();
     fitGame();
-    initStars();
     resetDaily();
     tickIdle(); tickEnergy();
 
