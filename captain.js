@@ -9,54 +9,37 @@ const MUNI=['北京市','上海市','天津市','重庆市'];
 const SK='luminos_v6';
 
 /* ================================================================
-   AES Encryption (Web Crypto API - browser native)
+   舰长资料通道（加密完全在服务端）
+   ---------------------------------------------------------------
+   手机号与地址用 pgp_sym_encrypt 存库，密钥只存在于数据库 app_secret，
+   前端代码、页面源码、网络请求里都不再出现密钥。
+   - 匿名用户：只能「登记」，写完读不回，连密文都取不到；
+   - 管理员：凭口令调用 captain_rpc 才能拿到明文。
+   这样即使有人扒走发布包的 JS，也拿不到任何一位舰长的联系方式。
    ================================================================ */
-const ENC_KEY = 'Luminos2026Gift!';
-
-async function getEncKey() {
-  const enc = new TextEncoder();
-  const keyData = enc.encode(ENC_KEY);
-  const key = await crypto.subtle.importKey(
-    'raw', keyData, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']
-  );
-  return key;
+async function capRpc(action, payload) {
+  if (typeof window.captainCall !== 'function') return { ok: false, error: '数据通道未就绪' };
+  return window.captainCall(action, payload || {});
+}
+async function capPublic(action, payload) {
+  if (typeof window.captainPublic !== 'function') return { ok: false, error: '数据通道未就绪' };
+  return window.captainPublic(action, payload || {});
 }
 
-async function encrypt(text) {
-  if (!text) return '';
-  try {
-    const key = await getEncKey();
-    const enc = new TextEncoder();
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv }, key, enc.encode(text)
-    );
-    const combined = new Uint8Array(iv.length + encrypted.byteLength);
-    combined.set(iv);
-    combined.set(new Uint8Array(encrypted), iv.length);
-    return btoa(String.fromCharCode(...combined));
-  } catch(e) {
-    console.error('Encrypt error:', e);
-    return text;
-  }
+/* ================================================================
+   狐狸提示（普通人想改资料时的统一回应）
+   ================================================================ */
+function showFox(title, desc) {
+  const t = document.getElementById('foxTitle');
+  const d = document.getElementById('foxDesc');
+  if (t) t.textContent = title;
+  if (d) d.textContent = desc;
+  const m = document.getElementById('fox');
+  if (m) m.classList.add('show');
 }
-
-async function decrypt(cipher) {
-  if (!cipher) return '';
-  try {
-    const key = await getEncKey();
-    const raw = Uint8Array.from(atob(cipher), c => c.charCodeAt(0));
-    const iv = raw.slice(0, 12);
-    const data = raw.slice(12);
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv }, key, data
-    );
-    return new TextDecoder().decode(decrypted);
-  } catch(e) {
-    console.error('Decrypt error:', e);
-    return cipher;
-  }
-}
+function closeFox() { const m = document.getElementById('fox'); if (m) m.classList.remove('show'); }
+window.showFox = showFox;
+window.closeFox = closeFox;
 
 /* ================================================================
    State
@@ -84,31 +67,31 @@ function initSB() {
    Database Operations
    ================================================================ */
 async function dbGetRecords(month) {
-  if (!window.sb) return [];
-  const { data, error } = await window.sb
-    .from('records')
-    .select('*')
-    .eq('month', month)
-    .order('created_at', { ascending: false });
-  if (error) { return []; }
-  return data || [];
+  // 只有管理员能读：服务端校验口令，访客调用一律返回「管理口令已失效」
+  if (window.role !== 'admin') return [];
+  const res = await capRpc('list', month ? { month } : {});
+  if (!res || !res.ok) { reportDbError('captain.list', res && res.error); return []; }
+  return (res.rows || []).map(function (r) {
+    r._phone = r.phone || '';
+    r._address = r.address || '';
+    return r;
+  });
 }
 
-async function dbInsertRecord(rec) {
-  if (!window.sb) { window.__lastDbError = '云端连接未就绪'; return null; }
-  // 访客登记与管理员新增都走这里：数据库对匿名只开放 INSERT，删除/修改另有通道
-  let { data, error } = await window.sb
-    .from('records')
-    .insert(rec)
-    .select()
-    .single();
-  if (error) { reportDbError('records.insert', error); return null; }
-  return data;
+/** 访客/管理员登记：明文只在请求中出现一次，落库前由数据库加密 */
+async function dbRegister(payload) {
+  window.__lastDbError = '';
+  const res = await capPublic('register', payload);
+  if (!res || !res.ok) { reportDbError('records.register', res && res.error); return null; }
+  return res;
 }
 
 /** 统一记录并暴露写库失败原因，避免界面只显示"失败"两个字 */
 function reportDbError(where, err) {
-  const msg = (err && (err.message || err.error_description || String(err))) || '未知错误';
+  var msg = (err && (err.message || err.error_description || String(err))) || '未知错误';
+  if (/Failed to fetch|NetworkError|ERR_|Load failed|network/i.test(msg)) {
+    msg = '连不上云服务器，请检查网络后重试；若一直失败，请用最新链接重新打开';
+  }
   window.__lastDbError = msg;
   try { console.error('[DB] ' + where + ' 失败：' + msg, err); } catch (e) {}
 }
@@ -128,47 +111,31 @@ async function adminWrite(action, table, payload, conflict) {
   return res;
 }
 
-async function dbUpdateRecord(id, updates) {
-  const res = await adminWrite('update', 'records', Object.assign({ id }, updates));
-  return !!res.ok;
-}
-
 async function dbDeleteRecord(id) {
   const res = await adminWrite('delete', 'records', { id });
   return !!res.ok;
 }
 
 async function dbGetMonths() {
-  if (!window.sb) return [];
-  const { data, error } = await window.sb
-    .from('records')
-    .select('month')
-    .order('month', { ascending: false });
-  if (error) { return []; }
-  const months = [...new Set((data||[]).map(r => r.month))];
-  return months;
+  const rows = await dbGetRecords();
+  return [...new Set(rows.map(r => r.month).filter(Boolean))].sort().reverse();
 }
 
 /* ============ 续舰名单 (renew_captains) ============ */
 async function dbGetRenewCaptains() {
-  if (!window.sb) return [];
-  const { data, error } = await window.sb
-    .from('renew_captains')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) { return []; }
-  return data || [];
+  if (window.role !== 'admin') return [];
+  const res = await capRpc('renew_list');
+  if (!res || !res.ok) return [];
+  return (res.rows || []).map(function (r) {
+    r._phone = r.phone || '';
+    r._address = r.address || '';
+    return r;
+  });
 }
 
 async function dbUpsertRenewCaptain(cap) {
-  if (!window.sb) return null;
-  const { data, error } = await window.sb
-    .from('renew_captains')
-    .upsert(cap, { onConflict: 'nickname' })
-    .select()
-    .single();
-  if (error) { return null; }
-  return data;
+  const res = await capRpc('renew_save', cap);
+  return res && res.ok ? res : null;
 }
 
 async function dbDeleteRenewCaptain(id) {
@@ -177,8 +144,8 @@ async function dbDeleteRenewCaptain(id) {
 }
 
 async function dbUpdateRenewCaptain(id, updates) {
-  const res = await adminWrite('update', 'renew_captains', Object.assign({ id }, updates));
-  return res.ok ? res.row : null;
+  const res = await capRpc('renew_save', Object.assign({ id }, updates));
+  return res && res.ok ? res : null;
 }
 
 /* ================================================================
@@ -279,8 +246,8 @@ async function enterApp() {
   document.getElementById('srch').style.display = isA ? '' : 'none';
   document.getElementById('gb').style.display = isA ? 'none' : '';
   if (!isA) document.getElementById('guestName').textContent = guestName;
-  document.getElementById('hdTitle').textContent = isA ? '舰长信息管理' : '我的登记信息';
-  document.getElementById('hdSub').textContent = isA ? ('管理员 · ' + getCurMonth()) : '舰长';
+  document.getElementById('hdTitle').textContent = isA ? '舰长信息管理' : '我的资料';
+  document.getElementById('hdSub').textContent = isA ? ('管理员 · ' + getCurMonth()) : '🔒 已加密 · 只有小光能看';
   await render();
 }
 
@@ -348,22 +315,17 @@ document.getElementById('fd').addEventListener('change', function() {});
    Render
    ================================================================ */
 async function render() {
-  if (window.role === 'admin') await renderStats();
   const list = document.getElementById('gl');
+  if (window.role === 'guest') { renderGuestCard(list); return; }
+  await renderStats();
   const recs = await getVisible();
   if (recs.length === 0) {
-    const mg = window.role ==='guest' ? '你还没有登记信息，点击右下角 ＋ 添加' : '本月暂无记录';
-    list.innerHTML = '<div class="empty"><div class="ic">📋</div><p>'+mg+'</p></div>';
+    list.innerHTML = '<div class="empty"><div class="ic">📋</div><p>本月暂无记录</p></div>';
     return;
   }
-  const isA = window.role ==='admin';
-  const decrypted = await Promise.all(recs.map(async r => {
-    r._phone = await decrypt(r.phone_enc || '');
-    r._address = await decrypt(r.address_enc || '');
-    return r;
-  }));
-  decrypted.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
-  list.innerHTML = decrypted.map(r => {
+  const isA = window.role === 'admin';
+  recs.sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+  list.innerHTML = recs.map(r => {
     const ad = fullAd(r);
     const isRenew = !!r.auto_renew;
     return '<div class="gc'+(isRenew?' gc-renew':'')+'" id="c-'+r.id+'">'+
@@ -386,18 +348,35 @@ async function render() {
   }).join('');
 }
 
+/* ============ 访客页：看不到任何人的资料，只有一张狐狸卡片 ============ */
+function renderGuestCard(list) {
+  if (!list) return;
+  list.innerHTML =
+    '<div class="guest-lock">' +
+      '<div class="gl-fox">🦊</div>' +
+      '<div class="gl-title">资料进了小光的保险箱</div>' +
+      '<div class="gl-desc">你的手机号和地址已经加密锁好，<br>除了小光，谁也看不到、也改不了。</div>' +
+      '<div class="gl-actions">' +
+        '<button class="gl-btn primary" onclick="openForm()">📝 重新登记一份</button>' +
+        '<button class="gl-btn" onclick="askXiaoguang()">💬 我想改资料</button>' +
+      '</div>' +
+      '<div class="gl-foot">钥匙只有一把，在小光手里 🗝️</div>' +
+    '</div>';
+}
+
+window.askXiaoguang = function () {
+  showFox(
+    '哎呀，锁上啦 🔒',
+    '这份资料被小光收进狐狸窝了，只有ta能开～ 想改手机号或地址，直接戳小光说一声就好，ta会替你改的！'
+  );
+};
+
 async function getVisible() {
-  let recs = await dbGetRecords(getCurMonth());
-  if (window.role === 'guest') return recs.filter(r => r.nickname === guestName);
-  const q = document.getElementById('si').value.trim().toLowerCase();
+  const recs = await dbGetRecords(getCurMonth());
+  const q = (document.getElementById('si').value || '').trim().toLowerCase();
   if (!q) return recs;
-  const decrypted = await Promise.all(recs.map(async r => {
-    r._phone = await decrypt(r.phone_enc || '');
-    r._address = await decrypt(r.address_enc || '');
-    return r;
-  }));
-  return decrypted.filter(r =>
-    r.nickname.toLowerCase().includes(q) ||
+  return recs.filter(r =>
+    (r.nickname||'').toLowerCase().includes(q) ||
     (r._phone||'').toLowerCase().includes(q) ||
     fullAd(r).toLowerCase().includes(q)
   );
@@ -407,8 +386,7 @@ async function renderStats() {
   const recs = await dbGetRecords(getCurMonth());
   let phoneCount = 0, addrComplete = 0;
   for (const r of recs) {
-    const ph = await decrypt(r.phone_enc || '');
-    if (ph) phoneCount++;
+    if (r._phone) phoneCount++;
     if (r.province && r.city && r.district) addrComplete++;
   }
   const months = await dbGetMonths();
@@ -435,6 +413,8 @@ function toggleD(id) { document.getElementById('d-'+id).classList.toggle('show')
    Form
    ================================================================ */
 async function openForm(id) {
+  // 资料只有管理员能改；普通人点编辑会收到狐狸提示
+  if (id && window.role !== 'admin') { window.askXiaoguang(); return; }
   editingId = id || null;
   document.getElementById('ft').textContent = id ? '编辑记录' : '添加记录';
   selProvince = null; selCity = null;
@@ -446,8 +426,8 @@ async function openForm(id) {
     const r = recs.find(x => x.id === id);
     if (r) {
       document.getElementById('fn').value = r.nickname || '';
-      document.getElementById('fph').value = await decrypt(r.phone_enc || '');
-      document.getElementById('fa').value = await decrypt(r.address_enc || '');
+      document.getElementById('fph').value = r._phone || '';
+      document.getElementById('fa').value = r._address || '';
       document.getElementById('fnote').value = r.note || '';
       setRenewModeRaw(!!r.auto_renew ? 1 : 0);
       if (r.province) {
@@ -513,30 +493,29 @@ async function saveForm() {
 
   showLoading('⏳ 保存中...');
   try {
-    const phone_enc = await encrypt(ph);
-    const address_enc = await encrypt(fa);
     const auto_renew = document.getElementById('fauto').value === '1';
+    const payload = {
+      nickname: n, phone: ph, province: fp, city: fc, district: fd,
+      address: fa, note: fn, auto_renew
+    };
 
     if (editingId) {
-      const ok = await dbUpdateRecord(editingId, {
-        nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn, auto_renew
-      });
-      if (ok) {
+      const res = await capRpc('save', Object.assign({ id: editingId }, payload));
+      if (res && res.ok) {
         if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
         else await removeRenewCaptainByName(n);
         closeForm(); await render(); toast('已更新 ✅','s');
       }
-      else { toast('更新失败：' + (window.__lastDbError || '未知错误'),'e'); }
+      else { toast('更新失败：' + (window.__lastDbError || (res && res.error) || '未知错误'),'e'); }
     } else {
-      const rec = {
-        nickname: n, phone_enc, province: fp, city: fc, district: fd, address_enc, note: fn,
-        month: getCurMonth(), auto_renew
-      };
-      window.__lastDbError = '';
-      const result = await dbInsertRecord(rec);
+      const result = await dbRegister(payload);
       if (result) {
-        if (auto_renew) await syncRenewCaptain(n, ph, fp, fc, fd, fa, fn);
-        closeForm(); await render(); toast('已添加 ✅','s');
+        closeForm(); await render();
+        if (window.role === 'guest') {
+          showFox('登记好啦 🦊', '资料已经加密送进小光的狐狸窝，ta会看到并安排发货。哪天想改手机号或地址，直接戳小光说一声就好～');
+        } else {
+          toast('已添加 ✅','s');
+        }
       }
       else { toast('添加失败：' + (window.__lastDbError || '未知错误'),'e'); }
     }
@@ -546,18 +525,13 @@ async function saveForm() {
 }
 
 async function syncRenewCaptain(nickname, phone, province, city, district, address, note) {
-  if (!window.sb) return;
-  const phone_enc = await encrypt(phone);
-  const address_enc = await encrypt(address);
-  await dbUpsertRenewCaptain({ nickname, phone_enc, province, city, district, address_enc, note });
+  await dbUpsertRenewCaptain({ nickname, phone, province, city, district, address, note });
 }
 
 async function removeRenewCaptainByName(nickname) {
-  if (!window.sb) return;
-  const { data } = await window.sb.from('renew_captains').select('id').eq('nickname', nickname);
-  if (data && data.length > 0) {
-    await dbDeleteRenewCaptain(data[0].id);
-  }
+  const caps = await dbGetRenewCaptains();
+  const hit = caps.find(c => c.nickname === nickname);
+  if (hit) await dbDeleteRenewCaptain(hit.id);
 }
 
 function setRenewMode(val) {
@@ -646,10 +620,6 @@ async function exportHistory(m) {
   try {
     const recs = await dbGetRecords(m);
     if (recs.length === 0) { toast('该月无数据','e'); return; }
-    for (const r of recs) {
-      r._phone = await decrypt(r.phone_enc || '');
-      r._address = await decrypt(r.address_enc || '');
-    }
     doExport(recs, m);
   } finally { hideLoading(); }
 }
@@ -749,16 +719,10 @@ async function exportData() {
   showLoading('⏳ 导出中...');
   try {
     const recs = await dbGetRecords(getCurMonth());
-    for (const r of recs) {
-      r._phone = await decrypt(r.phone_enc || '');
-      r._address = await decrypt(r.address_enc || '');
-    }
     // 合并续舰名单（自动续舰的人一起导出，避免漏发）
     const caps = await dbGetRenewCaptains();
     const merged = recs.slice();
     for (const c of caps) {
-      c._phone = await decrypt(c.phone_enc || '');
-      c._address = await decrypt(c.address_enc || '');
       // 若本月 records 已有同名，跳过（以 records 为准）
       const dup = merged.find(r => r.nickname === c.nickname);
       if (dup) continue;
@@ -793,39 +757,29 @@ function doExport(recs, month) {
 
 function doExportXLSX(recs, month) {
   const wb = XLSX.utils.book_new();
-  const wd = [
-    ['导入说明','',''],
-    ['1.收件地址按【省 市 区 详细地址】填写，标红部分必填','',''],
-    ['2.直辖市省市均填市名，如北京市','',''],
-    ['3.虚拟号格式：18700000000-1234','',''],
-    ['4.单次最多200个地址，超出请分批','',''],
-    ['5.导入说明行可保留','',''],
-    ['','',''],
-    ['收件人','收件人手机号','收件地址']
-  ];
-  recs.forEach(r => wd.push([r.nickname, r._phone||'', fullAd(r)]));
+  const wd = [['收件人', '手机号', '收件地址']];
+  recs.forEach(r => wd.push([r.nickname, r._phone || '', fullAd(r)]));
   const ws = XLSX.utils.aoa_to_sheet(wd);
-  ws['!cols'] = [{wch:16},{wch:20},{wch:60}];
-  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:2}}];
-  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  ws['!cols'] = [{wch:16},{wch:18},{wch:60}];
+  XLSX.utils.book_append_sheet(wb, ws, '舰长地址');
   const blob = new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/octet-stream'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = '柔造发货_'+month+'.xlsx';
+  a.download = '舰长地址_'+month+'.xlsx';
   a.click(); URL.revokeObjectURL(a.href);
-  toast('已导出 '+recs.length+' 条（柔造 xlsx）','s');
+  toast('已导出 '+recs.length+' 条','s');
 }
 
 function genCSV(recs, month) {
   month = month || getCurMonth();
-  const hd = ['收件人','收件人手机号','收件地址'];
+  const hd = ['收件人','手机号','收件地址'];
   const rows = recs.map(r => [r.nickname, r._phone||'', fullAd(r)]);
   const ce = v => { v = String(v); return (v.includes(',')||v.includes('"')||v.includes('\n')) ? '"'+v.replace(/"/g,'""')+'"' : v; };
   const lines = [hd.map(ce).join(','), ...rows.map(r => r.map(ce).join(','))];
   const blob = new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = '柔造发货_'+month+'.csv';
+  a.download = '舰长地址_'+month+'.csv';
   a.click(); URL.revokeObjectURL(a.href);
   toast('已导出 '+recs.length+' 条（CSV）','s');
 }
@@ -881,16 +835,17 @@ document.getElementById('gnInput').addEventListener('keydown', e => { if(e.key==
 window.renderNameWall = async function() {
   const wall = document.getElementById('nameWall');
   if (!wall) return;
-  const caps = await dbGetRenewCaptains();
-  if (caps.length === 0) { wall.innerHTML = ''; return; }
-  const w = window.innerWidth, h = window.innerHeight;
-  wall.innerHTML = caps.map((c, i) => {
+  // 走公开通道，只返回昵称；手机号/地址这类字段一个都不下发
+  const res = await capPublic('names');
+  const names = (res && res.ok && res.names) || [];
+  if (names.length === 0) { wall.innerHTML = ''; return; }
+  wall.innerHTML = names.map((nm, i) => {
     const left = 8 + ((i * 37) % 84);
     const top = 12 + ((i * 53) % 72);
     const size = 14 + ((i * 7) % 12);
     const dur = 6 + ((i * 3) % 6);
     const delay = (i * 0.8) % 5;
-    return '<span class="nw-name" data-i="'+i+'" style="left:'+left+'%;top:'+top+'%;font-size:'+size+'px;animation-duration:'+dur+'s;animation-delay:'+delay+'s">'+esc(c.nickname)+'</span>';
+    return '<span class="nw-name" data-i="'+i+'" style="left:'+left+'%;top:'+top+'%;font-size:'+size+'px;animation-duration:'+dur+'s;animation-delay:'+delay+'s">'+esc(nm)+'</span>';
   }).join('');
 };
 

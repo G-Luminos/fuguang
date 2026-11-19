@@ -248,8 +248,37 @@
     });
   };
 
-  global.adminOp = function (action, table, payload, conflict) {
+  /* ================================================================
+     舰长资料通道（captain_rpc）
+     ---------------------------------------------------------------
+     手机号/地址在数据库内用 pgp_sym_encrypt 加密，密钥只存在 app_secret。
+     匿名能调用的只有 names / register；list / save / renew_* 需要口令。
+     ================================================================ */
+  global.captainCall = function (action, payload) {
+    return rpcCall('captain_rpc', {
+      p_action: action,
+      p_pass: readAdminPass(),
+      p_payload: payload || {}
+    });
+  };
+
+  /** 通用管理型 RPC：自动带上会话口令（playlist_del 等专用函数用） */
+  global.adminRpc = function (fnName, args) {
     var pass = readAdminPass();
+    if (!pass) return Promise.resolve({ ok: false, error: '管理口令已失效' });
+    return rpcCall(fnName, Object.assign({}, args || {}, { p_pass: pass }));
+  };
+
+  /** 无需口令的公开动作：登记、首页名字墙 */
+  global.captainPublic = function (action, payload) {
+    return rpcCall('captain_rpc', {
+      p_action: action,
+      p_pass: '',
+      p_payload: payload || {}
+    });
+  };
+
+  global.adminOp = function (action, table, payload, conflict) {    var pass = readAdminPass();
     if (!pass) {
       return Promise.resolve({ ok: false, error: '管理口令已失效，请重新登录管理入口' });
     }

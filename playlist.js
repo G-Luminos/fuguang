@@ -9,6 +9,8 @@
 
   /* ===== 状态 ===== */
   var plSongs = [];
+  var plCustom = [];
+  var plPendingCover = '';
   var plFiltered = [];
   var plActiveTag = 'all';
   var plSearchQuery = '';
@@ -54,9 +56,33 @@
   }
 
   function initSongs() {
-    plSongs = SONGS_DATA || [];
     plLoaded = true;
-    renderPlaylist();
+    reloadSongs();
+  }
+
+  /** 内置歌单 + 自定义歌单合并；自定义的排在最前 */
+  function reloadSongs() {
+    plSongs = (typeof SONGS_DATA !== 'undefined' ? SONGS_DATA : []).slice();
+    if (!window.sb || typeof window.sb.from !== 'function') { renderPlaylist(); return; }
+    window.sb.from('playlist_custom').select('*').order('created_at', { ascending: false }).then(function(res) {
+      var rows = (res && res.data) || [];
+      plCustom = rows.map(function(r) {
+        return {
+          id: r.id,
+          name: r.name,
+          artists: r.artist ? [r.artist] : ['未知歌手'],
+          artist_str: r.artist || '未知歌手',
+          lang: r.lang || '',
+          genre: '',
+          cover: r.cover || '',
+          album_name: r.album || '',
+          duration_ms: r.duration_ms || 0,
+          custom: true
+        };
+      });
+      plSongs = plCustom.concat(plSongs);
+      renderPlaylist();
+    }).catch(function() { renderPlaylist(); });
   }
 
   /* ===== 渲染主界面 ===== */
@@ -95,6 +121,7 @@
     html += '<button class="pl-sort-btn' + (plSortBy === 'name' ? ' active' : '') + '" onclick="plSetSort(\'name\')">按歌名</button>';
     html += '<button class="pl-sort-btn' + (plSortBy === 'artist' ? ' active' : '') + '" onclick="plSetSort(\'artist\')">按歌手</button>';
     html += '<button class="pl-random-btn-inline" onclick="plRandomPick()">🎲 随机选歌</button>';
+    html += '<button class="pl-sort-btn pl-add-btn" onclick="openPlAdd()">＋ 加歌</button>';
     html += '</div>';
 
     /* 歌曲列表 — 按歌手分组 */
@@ -198,13 +225,16 @@
       '<div class="pl-song-index">' + index + '</div>' +
       '<div class="pl-song-cover">' + coverHtml + '</div>' +
       '<div class="pl-song-info">' +
-        '<div class="pl-song-name">' + escHtml(song.name) + '</div>' +
+        '<div class="pl-song-name">' + escHtml(song.name) +
+          (song.custom ? '<span class="pl-custom-tag">自定义</span>' : '') + '</div>' +
         '<div class="pl-song-meta">' +
           '<span>' + escHtml(song.artist_str) + '</span>' +
           (song.lang ? '<span>' + escHtml(song.lang) + '</span>' : '') +
+          (song.album_name ? '<span>' + escHtml(song.album_name) + '</span>' : '') +
           (duration ? '<span>⏱ ' + duration + '</span>' : '') +
         '</div>' +
       '</div>' +
+      (song.custom ? '<button class="pl-del-btn" title="删除" onclick="plDelSong(\'' + song.id + '\')">✕</button>' : '') +
     '</div>';
   }
 
@@ -298,6 +328,116 @@
     var overlay = $('plRandomOverlay');
     if (overlay) overlay.classList.remove('show');
     plRandomSong = null;
+  };
+
+  /* ===== 自定义加歌 ===== */
+  function parseDur(v) {
+    if (!v) return 0;
+    var m = v.match(/^(\d{1,2}):(\d{1,2})$/);
+    if (m) return (parseInt(m[1], 10) * 60 + parseInt(m[2], 10)) * 1000;
+    var n = parseInt(v.replace(/\D/g, ''), 10);
+    return isNaN(n) ? 0 : n * 1000;
+  }
+
+  function bindCoverFile() {
+    var f = $('plCoverFile');
+    if (!f || f.dataset.bound) return;
+    f.dataset.bound = '1';
+    f.addEventListener('change', function() {
+      var file = f.files && f.files[0];
+      if (!file) return;
+      if (typeof window.MediaUtil === 'undefined' || !window.MediaUtil.blobToDataUrl) {
+        if (window.toast) toast('图片组件还没准备好', 'e');
+        return;
+      }
+      window.MediaUtil.blobToDataUrl(file, { maxDim: 320, maxBytes: 90000 }).then(function(url) {
+        plPendingCover = url;
+        var prev = $('plCoverPrev');
+        if (prev) prev.innerHTML = '<img src="' + url + '">';
+        var inp = $('plAddCover');
+        if (inp) inp.value = '';
+      }).catch(function() {
+        if (window.toast) toast('这张图片读取失败', 'e');
+      });
+    });
+  }
+
+  window.openPlAdd = function() {
+    plPendingCover = '';
+    ['plAddName', 'plAddArtist', 'plAddAlbum', 'plAddCover', 'plAddLang', 'plAddDur'].forEach(function(id) {
+      var el = $(id); if (el) el.value = '';
+    });
+    var prev = $('plCoverPrev'); if (prev) prev.innerHTML = '🎵';
+    bindCoverFile();
+    var ov = $('plAddOverlay'); if (ov) ov.classList.add('show');
+    setTimeout(function() { var n = $('plAddName'); if (n) n.focus(); }, 220);
+  };
+
+  window.closePlAdd = function() {
+    var o = $('plAddOverlay'); if (o) o.classList.remove('show');
+  };
+
+  window.plCoverPreview = function(url) {
+    plPendingCover = '';
+    var prev = $('plCoverPrev');
+    if (!prev) return;
+    if (!url) { prev.innerHTML = '🎵'; return; }
+    prev.innerHTML = '<img src="' + escAttr(url) + '" onerror="this.parentNode.innerHTML=\'🎵\'">';
+  };
+
+  window.plSubmitAdd = function() {
+    var name = ((($('plAddName') || {}).value) || '').trim();
+    if (!name) { if (window.toast) toast('先填个歌名吧', 'e'); return; }
+    var cover = plPendingCover || (((($('plAddCover') || {}).value) || '').trim());
+    var btn = $('plAddOk');
+    if (btn) btn.disabled = true;
+    if (!window.sb || typeof window.sb.rpc !== 'function') {
+      if (btn) btn.disabled = false;
+      if (window.toast) toast('还没连上云端，稍后再试', 'e');
+      return;
+    }
+    window.sb.rpc('playlist_add', {
+      p_name: name,
+      p_artist: (((($('plAddArtist') || {}).value) || '').trim()),
+      p_album: (((($('plAddAlbum') || {}).value) || '').trim()),
+      p_cover: cover,
+      p_lang: (((($('plAddLang') || {}).value) || '').trim()),
+      p_duration: parseDur(((($('plAddDur') || {}).value) || '').trim()),
+      p_added_by: window.role === 'admin' ? '小光' : '粉丝'
+    }).then(function(r) {
+      if (btn) btn.disabled = false;
+      if (r && r.error) { if (window.toast) toast('保存失败：' + r.error.message, 'e'); return; }
+      window.closePlAdd();
+      if (window.toast) toast('已加入歌单 🎵', 's');
+      reloadSongs();
+    }).catch(function(e) {
+      if (btn) btn.disabled = false;
+      if (window.toast) toast('保存失败：' + (e && e.message || '网络错误'), 'e');
+    });
+  };
+
+  window.plDelSong = function(id) {
+    if (window.role !== 'admin') {
+      if (window.showFox) {
+        window.showFox('这首歌是小光的宝贝 🦊', '想删歌得小光自己来哦～ 你可以先记住歌名，戳ta说一声，ta马上帮你换掉。');
+      }
+      return;
+    }
+    var m = $('cm'), d = $('cd');
+    if (!m || !d) return;
+    m.textContent = '要从歌单里删掉这首歌吗？';
+    d.classList.add('show');
+    $('cok').onclick = function() {
+      d.classList.remove('show');
+      window.adminRpc('playlist_del', { p_id: id }).then(function(r) {
+        if (r && r.ok) {
+          if (window.toast) toast('已删除', 'i');
+          reloadSongs();
+        } else if (window.toast) {
+          toast('删除失败：' + ((r && r.error) || '未知错误'), 'e');
+        }
+      });
+    };
   };
 
   /* ===== 工具 ===== */

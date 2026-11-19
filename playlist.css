@@ -302,3 +302,29 @@
   .pl-group-header { padding: 6px 2px 4px }
   .pl-group-name { font-size: 13px }
 }
+
+/* ===== 自定义加歌 ===== */
+.pl-add-overlay { z-index: 260; }
+.pl-add-modal { max-height: 90vh; display: flex; flex-direction: column; }
+.pl-add-body { padding: 4px 16px 10px; overflow-y: auto; }
+.pl-add-body label { display: block; font-size: 12px; font-weight: 700; color: var(--pl-ts, #61666D); margin: 10px 0 5px; }
+.pl-add-body input:not([type=file]) { width: 100%; padding: 10px 12px; border: 1.5px solid #E3E5E7; border-radius: 10px; font-size: 14px; background: #FAFBFC; outline: none; }
+.pl-add-body input:not([type=file]):focus { border-color: #00A1D6; background: #fff; }
+.pl-rq { color: #F04864 }
+.pl-cover-row { display: flex; gap: 10px; align-items: flex-start; }
+.pl-cover-prev { width: 64px; height: 64px; flex: none; border-radius: 12px; background: linear-gradient(135deg,#FB7299,#FF9CBB); display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; color: #fff; }
+.pl-cover-prev img { width: 100%; height: 100%; object-fit: cover }
+.pl-cover-inputs { flex: 1; display: flex; flex-direction: column; gap: 6px }
+.pl-cover-upload { padding: 8px 10px; border-radius: 9px; border: 1.5px dashed #C9D1D9; background: #fff; font-size: 12px; color: #61666D; cursor: pointer }
+.pl-add-two { display: flex; gap: 10px }
+.pl-add-two > div { flex: 1 }
+.pl-add-tip { font-size: 11px; color: #8A8F98; line-height: 1.6; margin-top: 12px; background: #FFF7E8; border-radius: 8px; padding: 8px 10px }
+.pl-add-foot { display: flex; gap: 10px; padding: 10px 16px 16px; border-top: 1px solid #F0F1F3 }
+.pl-add-cancel, .pl-add-ok { flex: 1; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer }
+.pl-add-cancel { background: #F4F5F7; color: #61666D }
+.pl-add-ok { background: linear-gradient(135deg,#00A1D6,#23ADE5); color: #fff; box-shadow: 0 4px 14px rgba(0,161,214,.3) }
+.pl-add-ok:disabled { opacity: .5 }
+.pl-custom-tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 4px; background: #FFF0F5; color: #FB7299; border: 1px solid #FFD6E4; margin-left: 5px; vertical-align: middle }
+.pl-del-btn { border: none; background: transparent; color: #C9CDD4; font-size: 15px; padding: 4px 6px; cursor: pointer }
+.pl-del-btn:active { color: #F04864 }
+.pl-add-btn { background: linear-gradient(135deg,#00A1D6,#23ADE5) !important; color: #fff !important; border: none !important }

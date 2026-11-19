@@ -98,7 +98,7 @@
     </div>
   </div>
   </div>
-  <div id="gb" class="gb" style="display:none"><div class="gb-in">当前昵称：<strong id="guestName"></strong></div></div>
+  <div id="gb" class="gb" style="display:none"><div class="gb-in">🔒 当前昵称：<strong id="guestName"></strong> · 资料已加密，只有小光能查看和修改</div></div>
   <div id="statsRow" class="stats"></div>
   <div id="srch" class="srch" style="display:none">
     <input id="si" type="text" placeholder="搜索昵称/手机/地址..." oninput="render()">
@@ -154,6 +154,16 @@
   <p class="arh-desc">勾选后，接下来每个月都不再需要重复填写地址，会自动带出哦～如有疑问，可咨询小光 💫</p>
   <div class="cx-act">
     <button class="ck" style="background:var(--p);color:#FFF" onclick="closeAutoRenewHint()">知道啦</button>
+  </div>
+</div></div>
+
+<!-- 狐狸提示：普通人想改资料时出现 -->
+<div class="cd" id="fox"><div class="cx fox-card">
+  <div class="fox-ico">🦊</div>
+  <p class="fox-title" id="foxTitle">哎呀，锁上啦 🔒</p>
+  <p class="fox-desc" id="foxDesc"></p>
+  <div class="cx-act">
+    <button class="ck" id="foxOk" onclick="closeFox()">好哒，我去找小光</button>
   </div>
 </div></div>
 
@@ -295,6 +305,42 @@
     </div>
     <div class="pl-body" id="plBody">
       <div class="pl-loading show"><div class="pl-spinner"></div><div>🎵 加载中...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 自定义加歌 -->
+<div class="pl-overlay pl-add-overlay" id="plAddOverlay">
+  <div class="pl-modal pl-add-modal">
+    <div class="pl-header">
+      <h2>＋ 加一首歌</h2>
+      <div class="pl-header-actions"><button onclick="closePlAdd()">✕</button></div>
+    </div>
+    <div class="pl-add-body">
+      <label>歌名 <span class="pl-rq">*</span></label>
+      <input id="plAddName" maxlength="60" placeholder="例如：晴天">
+      <label>歌手</label>
+      <input id="plAddArtist" maxlength="40" placeholder="例如：周杰伦">
+      <label>专辑</label>
+      <input id="plAddAlbum" maxlength="60" placeholder="选填">
+      <label>封面图片</label>
+      <div class="pl-cover-row">
+        <div class="pl-cover-prev" id="plCoverPrev">🎵</div>
+        <div class="pl-cover-inputs">
+          <input id="plAddCover" placeholder="粘贴图片链接 https://..." oninput="plCoverPreview(this.value)">
+          <button class="pl-cover-upload" onclick="document.getElementById('plCoverFile').click()">📁 从相册选</button>
+          <input type="file" id="plCoverFile" accept="image/*" hidden>
+        </div>
+      </div>
+      <div class="pl-add-two">
+        <div><label>语言</label><input id="plAddLang" maxlength="10" placeholder="中文 / 日文"></div>
+        <div><label>时长</label><input id="plAddDur" maxlength="6" placeholder="3:45"></div>
+      </div>
+      <div class="pl-add-tip">封面找不到？长按音乐 App 里的封面复制图片链接，或者直接从相册选一张，会自动压缩。</div>
+    </div>
+    <div class="pl-add-foot">
+      <button class="pl-add-cancel" onclick="closePlAdd()">取消</button>
+      <button class="pl-add-ok" id="plAddOk" onclick="plSubmitAdd()">保存</button>
     </div>
   </div>
 </div>

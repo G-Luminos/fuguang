@@ -208,3 +208,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .g-loading-spinner{width:34px;height:34px;border:3px solid rgba(0,161,214,.2);border-top-color:var(--p);border-radius:50%;animation:gloadSpin .8s linear infinite}
 @keyframes gloadSpin{to{transform:rotate(360deg)}}
 .g-loading-text{font-size:13px;color:var(--ts);font-weight:600}
+
+/* ===== 狐狸提示（隐私锁） ===== */
+.fox-card{max-width:330px;background:linear-gradient(180deg,#FFF9F2,#FFF)}
+.fox-ico{font-size:56px;line-height:1;margin-bottom:6px;animation:foxPop .6s cubic-bezier(.2,1.6,.5,1)}
+@keyframes foxPop{0%{transform:scale(.4) rotate(-12deg);opacity:0}70%{transform:scale(1.12) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.fox-card .fox-title{font-size:17px;font-weight:800;color:#8A4B1E;margin:2px 0 8px}
+.fox-card .fox-desc{font-size:13px;line-height:1.65;color:#6B5B4E;font-weight:400;margin-bottom:16px;text-align:left;background:#FFF3E4;border-radius:10px;padding:11px 12px}
+.fox-card .cx-act .ck{background:linear-gradient(135deg,#FF9F45,#FFB86B);color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(255,159,69,.35)}
+
+/* ===== 访客锁定卡片 ===== */
+.guest-lock{margin:18px auto;max-width:420px;background:linear-gradient(165deg,#1B1030,#2A1A44 55%,#201436);border:1px solid rgba(255,180,110,.22);border-radius:20px;padding:30px 22px 24px;text-align:center;color:#EFE6FF;box-shadow:0 12px 40px rgba(26,10,46,.35);position:relative;overflow:hidden}
+.guest-lock::before{content:'';position:absolute;width:220px;height:220px;top:-90px;right:-70px;background:radial-gradient(circle,rgba(255,159,69,.35),transparent 70%);filter:blur(10px)}
+.gl-fox{font-size:64px;line-height:1;filter:drop-shadow(0 8px 18px rgba(255,159,69,.45));animation:glFloat 3.4s ease-in-out infinite}
+@keyframes glFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.gl-title{font-size:18px;font-weight:800;margin:14px 0 8px;letter-spacing:.5px}
+.gl-desc{font-size:13px;line-height:1.8;color:#C4B6E0}
+.gl-actions{display:flex;gap:10px;margin:20px 0 14px}
+.gl-btn{flex:1;padding:11px 8px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#EFE6FF;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+.gl-btn:active{transform:scale(.97)}
+.gl-btn.primary{background:linear-gradient(135deg,#FF9F45,#FF6B9D);border-color:transparent;box-shadow:0 6px 18px rgba(255,107,157,.3)}
+.gl-foot{font-size:11px;color:#8E7FAE;letter-spacing:.5px}
