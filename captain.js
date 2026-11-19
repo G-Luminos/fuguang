@@ -1,10 +1,8 @@
 ﻿
 /* ================================================================
-   Config - Supabase + Encryption
+   Config - Cloud (WorkBuddy) + Encryption
    ================================================================ */
-// ⚠️ 创建 Supabase 项目后，替换以下两个值
-const SB_URL = 'https://yiexaopgxcroktltjqoz.supabase.co';
-const SB_KEY = 'sb_publishable_O3vb23iYR6lKOjQCpFbhug_Dy_X4DR4';
+// 连接配置见 cloud-config.js，window.sb 由该文件的兼容层提供
 
 const ADMIN_U='fuguang', ADMIN_P='5099';
 const MUNI=['北京市','上海市','天津市','重庆市'];
@@ -64,17 +62,22 @@ async function decrypt(cipher) {
    State
    ================================================================ */
 window.role=null; window.guestName=''; window.editingId=null; window.selProvince=null; window.selCity=null;
-window.sb = null;
+// window.sb 由 cloud-config.js 提供，此处不可重置，否则会覆盖已建立的云端连接
 
 /* ================================================================
-   Supabase Init
+   Cloud Init
    ================================================================ */
 function initSB() {
-  if (typeof supabase === 'undefined') {
-    return false;
+  // cloud-config.js 会在脚本加载时同步安装兼容层
+  if (window.sb && typeof window.sb.from === 'function') return true;
+  // SDK 尚未就绪（网络较慢）：等它就绪后自动重试一次
+  if (typeof window.whenCloudReady === 'function') {
+    window.whenCloudReady(function () {
+      if (typeof window.loadNameWall === 'function') window.loadNameWall();
+      if (typeof window.render === 'function') window.render();
+    });
   }
-  window.sb = supabase.createClient(SB_URL, SB_KEY);
-  return true;
+  return false;
 }
 
 /* ================================================================

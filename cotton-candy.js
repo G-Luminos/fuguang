@@ -45,13 +45,14 @@
   /* ===== 打开/关闭 ===== */
   window.openCottonCandy = function() {
     if (!window.sb) {
-      // 尝试初始化 Supabase（可能 SDK 加载较慢）
-      if (typeof supabase !== 'undefined') {
-        window.sb = supabase.createClient('https://yiexaopgxcroktltjqoz.supabase.co', 'sb_publishable_O3vb23iYR6lKOjQCpFbhug_Dy_X4DR4');
-      } else {
-        alert('页面加载中，请稍后再试');
+      // 云服务客户端可能仍在初始化（SDK 加载较慢）
+      if (typeof window.whenCloudReady === 'function') {
+        window.whenCloudReady(function () { window.openCottonCandy(); });
+        alert('正在连接服务器，请稍候再试');
         return;
       }
+      alert('页面加载中，请稍后再试');
+      return;
     }
     resetForm();
     var isAdmin = window.role === 'admin';
@@ -167,17 +168,17 @@
     renderPreview();
   };
 
-  /* ===== 上传媒体 ===== */
-  async function uploadMedia(file, postId) {
-    var ext = file.name.split('.').pop() || 'bin';
-    var safeName = postId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-    var path = 'posts/' + safeName;
-    var result = await window.sb.storage.from(STORAGE_BUCKET).upload(path, file, {
-      cacheControl: '3600', upsert: false, contentType: file.type
-    });
-    if (result.error) return null;
-    var urlData = window.sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-    return urlData.data ? urlData.data.publicUrl : null;
+  /* ===== 媒体处理 =====
+     新后端无公开存储桶，媒体压缩后以 dataURL 内嵌进数据库，
+     匿名访客无需登录即可查看，也不会出现链接过期。 */
+  async function uploadMedia(file) {
+    if (!window.MediaUtil) return null;
+    try {
+      return await window.MediaUtil.toDataUrl(file);
+    } catch (e) {
+      if (window.showToast) window.showToast(e.message || '媒体处理失败', 'e');
+      return null;
+    }
   }
 
   /* ===== 提交投稿 ===== */
@@ -566,5 +567,15 @@
       ta.setAttribute('maxlength', MAX_TEXT + 100);
     }
   });
+
+  /* ===== 实时推送钩子：供 realtime-binding.js 调用 ===== */
+  window.ccRealtimeRefresh = function() {
+    var overlay = $('ccOverlay');
+    if (!overlay || !overlay.classList.contains('show')) return;
+    // 仅管理员、且在"看投稿"列表页时刷新
+    if (window.role !== 'admin') return;
+    var list = $('ccContentList');
+    if (list && list.style.display !== 'none') loadPosts();
+  };
 
 })();

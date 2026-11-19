@@ -4,15 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>浮光-Luminos</title>
-<link rel="preconnect" href="https://yiexaopgxcroktltjqoz.supabase.co">
+<link rel="preconnect" href="https://fuguang-luminos.app.workbuddy.host" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="gift-showcase.css">
 <link rel="stylesheet" href="cotton-candy.css">
 <link rel="stylesheet" href="playlist.css">
 <link rel="stylesheet" href="games.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="realtime.css">
 </head>
 <body>
+
+<!-- 实时推送连接状态徽标 -->
+<div id="rtStatus" class="rt-status" data-status="idle" title="实时推送状态">
+  <span class="rt-dot"></span><span class="rt-text">实时待命</span>
+</div>
 
 <!-- ===== Landing Page ===== -->
 <div class="landing" id="lp">
@@ -182,8 +188,10 @@
   </div>
 </div>
 
-<!-- Supabase SDK: 异步加载不阻塞首屏 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- WorkBuddy 云服务 SDK + 兼容层（必须在业务脚本之前加载） -->
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="cloud-config.js"></script>
+<script src="media-util.js"></script>
 <script src="area-data.js"></script>
 <script src="captain.js"></script>
 <!-- 棉花糖投稿弹窗 -->
@@ -423,6 +431,9 @@
 <script src="gift-showcase.js"></script>
 <script src="cotton-candy.js"></script>
 <script src="playlist.js"></script>
+<!-- 实时推送中枢（Supabase Realtime / WebSocket），须在所有业务脚本之后加载 -->
+<script src="realtime.js"></script>
+<script src="realtime-binding.js"></script>
 <script data-cat="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif" src="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.js"></script>
 <script>
 (function(){

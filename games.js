@@ -495,6 +495,12 @@
     updateSyncStatus();
   }
 
+  // 实时推送钩子：静默刷新云端棋盘缓存，不打断进行中的游戏
+  window.gmMonoRealtimeRefresh = function() {
+    if (gmCurrentGame === 'monopoly' && mpMoving) return; // 游戏中不刷新，避免棋盘跳动
+    mpRefreshBoards();
+  };
+
   function updateSyncStatus() {
     var el = $('mpSyncStatus');
     if (!el) return;

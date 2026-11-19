@@ -542,25 +542,15 @@ async function handleImageUpload(files) {
       // 1. 添加水印
       const watermarkedBlob = await addWatermark(file);
       
-      // 2. 上传到 Supabase Storage
+      // 2. 生成存储标识（图片本体以 dataURL 内嵌，见第 3 步）
       const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.jpg`;
       const storagePath = `${currentMonthId}/${fileName}`;
       
-      const { data: uploadData, error: uploadError } = await window.sb
-        .storage
-        .from(GIFT_BUCKET)
-        .upload(storagePath, watermarkedBlob, {
-          contentType: 'image/png',
-          upsert: false
-        });
-      
-      if (uploadError) {
-        continue;
-      }
-      
-      // 3. 获取公共 URL - 使用 Supabase 项目 URL 构建
-      const SB_URL = 'https://yiexaopgxcroktltjqoz.supabase.co';
-      const publicUrl = `${SB_URL}/storage/v1/object/public/${GIFT_BUCKET}/${storagePath}`;
+      // 3. 压缩为 dataURL 内嵌保存（新后端不提供公开存储桶）
+      const publicUrl = await window.MediaUtil.blobToDataUrl(watermarkedBlob, {
+        maxDim: 1400,
+        maxBytes: 780 * 1024
+      });
       
       // 4. 保存到数据库
       const currentImages = giftImages[currentMonthId] || [];
@@ -691,15 +681,7 @@ async function deleteImage(imageId) {
     const image = images.find(img => img.id === imageId);
     if (!image) return;
     
-    // 1. 从 Storage 删除
-    const { error: storageError } = await window.sb
-      .storage
-      .from(GIFT_BUCKET)
-      .remove([image.storage_path]);
-    
-    if (storageError) {
-      // 存储删除失败，继续删除数据库记录
-    }
+    // 1. 图片本体以 dataURL 内嵌在记录中，删除记录即完成清理
     
     // 2. 从数据库删除
     const { error: dbError } = await window.sb
@@ -754,5 +736,11 @@ window.toggleSection = toggleSection;
 window.openImageLightbox = openImageLightbox;
 window.closeImageLightbox = closeImageLightbox;
 window.navigateLightbox = navigateLightbox;
+
+// 供实时同步层调用：重新拉取图片列表并重绘（模块内部函数不对外暴露）
+window.giftRealtimeRefresh = async function () {
+  await loadGiftImages();
+  renderGiftShowcase();
+};
 
 })();
