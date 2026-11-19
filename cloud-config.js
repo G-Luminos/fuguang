@@ -16,6 +16,17 @@
 (function (global) {
   'use strict';
 
+  /* ---------- 域名守卫 ----------
+     云服务后端按 Origin 精确放行，只有本站域名能通过预检。
+     若本文件被旧域名（github.io）加载，这里立刻跳转，
+     避免用户看到的是一串 "TypeError: Failed to fetch"。
+     index.html 已有同样守卫，这里是第二道，防止只缓存了 HTML 的情况。 */
+  var _host = (global.location && global.location.hostname) || '';
+  if (/\.github\.io$/i.test(_host)) {
+    global.location.replace('https://fuguang-luminos.app.workbuddy.host/?sharecode=7M44HIDFCE');
+    return;
+  }
+
   var CONFIG = {
     endpoint: 'https://fuguang-luminos.app.workbuddy.host',
     publishableKey: 'wbpk_mT8nq5xvmBV3Doioqn4lCd_Mnldeo7jeJs2M7ZYIEd1Kp6Ne06e13h9',

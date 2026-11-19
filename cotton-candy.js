@@ -185,6 +185,10 @@
   function formatErr(err) {
     if (!err) return '未知错误';
     var msg = err.message || err.error_description || err.details || String(err);
+    // 网络层直接失败（跨域被拒 / 域名被拦 / 断网）时，浏览器只给一句 Failed to fetch
+    if (/Failed to fetch|NetworkError|Load failed|ERR_/i.test(msg)) {
+      return '连不上云服务器，请检查网络后重试；若一直失败，请用最新链接重新打开';
+    }
     if (err.code) msg += '（' + err.code + '）';
     return msg.length > 90 ? msg.slice(0, 90) + '…' : msg;
   }
