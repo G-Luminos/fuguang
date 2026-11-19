@@ -87,6 +87,9 @@
     { id: 'e_07', name: '蹦迪',   need: 5, emoji: '🕺' },
     { id: 'e_08', name: '睡大觉', need: 4, emoji: '😴' }
   ];
+  window.ShukeSkinNeed = {};
+  SKINS.forEach(function (x) { if (x.need > 0) window.ShukeSkinNeed[x.id] = x.need; });
+
   var RARITY = {
     default: { label: '默认', color: '#8A8F98', glow: 'rgba(138,143,152,.4)' },
     normal:  { label: '普通', color: '#A0A6B0', glow: 'rgba(160,166,176,.4)' },
@@ -277,6 +280,7 @@
     }
     if (up > 0) {
       toast('🎉 升级啦！Lv.' + SAVE.user.level + '（+' + (up * 10) + ' 积分）');
+      if (window.ShukePet) window.ShukePet.gameNotify('level');
       if (window.SKFX) SKFX.confetti(null, null, { count: 60 });
     }
     return up > 0;
@@ -380,6 +384,7 @@
     if (SAVE.checkin.streak % 7 === 0) { SAVE.user.coins += 100; toast('连签 7 天！额外 +100 🧶'); }
     scheduleSync();
     toast('签到成功 +' + coins + '🧶 +' + pts + '⭐（连签 ' + SAVE.checkin.streak + ' 天）');
+    if (window.ShukePet) window.ShukePet.gameNotify('checkin');
     return true;
   }
 
@@ -631,6 +636,7 @@
     SAVE.shuke.skin = id;
     scheduleSync();
     toast('合出「' + s.name + '」并换上了！🎉');
+    if (window.ShukePet) window.ShukePet.gameNotify('craft');
     if (window.SKFX) SKFX.confetti(null, null, { count: 80 });
     renderCollection(); renderHome();
   }
@@ -639,6 +645,7 @@
     SAVE.shuke.skin = id;
     scheduleSync();
     toast('已换上');
+    if (window.ShukePet) window.ShukePet.gameNotify('equip');
     renderCollection(); renderHome();
   }
 
@@ -1122,6 +1129,7 @@
       '<div class="sk-stage-desc">获得 <b>' + coins + ' 🧶</b> 和 <b>' + pts + ' ⭐</b><br>最高连击 ' + (G.maxCombo || 0) + '</div>' +
       '<button class="sk-btn primary" id="skStartBtn" onclick="SK.startGame()">再来一局 · 1⚡</button>' +
       '<div class="sk-stage-tip">' + (SAVE.play.games < CONFIG.playDailyDouble ? '今天还有 ' + (CONFIG.playDailyDouble - SAVE.play.games) + ' 局双倍' : '今天的双倍用完了') + '</div>';
+    if (window.ShukePet) window.ShukePet.gameNotify('game', { score: G.score });
     if (window.SKFX && G.score > 0) SKFX.confetti(null, null, { count: 50, spread: 0.7 });
     renderAll();
     if (myRank) pushSave();
@@ -1437,6 +1445,21 @@
     });
     window.addEventListener('pagehide', function () { saveLocal(SAVE); });
   }
+
+  /* 桌宠每日聊天奖励：走游戏内存存档，避免被覆盖 */
+  window.ShukeGame = {
+    dailyChatReward: function () {
+      var t = todayStr();
+      SAVE.play.chatRewardDate = SAVE.play.chatRewardDate || '';
+      if (SAVE.play.chatRewardDate === t) return false;
+      SAVE.play.chatRewardDate = t;
+      SAVE.user.coins += 10;
+      SAVE.user.points += 3;
+      scheduleSync();
+      renderHome();
+      return true;
+    }
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
