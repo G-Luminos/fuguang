@@ -1291,6 +1291,7 @@
     if (page === 'play') {
       setTimeout(fitGame, 30);
       if (!G.running) fitGame();
+      var eb = $('skEnergyBig'); if (eb) eb.textContent = playsLeft();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
