@@ -568,3 +568,6 @@
   .cc-present-dialog-box { padding: 16px }
   .cc-admin-left { flex-wrap: wrap }
 }
+
+/* 图片懒加载占位 */
+.cc-media-ph{padding:18px;text-align:center;font-size:12px;color:#8A8F98;background:#F4F5F7;border-radius:10px}

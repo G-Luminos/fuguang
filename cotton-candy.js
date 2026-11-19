@@ -403,20 +403,53 @@
     }
   };
 
+  /* ===== 媒体条目渲染 ===== */
+  function renderMediaItems(urls, fullscreen) {
+    var onClk = fullscreen ? 'ccPresentMediaFull' : 'ccMediaFullscreen';
+    return urls.map(function(url) {
+      var isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url);
+      if (isVideo) return '<video src="' + escHtml(url) + '" controls preload="metadata" onclick="' + onClk + '(this)"></video>';
+      return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="' + onClk + '(this)" loading="lazy" onerror="this.style.display=\'none\'">';
+    }).join('');
+  }
+
+  /* ===== 图片懒加载：卡片进入视野才拉 media_urls ===== */
+  function hydrateLazyMedia(root) {
+    var nodes = root.querySelectorAll('.cc-lazy[data-id]');
+    if (!nodes.length) return;
+    var fetchOne = function(el) {
+      if (el.dataset.done) return;
+      el.dataset.done = '1';
+      window.sb.rpc('cotton_media', { p_id: el.dataset.id }).then(function(r) {
+        var urls = (r && r.data) || [];
+        if (!urls.length) { el.remove(); return; }
+        el.classList.remove('cc-lazy');
+        el.innerHTML = renderMediaItems(urls, false);
+      }).catch(function() { el.remove(); });
+    };
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(en) {
+          if (en.isIntersecting) { fetchOne(en.target); io.unobserve(en.target); }
+        });
+      }, { rootMargin: '400px' });
+      nodes.forEach(function(n) { io.observe(n); });
+    } else {
+      nodes.forEach(fetchOne);
+    }
+  }
+
   /* ===== 渲染单条投稿 ===== */
   function renderPostCard(post, idx) {
     var time = formatTime(post.created_at);
     var mediaHtml = '';
-    if (post.media_urls && post.media_urls.length > 0) {
-      mediaHtml = '<div class="cc-card-media">' +
-        post.media_urls.map(function(url) {
-          var isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url);
-          if (isVideo) {
-            return '<video src="' + escHtml(url) + '" controls preload="metadata" onclick="ccMediaFullscreen(this)"></video>';
-          }
-          return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="ccMediaFullscreen(this)" loading="lazy" onerror="this.style.display=\'none\'">';
-        }).join('') +
-      '</div>';
+    var mediaCount = post.media_count || (post.media_urls || []).length;
+    if (mediaCount > 0) {
+      if (post.media_urls && post.media_urls.length > 0) {
+        mediaHtml = '<div class="cc-card-media">' + renderMediaItems(post.media_urls, false) + '</div>';
+      } else {
+        mediaHtml = '<div class="cc-card-media cc-lazy" data-id="' + post.id + '"><div class="cc-media-ph">🖼 图片加载中…</div></div>';
+      }
     }
 
     return '<div class="cc-card" data-idx="' + (idx !== undefined ? idx : '') + '">' +
@@ -529,7 +562,7 @@
     if (ccCurrentIdx < ccPosts.length - 1) { ccCurrentIdx++; renderPresentSlide(); }
   };
 
-  function renderPresentSlide() {
+  async function renderPresentSlide() {
     var post = ccPosts[ccCurrentIdx];
     if (!post) return;
     var counter = $('ccPresentCounter');
@@ -538,16 +571,15 @@
 
     var time = formatTime(post.created_at);
     var mediaHtml = '';
+    var needMedia = (post.media_count || (post.media_urls || []).length) > 0;
+    if (needMedia && (!post.media_urls || !post.media_urls.length)) {
+      try {
+        var r = await window.sb.rpc('cotton_media', { p_id: post.id });
+        if (r && r.data && r.data.length) post.media_urls = r.data;
+      } catch (e) {}
+    }
     if (post.media_urls && post.media_urls.length > 0) {
-      mediaHtml = '<div class="cc-present-media">' +
-        post.media_urls.map(function(url) {
-          var isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url);
-          if (isVideo) {
-            return '<video src="' + escHtml(url) + '" controls preload="metadata" onclick="ccPresentMediaFull(this)"></video>';
-          }
-          return '<img src="' + escHtml(url) + '" alt="投稿图片" onclick="ccPresentMediaFull(this)" loading="lazy" onerror="this.style.display=\'none\'">';
-        }).join('') +
-      '</div>';
+      mediaHtml = '<div class="cc-present-media">' + renderMediaItems(post.media_urls, true) + '</div>';
     }
 
     content.innerHTML =
