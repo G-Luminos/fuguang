@@ -263,3 +263,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 @media(max-width:380px){
   .hd-title h1{font-size:13px}
 }
+
+/* ===== 历史月份的登记卡置灰 ===== */
+.gl-card.gl-old{opacity:.55;filter:grayscale(.4)}
+.gl-card.gl-old .gl-card-av{background:#C9CDD4}
+.gl-card.gl-old .gl-btn{display:none}
+.gl-card-tag{flex:none;margin-left:auto;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(0,192,145,.14);color:var(--ok)}
+.gl-card-tag.old{background:rgba(0,0,0,.06);color:var(--ts)}

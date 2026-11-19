@@ -378,13 +378,16 @@ async function renderGuestCard(list) {
   list.innerHTML = '<div class="guest-lock"><div class="gl-fox">🦊</div><div class="gl-title">小光正在翻保险箱…</div></div>';
   const res = await capPublic('lookup', { nickname: guestName });
   const rows = (res && res.ok && res.rows) || [];
+  const curMonth = getCurMonth();
   let cards = '';
   if (rows.length) {
     cards = '<div class="gl-mine">' + rows.map(r => {
       const ad = [r.province, r.city, r.district].filter(Boolean).join(' ');
-      return '<div class="gl-card">' +
+      const isCur = r.month === curMonth;
+      return '<div class="gl-card' + (isCur ? '' : ' gl-old') + '">' +
         '<div class="gl-card-hd"><span class="gl-card-av">' + esc((r.nickname || '?').charAt(0)) + '</span>' +
-          '<div><b>' + esc(r.nickname) + '</b><small>' + esc(r.month || '') + (r.auto_renew ? ' · 自动续舰' : '') + '</small></div>' +
+          '<div><b>' + esc(r.nickname) + '</b><small>' + esc(r.month || '') + (r.auto_renew ? ' · 自动续舰' : '') + (isCur ? '' : ' · 历史') + '</small></div>' +
+          (isCur ? '<span class="gl-card-tag">当月</span>' : '<span class="gl-card-tag old">往期</span>') +
         '</div>' +
         '<div class="gl-card-row">📱 ' + (r.phone_mask ? esc(r.phone_mask) : '未填') + '</div>' +
         '<div class="gl-card-row">📍 ' + esc((ad ? ad + ' ' : '') + (r.address_mask || '未填')) + '</div>' +
@@ -483,6 +486,19 @@ async function openForm(id) {
     document.getElementById('fa').value = '';
     document.getElementById('fnote').value = '';
     setRenewModeRaw(0);
+    // 访客：带出上次在这台设备上填过的资料（存在本机，不上云）
+    if (window.role === 'guest') {
+      try {
+        const last = JSON.parse(localStorage.getItem(SK + '_last_reg') || 'null');
+        if (last && last.nickname === guestName) {
+          document.getElementById('fph').value = last.phone || '';
+          document.getElementById('fa').value = last.address || '';
+          document.getElementById('fnote').value = last.note || '';
+          fillAreaGroup('fp', 'fc', 'fd', last);
+          if (last.phone || last.address) toast('认出你啦，已带出上次资料 🦊','s');
+        }
+      } catch (e) {}
+    }
   }
   document.getElementById('fm').classList.add('show');
 }
@@ -523,7 +539,12 @@ async function saveForm() {
       if (result) {
         closeForm(); await render();
         if (window.role === 'guest') {
-          showFox('登记好啦 🦊', '资料已经加密送进小光的狐狸窝，ta会看到并安排发货。哪天想改手机号或地址，直接戳小光说一声就好～');
+          try {
+            localStorage.setItem(SK + '_last_reg', JSON.stringify({
+              nickname: n, phone: ph, province: fp, city: fc, district: fd, address: fa, note: fn
+            }));
+          } catch (e) {}
+          showFox('登记好啦 🦊', '资料已经加密送进小光的狐狸窝，ta会看到并安排发货。下次再来会自动带出这次的地址，不用重填～');
         } else {
           toast('已添加 ✅','s');
         }
@@ -881,6 +902,19 @@ window.hideLoading = hideLoading;
 document.getElementById('lpw').addEventListener('keydown', e => { if(e.key==='Enter') doLogin() });
 document.getElementById('lu').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('lpw').focus() });
 document.getElementById('gnInput').addEventListener('keydown', e => { if(e.key==='Enter') submitGuestNick() });
+document.getElementById('fn').addEventListener('blur', function() {
+  if (window.role !== 'guest' || editingId) return;
+  try {
+    const last = JSON.parse(localStorage.getItem(SK + '_last_reg') || 'null');
+    if (!last || this.value.trim() !== last.nickname) return;
+    if (document.getElementById('fph').value) return; // 已填就不覆盖
+    document.getElementById('fph').value = last.phone || '';
+    document.getElementById('fa').value = last.address || '';
+    document.getElementById('fnote').value = last.note || '';
+    fillAreaGroup('fp', 'fc', 'fd', last);
+    if (last.phone || last.address) toast('认出你啦，已带出上次资料 🦊','s');
+  } catch (e) {}
+});
 
 /* ================================================================
    Name Wall - 首页背景续舰名单名字墙（跟随鼠标摆动）
