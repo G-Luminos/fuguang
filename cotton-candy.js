@@ -309,7 +309,8 @@
     container.innerHTML = '<div class="cc-empty"><div class="cc-loading-spinner"><p>\u23F3 小光正在努力...</p></div></div>';
 
     try {
-      var result = await window.sb.from(TABLE_NAME).select('*').order('created_at', { ascending: false }).limit(FETCH_LIMIT);
+      // 图片改为懒加载：列表只拉文字 + 图片数量，媒体按卡片进入视野时再取
+      var result = await window.sb.rpc('cotton_list', { p_limit: FETCH_LIMIT });
       if (result.error) {
         container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">\uD83D\uDE14</div><p>加载失败，请重试</p></div>';
         return;
@@ -367,6 +368,7 @@
     }
 
     container.innerHTML = html;
+    hydrateLazyMedia(container);
   }
 
   window.ccChangeWeek = function(val) {
