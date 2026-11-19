@@ -2,12 +2,12 @@
    舒克宇宙 · Shuke Universe
    ---------------------------------------------------------------
    玩点结构：
-   1) 抓毛线（主动）——30 秒接毛线/鱼，连击翻倍，消耗体力，是主要收入
-   2) 打工（挂机）——离线也在涨，上限随等级，每天回来收
-   3) 开箱（收集）——皮肤碎片 / 装扮 / 猫粮，30 抽保底传说
-   4) 签到 + 每日任务（习惯）——连签加成产出，任务给积分
+   1) 抓毛线（主动）——30 秒接毛线/鱼，连击翻倍，体力限制，主要收入
+   2) 打工（挂机）——离线也涨，上限随等级，每天回来收
+   3) 开箱（收集）——皮肤碎片 / 装扮 / 猫粮，60 抽保底传说
+   4) 签到 + 每日任务（习惯）——连签加成产出
    5) 排行（社交）——云端真实积分榜
-   账号存档走 shuke_* 系列 RPC，密码只在服务端比对哈希。
+   6) 星钻（预留付费）——商店/充值通道已写好，默认关闭
    ================================================================ */
 (function () {
   'use strict';
@@ -18,13 +18,13 @@
 
   /* ================= 配置 ================= */
   var CONFIG = {
-    gachaCost: 60,
-    gacha10Cost: 540,
-    pity: 30,
-    idleRateBase: 10,          // 每小时猫毛球
+    gachaCost: 80,
+    gacha10Cost: 720,
+    pity: 60,
+    idleRateBase: 10,
     idleCapBase: 200,
     idleCapPerLevel: 20,
-    idleMaxHours: 12,          // 最长攒 12 小时
+    idleMaxHours: 12,
     petDailyLimit: 3,
     petCoins: 3,
     petExp: 5,
@@ -36,37 +36,56 @@
     playDailyDouble: 3,
     expBase: 80,
     expGrowth: 40,
-    rates: { normal: 0.60, rare: 0.25, epic: 0.10, ssr: 0.05 },
-    shop: [
-      { id: 'g1', name: '虚拟抵扣券', cost: 900, icon: '🎟️', desc: '直播间下单立减' },
-      { id: 'g2', name: '定制表情包', cost: 2200, icon: '😸', desc: '点图投稿，小光来画' },
-      { id: 'g3', name: '舒克立牌（虚拟）', cost: 4200, icon: '🪧', desc: '专属编号' },
-      { id: 'g4', name: '舰长专属头像框', cost: 8000, icon: '🖼️', desc: '限定款' },
-      { id: 'g5', name: '1 小时专属陪玩', cost: 16000, icon: '🎮', desc: '和小光开黑' }
+    rates: { normal: 0.62, rare: 0.28, epic: 0.08, ssr: 0.02 },
+    // 付费预留：通道已写好，默认关闭。开启时填上小光的支付宝账号/收款码说明即可
+    pay: {
+      enabled: false,
+      alipayAccount: '',
+      tip: '转账备注：你的游戏昵称'
+    },
+    gemPacks: [
+      { sku: 'p6',  gems: 60,  price: 6,  label: '60 星钻' },
+      { sku: 'p12', gems: 130, price: 12, label: '130 星钻', tag: '划算' },
+      { sku: 'p30', gems: 320, price: 30, label: '320 星钻', tag: '热销' },
+      { sku: 'p68', gems: 720, price: 68, label: '720 星钻', tag: '大额' }
     ]
   };
 
-  /* ================= 皮肤 / 装扮 ================= */
+  /* ================= 皮肤 / 装扮 / 表情 ================= */
   var SKINS = [
-    { id: 's_01', name: '原初舒克', rarity: 'default', need: 0, emoji: '🐈', bonus: 0,    desc: '刚睡醒的样子' },
-    { id: 's_02', name: '星空舒克', rarity: 'rare',    need: 6, emoji: '🌌',    bonus: 0.05, desc: '毛里藏着星星' },
-    { id: 's_03', name: '樱花舒克', rarity: 'epic',    need: 10, emoji: '🌸',   bonus: 0.08, desc: '春天限定' },
-    { id: 's_04', name: '赛博舒克', rarity: 'epic',    need: 12, emoji: '🤖',   bonus: 0.10, desc: '机械猫耳会发光' },
-    { id: 's_05', name: '金龙舒克', rarity: 'ssr',     need: 20, emoji: '🐉',   bonus: 0.15, desc: '传说级，出货率 5%' }
+    { id: 's_01', name: '原初舒克', rarity: 'default', need: 0,   emoji: '🐈',  bonus: 0,    desc: '刚睡醒的样子' },
+    { id: 's_02', name: '星空舒克', rarity: 'rare',    need: 20,  emoji: '🌌',  bonus: 0.05, desc: '毛里藏着星星' },
+    { id: 's_07', name: '雾凇舒克', rarity: 'rare',    need: 24,  emoji: '❄️',  bonus: 0.06, desc: '冬天的尾巴' },
+    { id: 's_03', name: '樱花舒克', rarity: 'epic',    need: 40,  emoji: '🌸',  bonus: 0.10, desc: '春天限定' },
+    { id: 's_04', name: '赛博舒克', rarity: 'epic',    need: 48,  emoji: '🤖',  bonus: 0.12, desc: '机械猫耳会发光' },
+    { id: 's_08', name: '熔岩舒克', rarity: 'epic',    need: 56,  emoji: '🌋',  bonus: 0.15, desc: '走路冒火星' },
+    { id: 's_05', name: '金龙舒克', rarity: 'ssr',     need: 80,  emoji: '🐉',  bonus: 0.20, desc: '传说级，出货率 2%' },
+    { id: 's_09', name: '星穹舒克', rarity: 'ssr',     need: 96,  emoji: '🌠',  bonus: 0.24, desc: '银河落在身上' },
+    { id: 's_10', name: '微光舒克', rarity: 'ssr',     need: 128, emoji: '✨',  bonus: 0.30, desc: '隐藏款，只出碎片' }
   ];
   var ITEMS = [
-    { id: 'a_01', name: '蝴蝶结',   need: 4, emoji: '🎀' },
-    { id: 'a_02', name: '铃铛项圈', need: 4, emoji: '🔔' },
-    { id: 'a_03', name: '墨镜',     need: 5, emoji: '🕶️' },
-    { id: 'a_04', name: '小皇冠',   need: 6, emoji: '👑' },
-    { id: 'a_05', name: '耳机',     need: 5, emoji: '🎧' },
-    { id: 'a_06', name: '围巾',     need: 4, emoji: '🧣' }
+    { id: 'a_01', name: '蝴蝶结',   need: 4,  emoji: '🎀' },
+    { id: 'a_02', name: '铃铛项圈', need: 4,  emoji: '🔔' },
+    { id: 'a_03', name: '墨镜',     need: 6,  emoji: '🕶️' },
+    { id: 'a_04', name: '小皇冠',   need: 8,  emoji: '👑' },
+    { id: 'a_05', name: '耳机',     need: 6,  emoji: '🎧' },
+    { id: 'a_06', name: '围巾',     need: 5,  emoji: '🧣' },
+    { id: 'a_07', name: '贝雷帽',   need: 6,  emoji: '🎩' },
+    { id: 'a_08', name: '小翅膀',   need: 10, emoji: '🪽' },
+    { id: 'a_09', name: '魔法棒',   need: 10, emoji: '🪄' },
+    { id: 'a_10', name: '小书包',   need: 5,  emoji: '🎒' },
+    { id: 'a_11', name: '光环',     need: 12, emoji: '😇' },
+    { id: 'a_12', name: '火焰披风', need: 12, emoji: '🔥' }
   ];
   var EMOJIS = [
-    { id: 'e_01', name: '卖萌', need: 3, emoji: '🥺' },
+    { id: 'e_01', name: '卖萌',   need: 3, emoji: '🥺' },
     { id: 'e_02', name: '打哈欠', need: 3, emoji: '🥱' },
-    { id: 'e_03', name: '傲娇', need: 4, emoji: '😼' },
-    { id: 'e_04', name: '干饭', need: 4, emoji: '🍚' }
+    { id: 'e_03', name: '傲娇',   need: 4, emoji: '😼' },
+    { id: 'e_04', name: '干饭',   need: 4, emoji: '🍚' },
+    { id: 'e_05', name: '吃瓜',   need: 3, emoji: '🍉' },
+    { id: 'e_06', name: '泡澡',   need: 5, emoji: '🛁' },
+    { id: 'e_07', name: '蹦迪',   need: 5, emoji: '🕺' },
+    { id: 'e_08', name: '睡大觉', need: 4, emoji: '😴' }
   ];
   var RARITY = {
     default: { label: '默认', color: '#8A8F98', glow: 'rgba(138,143,152,.4)' },
@@ -91,7 +110,7 @@
   function defaultSave() {
     return {
       v: 2,
-      user: { name: '小粉丝', level: 1, exp: 0, coins: 120, points: 0, food: 3 },
+      user: { name: '小粉丝', level: 1, exp: 0, coins: 120, points: 0, food: 3, gems: 0 },
       checkin: { last: '', streak: 0, days: {} },
       shuke: { skin: 's_01', owned: ['s_01'], shards: {} },
       gacha: { pity: 0, opened: 0 },
@@ -148,7 +167,6 @@
       }
       if (o.gacha) { s.gacha.pity = o.gacha.pityCounter || 0; s.gacha.opened = o.gacha.totalOpened || 0; }
       if (o.exchanged) s.exchanged = o.exchanged;
-      if (o.claimedCoins) s.idle.pending = 0;
       return s;
     } catch (e) { return null; }
   }
@@ -173,6 +191,9 @@
   var currentPage = 'home';
   var authMode = 'login';
   var syncing = false, syncTimer = null;
+  var shopList = [];
+  var adminPassInput = '';
+  var pickedPack = null;
 
   /* ================= 工具 ================= */
   function $(id) { return document.getElementById(id); }
@@ -201,7 +222,10 @@
       up++;
       SAVE.user.points += 10;
     }
-    if (up > 0) toast('🎉 升级啦！Lv.' + SAVE.user.level + '（+' + (up * 10) + ' 积分）');
+    if (up > 0) {
+      toast('🎉 升级啦！Lv.' + SAVE.user.level + '（+' + (up * 10) + ' 积分）');
+      if (window.SKFX) SKFX.confetti(null, null, { count: 60 });
+    }
     return up > 0;
   }
 
@@ -211,12 +235,8 @@
     var s = SKINS.filter(function (x) { return x.id === SAVE.shuke.skin; })[0];
     return s ? s.bonus : 0;
   }
-  function idleRate() {
-    return CONFIG.idleRateBase * (1 + streakBonus()) * (1 + skinBonus());
-  }
-  function idleCap() {
-    return CONFIG.idleCapBase + (SAVE.user.level - 1) * CONFIG.idleCapPerLevel;
-  }
+  function idleRate() { return CONFIG.idleRateBase * (1 + streakBonus()) * (1 + skinBonus()); }
+  function idleCap() { return CONFIG.idleCapBase + (SAVE.user.level - 1) * CONFIG.idleCapPerLevel; }
   function tickIdle() {
     var now = Date.now();
     var hours = Math.min((now - SAVE.idle.at) / 3600000, CONFIG.idleMaxHours);
@@ -258,9 +278,12 @@
       var d = r && r.data;
       if (d && d.ok) {
         myRank = d.rank; serverTotal = d.total;
+        // 积分与星钻以服务端为准，避免兑换后又被旧客户端顶回来
+        if (typeof d.points === 'number') SAVE.user.points = d.points;
+        if (typeof d.gems === 'number') SAVE.user.gems = d.gems;
+        saveLocal(SAVE);
         renderAcct();
       } else if (d && !d.ok && d.error) {
-        // token 失效：静默退出登录状态，避免一直报错
         if (String(d.error).indexOf('过期') >= 0) logout(true);
       }
     }).catch(function () { syncing = false; });
@@ -277,6 +300,8 @@
         SAVE = remote;
       }
       SAVE.user.name = d.player.nickname;
+      SAVE.user.gems = d.player.gems || 0;
+      if (typeof d.player.points === 'number') SAVE.user.points = d.player.points;
       SAVE.cloud.nick = d.player.nickname;
       saveLocal(SAVE);
       return true;
@@ -409,27 +434,34 @@
   }
 
   function pickDrop(rarity) {
-    if (rarity === 'ssr') return { type: 'shard', id: 's_05', emoji: '🐉', name: '金龙碎片', qty: 2, rarity: 'ssr' };
+    if (rarity === 'ssr') {
+      var ssrPool = Math.random() < 0.6 ? ['s_05', 's_09'] : ['s_05', 's_09', 's_10'];
+      var ssrId = ssrPool[Math.floor(Math.random() * ssrPool.length)];
+      var ss = findMeta(ssrId);
+      return { type: 'shard', id: ssrId, emoji: ss.emoji, name: ss.name + '碎片', qty: 3 + Math.floor(Math.random() * 3), rarity: 'ssr' };
+    }
     if (rarity === 'epic') {
-      if (Math.random() < 0.75) {
-        var pool = ['s_03', 's_04'];
-        var id = pool[Math.floor(Math.random() * pool.length)];
-        var s = SKINS.filter(function (x) { return x.id === id; })[0];
-        return { type: 'shard', id: id, emoji: s.emoji, name: s.name + '碎片', qty: 2, rarity: 'epic' };
-      }
-      return { type: 'coins', qty: 80, emoji: '🧶', name: '猫毛球 x80', rarity: 'epic' };
+      var ePool = ['s_03', 's_04', 's_08'];
+      var eId = ePool[Math.floor(Math.random() * ePool.length)];
+      var se = findMeta(eId);
+      return { type: 'shard', id: eId, emoji: se.emoji, name: se.name + '碎片', qty: 2 + Math.floor(Math.random() * 2), rarity: 'epic' };
     }
     if (rarity === 'rare') {
-      var r = Math.random();
-      if (r < 0.45) return { type: 'shard', id: 's_02', emoji: '🌌', name: '星空碎片', qty: 1, rarity: 'rare' };
-      if (r < 0.75) {
+      var rr = Math.random();
+      if (rr < 0.45) {
+        var rarePool = ['s_02', 's_07'];
+        var rId = rarePool[Math.floor(Math.random() * rarePool.length)];
+        var sr = findMeta(rId);
+        return { type: 'shard', id: rId, emoji: sr.emoji, name: sr.name + '碎片', qty: 1 + Math.floor(Math.random() * 2), rarity: 'rare' };
+      }
+      if (rr < 0.75) {
         var it = ITEMS[Math.floor(Math.random() * ITEMS.length)];
         return { type: 'shard', id: it.id, emoji: it.emoji, name: it.name + '碎片', qty: 1, rarity: 'rare' };
       }
       return { type: 'food', qty: 2, emoji: '🍖', name: '猫粮 x2', rarity: 'rare' };
     }
     var n = Math.random();
-    if (n < 0.35) return { type: 'coins', qty: 25, emoji: '🧶', name: '猫毛球 x25', rarity: 'normal' };
+    if (n < 0.35) return { type: 'coins', qty: 30 + Math.floor(Math.random() * 31), emoji: '🧶', name: '猫毛球', rarity: 'normal' };
     if (n < 0.6) return { type: 'food', qty: 1, emoji: '🍖', name: '猫粮 x1', rarity: 'normal' };
     var e = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
     return { type: 'shard', id: e.id, emoji: e.emoji, name: e.name + '碎片', qty: 1, rarity: 'normal' };
@@ -440,7 +472,6 @@
     else if (d.type === 'food') SAVE.user.food += d.qty;
     else {
       SAVE.shuke.shards[d.id] = (SAVE.shuke.shards[d.id] || 0) + d.qty;
-      // 碎片集齐即自动解锁（皮肤与装扮都算）
       var meta = findMeta(d.id);
       if (meta && meta.need > 0 && (SAVE.shuke.shards[d.id] || 0) >= meta.need && SAVE.shuke.owned.indexOf(d.id) < 0 && d.id.indexOf('s_') === 0) {
         SAVE.shuke.owned.push(d.id);
@@ -490,16 +521,46 @@
   function showResult(best, drops) {
     var r = RARITY[best] || RARITY.normal;
     var first = drops.filter(function (d) { return d.rarity === best; })[0] || drops[0];
-    $('skResRarity').textContent = r.label + ' · ' + drops.length + ' 件';
-    $('skResRarity').style.color = r.color;
-    $('skResIcon').textContent = first.emoji || '✨';
-    $('skResIcon').style.color = r.color;
-    $('skResName').textContent = first.name;
-    var extra = drops.filter(function (d) { return d !== first; }).map(function (d) { return d.emoji; }).join(' ');
-    $('skResMulti').textContent = drops.length > 1 ? ('其余：' + extra) : '';
-    $('skResultBox').style.borderColor = r.color + '66';
-    $('skResultBox').style.boxShadow = '0 0 60px ' + r.glow;
-    $('skResultModal').classList.add('show');
+
+    function reveal() {
+      $('skResRarity').textContent = r.label + ' · ' + drops.length + ' 件';
+      $('skResRarity').style.color = r.color;
+      $('skResIcon').textContent = first.emoji || '✨';
+      $('skResIcon').style.color = r.color;
+      $('skResName').textContent = first.name + (first.qty > 1 ? ' x' + first.qty : '');
+      $('skResultBox').style.borderColor = r.color + '66';
+      $('skResultBox').style.boxShadow = '0 0 60px ' + r.glow;
+
+      var cards = $('skResCards');
+      if (drops.length > 1) {
+        cards.innerHTML = drops.map(function (d, i) {
+          var cr = RARITY[d.rarity] || RARITY.normal;
+          return '<div class="sk-card-mini" style="animation-delay:' + (i * 70) + 'ms;border-color:' + cr.color + '44">' +
+            '<div class="sk-card-mini-ico" style="color:' + cr.color + '">' + d.emoji + '</div>' +
+            '<div class="sk-card-mini-name" style="color:' + cr.color + '">' + d.name + (d.qty > 1 ? '×' + d.qty : '') + '</div>' +
+          '</div>';
+        }).join('');
+        cards.style.display = 'grid';
+      } else {
+        cards.style.display = 'none';
+      }
+      $('skResultModal').classList.add('show');
+
+      if (best === 'ssr' && window.SKFX) {
+        SKFX.flash('rgba(255,194,75,.55)', 420);
+        SKFX.confetti(null, null, { count: 120, colors: ['#FFB23E', '#FF6B9D', '#FFFFFF', '#FFC24B'] });
+        SKFX.shake(4, 200);
+      } else if (best === 'epic' && window.SKFX) {
+        SKFX.confetti(null, null, { count: 70, colors: ['#B678FF', '#9B6BFF', '#FFFFFF'] });
+      }
+    }
+
+    // 史诗及以上：先 3D 晶体揭晓，再弹卡
+    if (window.SKFX && (best === 'epic' || best === 'ssr')) {
+      SKFX.reveal3d(r.color, r.glow).then(reveal);
+    } else {
+      reveal();
+    }
   }
   function closeResult() { $('skResultModal').classList.remove('show'); }
 
@@ -517,6 +578,7 @@
     SAVE.shuke.skin = id;
     scheduleSync();
     toast('合出「' + s.name + '」并换上了！🎉');
+    if (window.SKFX) SKFX.confetti(null, null, { count: 80 });
     renderCollection(); renderHome();
   }
   function equipSkin(id) {
@@ -527,17 +589,37 @@
     renderCollection(); renderHome();
   }
 
-  /* ================= 商店 ================= */
+  /* ================= 商店（积分兑换，记录进云端） ================= */
+  function loadShop() {
+    if (!window.sb) return;
+    window.sb.from('shuke_shop').select('*').order('sort').then(function (r) {
+      if (r && r.data) { shopList = r.data; renderShop(); }
+    }).catch(function () {});
+  }
+
   function buy(id) {
-    var g = CONFIG.shop.filter(function (x) { return x.id === id; })[0];
-    if (!g) return;
-    if (SAVE.exchanged[id]) { toast('已经兑换过啦'); return; }
-    if (SAVE.user.points < g.cost) { toast('积分不够，还差 ' + (g.cost - SAVE.user.points)); return; }
-    SAVE.user.points -= g.cost;
-    SAVE.exchanged[id] = { at: new Date().toISOString(), name: g.name, cost: g.cost };
-    scheduleSync();
-    toast('兑换成功：' + g.name + '，截图给小光核销');
-    renderShop(); renderHome();
+    var g = shopList.filter(function (x) { return x.id === id; })[0];
+    if (!g) { toast('商品还没加载好，稍后再试'); return; }
+    if (!token) { toast('先登录再兑换，兑换记录要留给你'); openAuth(); return; }
+    if (g.once && SAVE.exchanged[id]) { toast('这个已经兑换过啦'); return; }
+    if (SAVE.user.points < g.cost) { toast('积分不够，还差 ' + nfmt(g.cost - SAVE.user.points)); return; }
+    if (!window.sb) { toast('还没连上云端'); return; }
+    var btn = document.querySelector('[data-redeem="' + id + '"]');
+    if (btn) btn.disabled = true;
+    window.sb.rpc('shuke_redeem', { p_token: token, p_item: id }).then(function (r) {
+      if (btn) btn.disabled = false;
+      var d = r && r.data;
+      if (!d || !d.ok) { toast((d && d.error) || '兑换失败'); return; }
+      SAVE.user.points = d.points;
+      if (g.once) SAVE.exchanged[id] = { at: new Date().toISOString(), name: g.name, cost: g.cost };
+      scheduleSync();
+      toast('兑换成功：' + g.name + '，记得截图发给小光');
+      if (window.SKFX) SKFX.confetti(null, null, { count: 60 });
+      renderShop(); renderHome();
+    }).catch(function (e) {
+      if (btn) btn.disabled = false;
+      toast('兑换失败：' + (e && e.message || '网络错误'));
+    });
   }
 
   /* ================= 排行榜 ================= */
@@ -571,77 +653,143 @@
     });
   }
 
-  /* ================= 账号 ================= */
-  function openAuth() {
-    authMode = 'login';
-    setAuthMode('login');
-    $('skAuthNick').value = SAVE.cloud.nick || '';
-    $('skAuthPass').value = '';
-    $('skAuthErr').textContent = '';
-    $('skAuthModal').classList.add('show');
+  /* ================= 充值（预留，默认关闭） ================= */
+  function openPay() {
+    var modal = $('skPayModal');
+    if (!modal) return;
+    pickedPack = null;
+    renderPay();
+    modal.classList.add('show');
   }
-  function closeAuth() {
-    $('skAuthModal').classList.remove('show');
-    if (!token) toast('可以先随便玩，登录后存档才会上云');
-  }
-  function setAuthMode(mode) {
-    authMode = mode;
-    $('skTabLogin').classList.toggle('active', mode === 'login');
-    $('skTabReg').classList.toggle('active', mode === 'register');
-    $('skAuthTitle').textContent = mode === 'login' ? '欢迎回来' : '取个名字吧';
-    $('skAuthSub').textContent = mode === 'login' ? '登录后存档上云、能上排行榜' : '注册后存档跟着账号走，换设备不丢';
-    $('skAuthSubmit').textContent = mode === 'login' ? '登录' : '注册并开始';
+  function closePay() { var m = $('skPayModal'); if (m) m.classList.remove('show'); }
+
+  function renderPay() {
+    var body = $('skPayBody');
+    if (!body) return;
+    var disabled = !CONFIG.pay.enabled;
+    body.innerHTML =
+      '<div class="sk-pay-grid">' + CONFIG.gemPacks.map(function (pk) {
+        return '<button class="sk-pay-pack" data-sku="' + pk.sku + '" onclick="SK.pickPack(\'' + pk.sku + '\')">' +
+          (pk.tag ? '<span class="sk-pay-tag">' + pk.tag + '</span>' : '') +
+          '<div class="sk-pay-gems">💎 ' + pk.gems + '</div>' +
+          '<div class="sk-pay-price">¥' + pk.price + '</div>' +
+        '</button>';
+      }).join('') + '</div>' +
+      '<div class="sk-pay-note">' +
+        (disabled
+          ? '充值通道正在装修，先攒着积分玩吧～ 星钻上线后会在这里买礼包'
+          : '转账到小光的支付宝账号（' + (CONFIG.pay.alipayAccount || '见公告') + '），备注你的游戏昵称。已转账请把备注/订单号填在下面，小光核对后星钻到账') +
+      '</div>' +
+      (disabled ? '' : '<input id="skPayProof" class="sk-pay-input" maxlength="60" placeholder="转账备注 / 订单号（可选）">') +
+      '<button class="sk-btn primary" style="width:100%" id="skPayGo" ' + (disabled ? 'disabled' : '') + ' onclick="SK.submitPay()">' +
+        (disabled ? '敬请期待' : '选择充值包后点我') +
+      '</button>';
   }
 
-  function submitAuth() {
-    var nick = $('skAuthNick').value.trim();
-    var pass = $('skAuthPass').value;
-    var err = $('skAuthErr');
-    err.textContent = '';
-    if (nick.length < 2) { err.textContent = '昵称至少 2 个字'; return; }
-    if (pass.length < 4) { err.textContent = '密码至少 4 位'; return; }
-    if (!window.sb) { err.textContent = '还没连上云端，稍后再试'; return; }
-    var btn = $('skAuthSubmit');
-    btn.disabled = true; btn.textContent = '处理中…';
+  function pickPack(sku) {
+    pickedPack = sku;
+    document.querySelectorAll('.sk-pay-pack').forEach(function (el) {
+      el.classList.toggle('active', el.dataset.sku === sku);
+    });
+    if (!CONFIG.pay.enabled) { toast('充值通道正在装修，敬请期待'); return; }
+    $('skPayGo').textContent = '我已转账，提交给小光核对';
+  }
 
-    var fn = authMode === 'login' ? 'shuke_login' : 'shuke_register';
-    window.sb.rpc(fn, { p_nick: nick, p_pass: pass }).then(function (r) {
-      btn.disabled = false;
+  function submitPay() {
+    if (!CONFIG.pay.enabled) { toast('充值通道正在装修，敬请期待'); return; }
+    if (!pickedPack) { toast('先选一个星钻包'); return; }
+    if (!token) { toast('先登录再充值'); openAuth(); return; }
+    var proof = (($('skPayProof') || {}).value || '').trim();
+    if (!window.sb) { toast('还没连上云端'); return; }
+    window.sb.rpc('shuke_pay_create', { p_token: token, p_sku: pickedPack, p_proof: proof }).then(function (r) {
       var d = r && r.data;
-      if (r && r.error) { err.textContent = r.error.message || '请求失败'; btn.textContent = authMode === 'login' ? '登录' : '注册并开始'; return; }
-      if (!d || !d.ok) { err.textContent = (d && d.error) || '失败，稍后再试'; btn.textContent = authMode === 'login' ? '登录' : '注册并开始'; return; }
-      token = d.token;
-      try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
-      SAVE.cloud.nick = d.player.nickname;
-      SAVE.user.name = d.player.nickname;
-      if (authMode === 'login' && d.save && Object.keys(d.save).length) {
-        var remote = merge(defaultSave(), d.save);
-        // 本地有进度、云端是空存档时不要把本地覆盖掉
-        if ((remote.gacha.opened || 0) > 0 || (remote.user.level || 1) > 1) {
-          SAVE = remote;
-          SAVE.user.name = d.player.nickname;
-        }
-      }
-      closeAuth();
-      renderAll();
-      pushSave();
-      loadLeaderboard();
-      toast(authMode === 'login' ? '登录成功，存档已同步 ☁️' : '注册成功，开始养舒克吧 🐈‍⬛');
+      if (!d || !d.ok) { toast((d && d.error) || '提交失败'); return; }
+      toast('已提交，小光核对后星钻到账');
+      closePay();
     }).catch(function (e) {
-      btn.disabled = false;
-      btn.textContent = authMode === 'login' ? '登录' : '注册并开始';
-      err.textContent = (e && e.message) || '网络错误';
+      toast('提交失败：' + (e && e.message || '网络错误'));
     });
   }
 
-  function logout(silent) {
-    token = '';
-    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
-    SAVE.cloud.nick = '';
-    myRank = null;
-    saveLocal(SAVE);
-    renderAcct(); renderMe();
-    if (!silent) toast('已退出登录，存档还在本机');
+  /* ================= 管理台（兑换 / 充值核销） ================= */
+  function openAdmin() {
+    var m = $('skAdminModal');
+    if (!m) return;
+    m.classList.add('show');
+    if (adminPassInput) loadAdminLists();
+    else $('skAdminBody').innerHTML =
+      '<input id="skAdminPass" type="password" placeholder="管理口令" class="sk-pay-input">' +
+      '<button class="sk-btn primary" style="width:100%;margin-top:10px" onclick="SK.adminLogin()">进入</button>';
+  }
+  function closeAdmin() { var m = $('skAdminModal'); if (m) m.classList.remove('show'); }
+
+  function adminLogin() {
+    var p = ($('skAdminPass') || {}).value || '';
+    if (!p) { toast('先输入口令'); return; }
+    if (!window.adminLogin) { toast('通道未就绪'); return; }
+    window.adminLogin(p).then(function (r) {
+      if (!r || !r.ok) { toast('口令不对'); return; }
+      adminPassInput = p;
+      loadAdminLists();
+    });
+  }
+
+  function loadAdminLists() {
+    var body = $('skAdminBody');
+    body.innerHTML = '<div class="sk-loading">加载中…</div>';
+    Promise.all([
+      window.adminRpc('shuke_redeem_list', {}),
+      window.adminRpc('shuke_pay_list', {})
+    ]).then(function (rs) {
+      var redeems = (rs[0] && rs[0].ok && rs[0].rows) || [];
+      var pays = (rs[1] && rs[1].ok && rs[1].rows) || [];
+      var html = '';
+      html += '<div class="sk-adm-sec">📦 兑换核销（' + redeems.filter(function (x) { return x.status === 'pending'; }).length + ' 待办）</div>';
+      if (!redeems.length) html += '<div class="sk-loading">还没有兑换记录</div>';
+      redeems.slice(0, 30).forEach(function (r) {
+        html += '<div class="sk-adm-row' + (r.status !== 'pending' ? ' done' : '') + '">' +
+          '<div class="sk-adm-info"><b>' + esc(r.nickname) + '</b> · ' + esc(r.item_name) +
+          '<small>' + nfmt(r.cost) + ' 积分 · ' + fmtTime(r.created_at) + '</small>' +
+          (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</div>' +
+          (r.status === 'pending'
+            ? '<div class="sk-adm-act"><button onclick="SK.admMark(\'' + r.id + '\',\'done\')">完成</button><button onclick="SK.admMark(\'' + r.id + '\',\'rejected\')">驳回</button></div>'
+            : '<div class="sk-adm-status">' + (r.status === 'done' ? '已完成' : '已驳回') + '</div>') +
+        '</div>';
+      });
+      html += '<div class="sk-adm-sec">💎 充值核销（' + pays.filter(function (x) { return x.status === 'pending'; }).length + ' 待办）</div>';
+      if (!pays.length) html += '<div class="sk-loading">还没有充值订单</div>';
+      pays.slice(0, 30).forEach(function (o) {
+        html += '<div class="sk-adm-row' + (o.status !== 'pending' ? ' done' : '') + '">' +
+          '<div class="sk-adm-info"><b>' + esc(o.nickname) + '</b> · ' + esc(o.label) + ' · ¥' + o.amount_cny +
+          '<small>' + fmtTime(o.created_at) + '</small>' +
+          (o.proof ? '<small>凭证：' + esc(o.proof) + '</small>' : '') + '</div>' +
+          (o.status === 'pending'
+            ? '<div class="sk-adm-act"><button onclick="SK.admPay(\'' + o.id + '\',1)">已到账</button><button onclick="SK.admPay(\'' + o.id + '\',0)">驳回</button></div>'
+            : '<div class="sk-adm-status">' + (o.status === 'paid' ? '已到账' : '已驳回') + '</div>') +
+        '</div>';
+      });
+      body.innerHTML = html;
+    }).catch(function (e) {
+      body.innerHTML = '<div class="sk-loading">加载失败：' + esc(e && e.message || '') + '</div>';
+    });
+  }
+
+  function fmtTime(t) {
+    try { return new Date(t).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return ''; }
+  }
+
+  function admMark(id, status) {
+    window.adminRpc('shuke_redeem_mark', { p_id: id, p_status: status }).then(function (r) {
+      if (r && r.ok) { toast('已处理'); loadAdminLists(); }
+      else toast('失败：' + ((r && r.error) || ''));
+    });
+  }
+  function admPay(id, ok) {
+    window.adminRpc('shuke_pay_confirm', { p_id: id, p_ok: !!ok }).then(function (r) {
+      if (r && r.ok) { toast('已处理'); loadAdminLists(); }
+      else toast('失败：' + ((r && r.error) || ''));
+    });
   }
 
   /* ================= 渲染 ================= */
@@ -653,6 +801,7 @@
     $('skCoins').textContent = nfmt(SAVE.user.coins);
     $('skPoints').textContent = nfmt(SAVE.user.points);
     $('skEnergy').textContent = SAVE.energy.v;
+    if ($('skGems')) $('skGems').textContent = nfmt(SAVE.user.gems || 0);
 
     var need = expNeed(SAVE.user.level);
     $('skExpBar').style.width = clamp(SAVE.user.exp / need * 100, 0, 100) + '%';
@@ -690,6 +839,7 @@
     $('skColPct').textContent = col + '%';
     $('skDraw1').disabled = SAVE.user.coins < CONFIG.gachaCost;
     $('skDraw10').disabled = SAVE.user.coins < CONFIG.gacha10Cost;
+    if ($('skGemsMini')) $('skGemsMini').textContent = nfmt(SAVE.user.gems || 0);
   }
 
   function collectionPct() {
@@ -712,6 +862,7 @@
         '<div class="sk-skin-name">' + s.name + '</div>' +
         '<div class="sk-skin-rar">' + r.label + '</div>' +
         '<div class="sk-skin-bonus">' + (s.bonus > 0 ? '产出 +' + Math.round(s.bonus * 100) + '%' : '&nbsp;') + '</div>' +
+        '<div class="sk-skin-desc">' + s.desc + '</div>' +
         btn + '</div>';
     }).join('');
     $('skSkins').innerHTML = html;
@@ -721,7 +872,7 @@
       var cnt = SAVE.shuke.shards[x.id] || 0;
       var got = cnt >= x.need;
       return '<div class="sk-item">' +
-        '<div class="sk-item-ico" style="--grey:' + (got ? 0 : 1) + ';--op:' + (got ? 1 : .45) + '">' + x.emoji + '</div>' +
+        '<div class="sk-item-ico" style="--grey:' + (got ? 0 : 1) + ';--op:' + (got ? 1 : .6) + '">' + x.emoji + '</div>' +
         '<div class="sk-item-name">' + x.name + '</div>' +
         '<div class="sk-item-cnt">' + cnt + '/' + x.need + '</div></div>';
     }).join('');
@@ -737,6 +888,7 @@
     $('skMeName').textContent = SAVE.cloud.nick || (SAVE.user.name + '（本地）');
     $('skMeLevel').textContent = 'Lv.' + SAVE.user.level;
     $('skMePoints').textContent = nfmt(SAVE.user.points);
+    if ($('skMeGems')) $('skMeGems').textContent = nfmt(SAVE.user.gems || 0);
     $('skMeCombo').textContent = SAVE.play.bestCombo || 0;
     $('skMeOpens').textContent = SAVE.gacha.opened || 0;
     $('skMeOutBtn').style.display = token ? '' : 'none';
@@ -825,44 +977,41 @@
       '<p style="font-size:11px;color:var(--ts);text-align:center;margin-top:8px">每天 0 点重置，3 个全领 = 75🧶 + 30⭐</p>';
   }
 
-  function openTasks() {
-    resetDaily();
-    openSheet('✅ 今日任务', '<div id="skTaskList"></div>');
-    renderTasks();
-  }
+  function openTasks() { resetDaily(); openSheet('✅ 今日任务', '<div id="skTaskList"></div>'); renderTasks(); }
 
   function renderShop() {
-    var html = CONFIG.shop.map(function (g) {
-      var got = SAVE.exchanged[g.id];
+    var html = shopList.map(function (g) {
+      var got = g.once && SAVE.exchanged[g.id];
       var enough = SAVE.user.points >= g.cost;
       return '<div class="sk-shop-item">' +
         '<div class="sk-shop-ico">' + g.icon + '</div>' +
         '<div class="sk-shop-info"><div class="sk-shop-name">' + g.name + '</div>' +
-          '<div class="sk-shop-cost">' + nfmt(g.cost) + ' 积分 · ' + g.desc + '</div></div>' +
-        '<button class="sk-shop-btn" ' + (got || !enough ? 'disabled' : '') + ' onclick="SK.buy(\'' + g.id + '\')">' +
+          '<div class="sk-shop-cost">' + nfmt(g.cost) + ' 积分 · ' + g.detail + '</div></div>' +
+        '<button class="sk-shop-btn" data-redeem="' + g.id + '" ' + (got || !enough ? 'disabled' : '') + ' onclick="SK.buy(\'' + g.id + '\')">' +
           (got ? '已兑换' : enough ? '兑换' : '积分不足') + '</button>' +
       '</div>';
     }).join('');
     $('skSheetBody').innerHTML = html +
-      '<p style="font-size:11px;color:var(--ts);text-align:center;margin-top:8px">我的积分：<b style="color:var(--gold)">' + nfmt(SAVE.user.points) + '</b> · 兑换后截图给小光核销</p>';
+      '<p style="font-size:11px;color:var(--ts);text-align:center;margin-top:8px">我的积分：<b style="color:var(--gold)">' + nfmt(SAVE.user.points) + '</b> · 兑换记录小光能在后台看到</p>';
   }
 
-  function openShop() { openSheet('🎁 积分商店', ''); renderShop(); }
+  function openShop() { openSheet('🎁 积分商店', '<div class="sk-loading">加载中…</div>'); loadShop(); renderShop(); }
 
   /* ================= 抓毛线（Canvas 小游戏） ================= */
   var G = {
-    running: false, raf: 0, ctx: null, canvas: null,
-    t: 0, score: 0, combo: 0, comboTimer: 0, mult: 1,
-    catX: 0.5, items: [], spawnAcc: 0, last: 0, catchFx: []
+    running: false, raf: 0, ctx: null, canvas: null, dpr: 1,
+    t: 0, score: 0, combo: 0, mult: 1, maxCombo: 0,
+    catX: 0.5, items: [], spawnAcc: 0, last: 0, catchFx: [], particles: []
   };
 
   function fitGame() {
     var cv = $('skGame');
     if (!cv) return;
     var rect = cv.getBoundingClientRect();
+    if (rect.width < 10) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    cv.width = Math.max(300, Math.round(rect.width * dpr));
-    cv.height = Math.max(400, Math.round(rect.height * dpr));
+    cv.width = Math.round(rect.width * dpr);
+    cv.height = Math.round(rect.height * dpr);
     G.canvas = cv;
     G.ctx = cv.getContext('2d');
     G.dpr = dpr;
@@ -871,7 +1020,7 @@
   function startGame() {
     resetDaily();
     tickEnergy();
-    if (SAVE.energy.v < 1) { toast('体力不足，等一会儿或去商店'); return; }
+    if (SAVE.energy.v < 1) { toast('体力不足，等一会儿再玩'); return; }
     SAVE.energy.v -= 1;
     SAVE.energy.at = Date.now();
     scheduleSync();
@@ -879,7 +1028,8 @@
     if (!G.canvas) fitGame();
     G.running = true;
     G.t = CONFIG.playSeconds;
-    G.score = 0; G.combo = 0; G.mult = 1; G.maxCombo = 0; G.items = []; G.spawnAcc = 0; G.catchFx = [];
+    G.score = 0; G.combo = 0; G.mult = 1; G.maxCombo = 0;
+    G.items = []; G.spawnAcc = 0; G.catchFx = []; G.particles = [];
     G.catX = 0.5;
     G.last = performance.now();
 
@@ -910,11 +1060,12 @@
 
     $('skStageOverlay').classList.remove('hide');
     $('skStageOverlay').innerHTML =
-      '<div class="sk-stage-ico">' + (G.score > 40 ? '🎉' : '🐾') + '</div>' +
+      '<div class="sk-stage-ico">' + (G.score > 60 ? '🎉' : G.score > 30 ? '✨' : '🐾') + '</div>' +
       '<div class="sk-stage-title">本局 ' + G.score + ' 分' + (double ? ' · 双倍' : '') + '</div>' +
       '<div class="sk-stage-desc">获得 <b>' + coins + ' 🧶</b> 和 <b>' + pts + ' ⭐</b><br>最高连击 ' + (G.maxCombo || 0) + '</div>' +
       '<button class="sk-btn primary" id="skStartBtn" onclick="SK.startGame()">再来一局 · 1⚡</button>' +
       '<div class="sk-stage-tip">' + (SAVE.play.games < CONFIG.playDailyDouble ? '今天还有 ' + (CONFIG.playDailyDouble - SAVE.play.games) + ' 局双倍' : '今天的双倍用完了') + '</div>';
+    if (window.SKFX && G.score > 0) SKFX.confetti(null, null, { count: 50, spread: 0.7 });
     renderAll();
     if (myRank) pushSave();
     loadLeaderboard();
@@ -934,6 +1085,20 @@
     });
   }
 
+  function spawnCatchParticles(x, y, color) {
+    for (var i = 0; i < 8; i++) {
+      var ang = Math.random() * 6.28;
+      var sp = 60 + Math.random() * 120;
+      G.particles.push({
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - 40,
+        life: 0.45 + Math.random() * 0.25,
+        color: color
+      });
+    }
+  }
+
   function gameLoop(now) {
     if (!G.running) return;
     var dt = Math.min((now - G.last) / 1000, 0.05);
@@ -944,7 +1109,6 @@
     var ctx = G.ctx;
     ctx.clearRect(0, 0, W, H);
 
-    // 背景光带
     var grd = ctx.createLinearGradient(0, 0, 0, H);
     grd.addColorStop(0, 'rgba(155,107,255,.18)');
     grd.addColorStop(0.6, 'rgba(20,8,40,0)');
@@ -952,7 +1116,6 @@
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, W, H);
 
-    // 生成
     G.spawnAcc += dt;
     var interval = 0.62 - Math.min(0.3, (CONFIG.playSeconds - G.t) * 0.008);
     if (G.spawnAcc >= interval) { G.spawnAcc = 0; spawnItem(); }
@@ -960,8 +1123,8 @@
     var catY = H - 90 * G.dpr;
     var catX = G.catX * W;
     var basketW = 92 * G.dpr;
+    var curSkin = SKINS.filter(function (s) { return s.id === SAVE.shuke.skin; })[0] || SKINS[0];
 
-    // 绘制物体
     for (var i = G.items.length - 1; i >= 0; i--) {
       var it = G.items[i];
       it.y += it.vy * dt;
@@ -978,19 +1141,24 @@
       ctx.fillText(glyph, 0, 0);
       ctx.restore();
 
-      // 接住
       if (y > catY - 20 * G.dpr && y < catY + 50 * G.dpr && Math.abs(x - catX) < basketW / 2) {
         G.items.splice(i, 1);
+        var rect = G.canvas.getBoundingClientRect();
+        var cx = rect.left + it.x * rect.width;
+        var cy = rect.top + it.y * rect.height;
         if (it.type === 'bomb') {
           G.combo = 0; G.mult = 1;
           G.score = Math.max(0, G.score - 5);
           G.catchFx.push({ x: x, y: y, life: 0.5, text: '-5 💥', color: '#FF5C7A' });
+          if (window.SKFX) { SKFX.shake(5, 220); SKFX.flash('rgba(255,92,122,.25)', 180); }
         } else {
           G.combo++;
           G.maxCombo = Math.max(G.maxCombo || 0, G.combo);
           G.mult = Math.min(5, 1 + Math.floor(G.combo / 5));
           G.score += it.pts * G.mult;
           G.catchFx.push({ x: x, y: y, life: 0.5, text: '+' + (it.pts * G.mult), color: '#FFC24B' });
+          spawnCatchParticles(x, y, it.type === 'star' ? '#FFC24B' : it.type === 'fish' ? '#4DE3FF' : '#9B6BFF');
+          if (window.SKFX && G.combo % 5 === 0) SKFX.confetti(cx, cy, { count: 24, spread: 0.5 });
         }
         $('skScore').textContent = G.score;
         $('skCombo').textContent = 'x' + G.mult + (G.combo > 1 ? ' · ' + G.combo + ' 连' : '');
@@ -1000,15 +1168,30 @@
       if (it.y > 1.1) G.items.splice(i, 1);
     }
 
-    // 猫（篮子）
     ctx.save();
     ctx.font = (52 * G.dpr) + 'px serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🐈‍⬛', catX, catY);
+    ctx.fillText(curSkin.emoji, catX, catY);
     ctx.restore();
 
-    // 接住特效
+    // 接住粒子
+    for (var pi = G.particles.length - 1; pi >= 0; pi--) {
+      var pt = G.particles[pi];
+      pt.life -= dt;
+      if (pt.life <= 0) { G.particles.splice(pi, 1); continue; }
+      pt.vy += 220 * dt;
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, pt.life * 2);
+      ctx.fillStyle = pt.color;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 3 * G.dpr, 0, 6.283);
+      ctx.fill();
+      ctx.restore();
+    }
+
     for (var j = G.catchFx.length - 1; j >= 0; j--) {
       var fx = G.catchFx[j];
       fx.life -= dt;
@@ -1107,6 +1290,78 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /* ================= 账号 ================= */
+  function openAuth() {
+    setAuthMode('login');
+    $('skAuthNick').value = SAVE.cloud.nick || '';
+    $('skAuthPass').value = '';
+    $('skAuthErr').textContent = '';
+    $('skAuthModal').classList.add('show');
+  }
+  function closeAuth() {
+    $('skAuthModal').classList.remove('show');
+    if (!token) toast('可以先随便玩，登录后存档才会上云');
+  }
+  function setAuthMode(mode) {
+    authMode = mode;
+    $('skTabLogin').classList.toggle('active', mode === 'login');
+    $('skTabReg').classList.toggle('active', mode === 'register');
+    $('skAuthTitle').textContent = mode === 'login' ? '欢迎回来' : '取个名字吧';
+    $('skAuthSub').textContent = mode === 'login' ? '登录后存档上云、能上排行榜' : '注册后存档跟着账号走，换设备不丢';
+    $('skAuthSubmit').textContent = mode === 'login' ? '登录' : '注册并开始';
+  }
+
+  function submitAuth() {
+    var nick = $('skAuthNick').value.trim();
+    var pass = $('skAuthPass').value;
+    var err = $('skAuthErr');
+    err.textContent = '';
+    if (nick.length < 2) { err.textContent = '昵称至少 2 个字'; return; }
+    if (pass.length < 4) { err.textContent = '密码至少 4 位'; return; }
+    if (!window.sb) { err.textContent = '还没连上云端，稍后再试'; return; }
+    var btn = $('skAuthSubmit');
+    btn.disabled = true; btn.textContent = '处理中…';
+
+    var fn = authMode === 'login' ? 'shuke_login' : 'shuke_register';
+    window.sb.rpc(fn, { p_nick: nick, p_pass: pass }).then(function (r) {
+      btn.disabled = false;
+      var d = r && r.data;
+      if (r && r.error) { err.textContent = r.error.message || '请求失败'; btn.textContent = authMode === 'login' ? '登录' : '注册并开始'; return; }
+      if (!d || !d.ok) { err.textContent = (d && d.error) || '失败，稍后再试'; btn.textContent = authMode === 'login' ? '登录' : '注册并开始'; return; }
+      token = d.token;
+      try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
+      SAVE.cloud.nick = d.player.nickname;
+      SAVE.user.name = d.player.nickname;
+      if (typeof d.player.gems === 'number') SAVE.user.gems = d.player.gems;
+      if (authMode === 'login' && d.save && Object.keys(d.save).length) {
+        var remote = merge(defaultSave(), d.save);
+        if ((remote.gacha.opened || 0) > 0 || (remote.user.level || 1) > 1) {
+          SAVE = remote;
+          SAVE.user.name = d.player.nickname;
+        }
+      }
+      closeAuth();
+      renderAll();
+      pushSave();
+      loadLeaderboard();
+      toast(authMode === 'login' ? '登录成功，存档已同步 ☁️' : '注册成功，开始养舒克吧 🐈');
+    }).catch(function (e) {
+      btn.disabled = false;
+      btn.textContent = authMode === 'login' ? '登录' : '注册并开始';
+      err.textContent = (e && e.message) || '网络错误';
+    });
+  }
+
+  function logout(silent) {
+    token = '';
+    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    SAVE.cloud.nick = '';
+    myRank = null;
+    saveLocal(SAVE);
+    renderAcct(); renderMe();
+    if (!silent) toast('已退出登录，存档还在本机');
+  }
+
   /* ================= 初始化 ================= */
   function init() {
     window.SK = {
@@ -1120,7 +1375,10 @@
       startGame: startGame,
       openAuth: openAuth, closeAuth: closeAuth, authMode: setAuthMode,
       submitAuth: submitAuth, logout: logout,
-      loadLeaderboard: loadLeaderboard
+      loadLeaderboard: loadLeaderboard,
+      openPay: openPay, closePay: closePay, pickPack: pickPack, submitPay: submitPay,
+      openAdmin: openAdmin, closeAdmin: closeAdmin, adminLogin: adminLogin,
+      admMark: admMark, admPay: admPay
     };
 
     document.querySelectorAll('.sk-tab').forEach(function (t) {
@@ -1137,9 +1395,9 @@
     resetDaily();
     tickIdle(); tickEnergy();
 
-    // 云端存档
     if (window.whenCloudReady) {
       window.whenCloudReady(function () {
+        loadShop();
         if (token) {
           pullRemote().then(function () { renderAll(); loadLeaderboard(); });
         } else {
@@ -1148,13 +1406,13 @@
       });
     }
     if (!window.sb && window.cloudReady) {
-      window.cloudReady().then(function () { if (token) pullRemote().then(renderAll); });
+      window.cloudReady().then(function () { loadShop(); if (token) pullRemote().then(renderAll); });
     }
 
     renderAll();
     loadLeaderboard();
+    loadShop();
 
-    // 定时刷新挂机 / 体力 / 定时同步
     setInterval(function () {
       tickIdle(); tickEnergy();
       if (currentPage === 'home') renderHome();
