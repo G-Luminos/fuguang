@@ -44,7 +44,7 @@ window.closeFox = closeFox;
 /* ================================================================
    State
    ================================================================ */
-window.role=null; window.guestName=''; window.editingId=null; window.selProvince=null; window.selCity=null;
+window.role=null; window.guestName=''; window.editingId=null;
 // window.sb 由 cloud-config.js 提供，此处不可重置，否则会覆盖已建立的云端连接
 
 /* ================================================================
@@ -266,50 +266,69 @@ function initProvinces() {
   });
 }
 
-document.getElementById('fp').addEventListener('change', function() {
-  const name = this.value;
-  selProvince = name || null;
-  const fc = document.getElementById('fc');
-  const fd = document.getElementById('fd');
-  if (!name) {
-    fc.innerHTML = '<option value="">请先选省份</option>'; fc.disabled = true;
-    fd.innerHTML = '<option value="">请先选城市</option>'; fd.disabled = true;
-    selCity = null; return;
-  }
-  const val = AREA_DATA[name];
-  if (Array.isArray(val)) {
-    fc.innerHTML = '<option value="">请选择区</option>'; fc.disabled = false;
-    val.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; fc.appendChild(o) });
-    fd.innerHTML = '<option value="">-</option>'; fd.disabled = true; selCity = null;
-  } else {
-    fc.innerHTML = '<option value="">请选择城市</option>'; fc.disabled = false;
-    Object.keys(val).sort().forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; fc.appendChild(o) });
-    fd.innerHTML = '<option value="">请先选城市</option>'; fd.disabled = true; selCity = null;
-  }
-});
+/**
+ * 通用三级联动：绑定省/市/区三个 select。
+ * state 是 { prov, city } 引用对象，表单读取时用 state.prov/state.city。
+ */
+function bindAreaGroup(provId, cityId, distId, state) {
+  const fp = document.getElementById(provId);
+  const fc = document.getElementById(cityId);
+  const fd = document.getElementById(distId);
+  fp.innerHTML = '<option value="">请选择省份</option>';
+  Object.keys(AREA_DATA).sort().forEach(p => {
+    const o = document.createElement('option'); o.value = p; o.textContent = p;
+    fp.appendChild(o);
+  });
+  fp.addEventListener('change', function () {
+    state.prov = fp.value || null;
+    state.city = null;
+    if (!fp.value) {
+      fc.innerHTML = '<option value="">请先选省份</option>'; fc.disabled = true;
+      fd.innerHTML = '<option value="">请先选城市</option>'; fd.disabled = true;
+      return;
+    }
+    const val = AREA_DATA[fp.value];
+    if (Array.isArray(val)) {
+      fc.innerHTML = '<option value="">请选择区</option>'; fc.disabled = false;
+      val.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; fc.appendChild(o); });
+      fd.innerHTML = '<option value="">-</option>'; fd.disabled = true;
+    } else {
+      fc.innerHTML = '<option value="">请选择城市</option>'; fc.disabled = false;
+      Object.keys(val).sort().forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; fc.appendChild(o); });
+      fd.innerHTML = '<option value="">请先选城市</option>'; fd.disabled = true;
+    }
+  });
+  fc.addEventListener('change', function () {
+    state.city = fc.value || null;
+    const prov = AREA_DATA[state.prov];
+    if (!prov) return;
+    if (Array.isArray(prov)) { fd.innerHTML = '<option value="">-</option>'; fd.disabled = true; return; }
+    const districts = prov[state.city];
+    if (!districts || districts.length === 0) { fd.innerHTML = '<option value="">-</option>'; fd.disabled = true; return; }
+    fd.innerHTML = '<option value="">请选择区县</option>'; fd.disabled = false;
+    districts.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; fd.appendChild(o); });
+  });
+  fd.addEventListener('change', function () {});
+}
 
-document.getElementById('fc').addEventListener('change', function() {
-  const name = this.value;
-  selCity = name || null;
-  const fd = document.getElementById('fd');
-  const fp = document.getElementById('fp').value;
-  if (!name) {
-    fd.innerHTML = '<option value="">请先选城市</option>'; fd.disabled = true; return;
-  }
-  const prov = AREA_DATA[fp];
+/** 回填省市区（表单编辑用） */
+function fillAreaGroup(fpId, fcId, fdId, r) {
+  const fp = document.getElementById(fpId);
+  const fc = document.getElementById(fcId);
+  const fd = document.getElementById(fdId);
+  if (!r.province) { fp.value = ''; return; }
+  fp.value = r.province;
+  fp.dispatchEvent(new Event('change'));
+  const prov = AREA_DATA[r.province];
   if (!prov) return;
-  if (Array.isArray(prov)) {
-    fd.innerHTML = '<option value="">-</option>'; fd.disabled = true; return;
+  if (r.city) {
+    fc.value = r.city;
+    fc.dispatchEvent(new Event('change'));
+    if (!Array.isArray(prov) && prov[r.city] && prov[r.city].length && r.district) {
+      fd.value = r.district;
+    }
   }
-  const districts = prov[name];
-  if (!districts || districts.length === 0) {
-    fd.innerHTML = '<option value="">-</option>'; fd.disabled = true; return;
-  }
-  fd.innerHTML = '<option value="">请选择区县</option>'; fd.disabled = false;
-  districts.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; fd.appendChild(o) });
-});
-
-document.getElementById('fd').addEventListener('change', function() {});
+}
 
 /* ================================================================
    Render
@@ -436,7 +455,6 @@ async function openForm(id) {
   if (id && window.role !== 'admin') { window.askXiaoguang(); return; }
   editingId = id || null;
   document.getElementById('ft').textContent = id ? '编辑记录' : '添加记录';
-  selProvince = null; selCity = null;
   document.getElementById('fc').innerHTML = '<option value="">请先选省份</option>'; document.getElementById('fc').disabled = true;
   document.getElementById('fd').innerHTML = '<option value="">请先选城市</option>'; document.getElementById('fd').disabled = true;
 
@@ -449,38 +467,7 @@ async function openForm(id) {
       document.getElementById('fa').value = r._address || '';
       document.getElementById('fnote').value = r.note || '';
       setRenewModeRaw(!!r.auto_renew ? 1 : 0);
-      if (r.province) {
-        document.getElementById('fp').value = r.province;
-        selProvince = r.province;
-        const prov = AREA_DATA[r.province];
-        if (prov) {
-          const fc = document.getElementById('fc');
-          const fd = document.getElementById('fd');
-          if (Array.isArray(prov)) {
-            fc.innerHTML = '<option value="">请选择区</option>'; fc.disabled = false;
-            prov.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; fc.appendChild(o) });
-            fd.innerHTML = '<option value="">-</option>'; fd.disabled = true;
-          } else {
-            fc.innerHTML = '<option value="">请选择城市</option>'; fc.disabled = false;
-            Object.keys(prov).sort().forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; fc.appendChild(o) });
-            fd.innerHTML = '<option value="">请先选城市</option>'; fd.disabled = true;
-          }
-          if (r.city) {
-            document.getElementById('fc').value = r.city;
-            selCity = r.city;
-            if (!Array.isArray(prov) && prov[r.city]) {
-              const districts = prov[r.city];
-              if (districts.length > 0) {
-                fd.innerHTML = '<option value="">请选择区县</option>'; fd.disabled = false;
-                districts.forEach(d => { const o = document.createElement('option'); o.value=d; o.textContent=d; fd.appendChild(o) });
-              }
-              if (r.district) fd.value = r.district;
-            }
-          }
-        }
-      } else {
-        document.getElementById('fp').value = '';
-      }
+      fillAreaGroup('fp', 'fc', 'fd', r);
     }
   } else {
     document.getElementById('fn').value = window.role ==='guest' ? guestName : '';
@@ -649,28 +636,37 @@ async function exportHistory(m) {
 async function openRenewAdmin() {
   if (window.role !== 'admin') return;
   editingRenewId = null;
-  document.getElementById('rn').placeholder = '昵称';
-  document.getElementById('rmAddBtn').textContent = '新增';
+  cancelRenewForm();
+  document.getElementById('rnq').value = '';
   showLoading('⏳ 加载中...');
   try {
     await renderRenewAdmin();
     document.getElementById('rm').classList.add('show');
-    document.getElementById('rn').value = '';
   } finally { hideLoading(); }
 }
 function closeRenewAdmin() { document.getElementById('rm').classList.remove('show') }
 
 async function renderRenewAdmin() {
   const caps = await dbGetRenewCaptains();
+  const q = (document.getElementById('rnq').value || '').trim().toLowerCase();
+  const shown = q ? caps.filter(c => (c.nickname || '').toLowerCase().includes(q)) : caps;
   const body = document.getElementById('rmBody');
   if (caps.length === 0) {
-    body.innerHTML = '<div style="text-align:center;padding:24px;color:#61666D;font-size:13px">暂无续舰名单，添加后这里会显示</div>';
+    body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ts);font-size:13px">暂无续舰名单，点「＋ 新增」添加</div>';
     return;
   }
-  body.innerHTML = caps.map(c => {
+  if (shown.length === 0) {
+    body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--ts);font-size:13px">没有匹配的昵称</div>';
+    return;
+  }
+  body.innerHTML = shown.map(c => {
+    const ad = [c.province, c.city, c.district, c._address].filter(Boolean).join(' ');
     return '<div class="hist-item">'+
-      '<div><div class="mon">'+esc(c.nickname)+'</div><div class="cnt">'+(c.province?'地址已存':'仅名字')+'</div></div>'+
-      '<div style="display:flex;gap:6px">'+
+      '<div style="min-width:0;flex:1"><div class="mon">'+esc(c.nickname)+'</div>'+
+      '<div class="cnt">'+(c._phone ? '📱 '+esc(c._phone) : '未填手机')+'</div>'+
+      (ad ? '<div class="cnt">📍 '+esc(ad)+'</div>' : '<div class="cnt">未填地址</div>')+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex:none">'+
       '<button onclick="editRenewCaptain(\''+c.id+'\')">编辑</button>'+
       '<button onclick="delRenewCaptain(\''+c.id+'\')" style="border-color:var(--err);color:var(--err)">删除</button>'+
       '</div>'+
@@ -680,29 +676,27 @@ async function renderRenewAdmin() {
 
 var editingRenewId = null;
 
-async function addRenewCaptain() {
-  if (window.role !== 'admin') return;
-  const n = document.getElementById('rn').value.trim();
-  if (!n) { toast('请输入昵称','e'); return; }
-  showLoading('⏳ 保存中...');
-  try {
-    let result;
-    const wasEditing = !!editingRenewId;
-    if (editingRenewId) {
-      result = await dbUpdateRenewCaptain(editingRenewId, { nickname: n });
-    } else {
-      result = await dbUpsertRenewCaptain({ nickname: n });
-    }
-    if (result) {
-      editingRenewId = null;
-      document.getElementById('rn').value = '';
-      document.getElementById('rn').placeholder = '昵称';
-      document.getElementById('rmAddBtn').textContent = '新增';
-      await renderRenewAdmin();
-      await window.loadNameWall();
-      toast(wasEditing ? '已保存 ✅' : '已新增 ✅','s');
-    } else { toast('操作失败（可能重名）','e'); }
-  } finally { hideLoading(); }
+function openRenewForm() {
+  editingRenewId = null;
+  document.getElementById('rnFormTitle').textContent = '新增续舰';
+  document.getElementById('rn').value = '';
+  document.getElementById('rph').value = '';
+  document.getElementById('rp').value = '';
+  document.getElementById('rc').innerHTML = '<option value="">请先选省份</option>';
+  document.getElementById('rc').disabled = true;
+  document.getElementById('rd').innerHTML = '<option value="">请先选城市</option>';
+  document.getElementById('rd').disabled = true;
+  document.getElementById('ra').value = '';
+  document.getElementById('rnote').value = '';
+  document.getElementById('rmAddBtn').textContent = '保存';
+  document.getElementById('rnForm').style.display = '';
+  setTimeout(() => document.getElementById('rn').focus(), 200);
+}
+
+function cancelRenewForm() {
+  editingRenewId = null;
+  const f = document.getElementById('rnForm');
+  if (f) f.style.display = 'none';
 }
 
 async function editRenewCaptain(id) {
@@ -711,10 +705,45 @@ async function editRenewCaptain(id) {
   const c = caps.find(x => x.id === id);
   if (!c) return;
   editingRenewId = id;
+  document.getElementById('rnFormTitle').textContent = '编辑「' + (c.nickname || '') + '」';
   document.getElementById('rn').value = c.nickname || '';
-  document.getElementById('rn').placeholder = '编辑昵称...';
+  document.getElementById('rph').value = c._phone || '';
+  document.getElementById('ra').value = c._address || '';
+  document.getElementById('rnote').value = c.note || '';
+  fillAreaGroup('rp', 'rc', 'rd', c);
   document.getElementById('rmAddBtn').textContent = '保存';
-  document.getElementById('rn').focus();
+  document.getElementById('rnForm').style.display = '';
+  setTimeout(() => document.getElementById('rn').focus(), 200);
+}
+
+async function addRenewCaptain() {
+  if (window.role !== 'admin') return;
+  const n = document.getElementById('rn').value.trim();
+  const ph = document.getElementById('rph').value.trim();
+  const fp = document.getElementById('rp').value;
+  const fc = document.getElementById('rc').value;
+  const fd = document.getElementById('rd').value;
+  const fa = document.getElementById('ra').value.trim();
+  const note = document.getElementById('rnote').value.trim();
+  if (!n) { toast('请输入昵称','e'); return; }
+  if (ph && !/^1[3-9]\d{9}$/.test(ph)) { toast('手机号格式不对','e'); return; }
+
+  showLoading('⏳ 保存中...');
+  try {
+    const payload = { nickname: n, province: fp, city: fc, district: fd, note };
+    if (ph) payload.phone = ph;          // 留空 = 保留原值
+    if (fa) payload.address = fa;
+    if (editingRenewId) payload.id = editingRenewId;
+    const res = await capRpc('renew_save', payload);
+    if (res && res.ok) {
+      cancelRenewForm();
+      await renderRenewAdmin();
+      await window.loadNameWall();
+      toast(editingRenewId ? '已保存 ✅' : '已新增 ✅','s');
+    } else {
+      toast('操作失败：' + ((res && res.error) || '未知错误'),'e');
+    }
+  } finally { hideLoading(); }
 }
 
 async function delRenewCaptain(id) {
@@ -905,6 +934,10 @@ window.loadNameWall = function() {
    Init
    ================================================================ */
 initProvinces();
+var recordArea = { prov: null, city: null };
+var renewArea = { prov: null, city: null };
+bindAreaGroup('fp', 'fc', 'fd', recordArea);
+bindAreaGroup('rp', 'rc', 'rd', renewArea);
 
 (function() {
   // 始终初始化 Supabase，匿名投稿等非登录功能也需要

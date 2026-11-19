@@ -151,7 +151,7 @@
 <div class="cd" id="arh"><div class="cx" style="max-width:340px">
   <div class="arh-icon">🐱</div>
   <p class="arh-title">已开启自动续舰 🎉</p>
-  <p class="arh-desc">勾选后，接下来每个月都不再需要重复填写地址，会自动带出哦～如有疑问，可咨询小光 💫</p>
+  <p class="arh-desc">勾选后，接下来每个月都不再需要重复填写地址，会自动带出哦～<br>而且<b>你的名字会在主页名字墙上漂浮展示</b>，让大家都看到你一直陪着小光 💫</p>
   <div class="cx-act">
     <button class="ck" style="background:var(--p);color:#FFF" onclick="closeAutoRenewHint()">知道啦</button>
   </div>
@@ -180,14 +180,29 @@
 </div></div>
 
 <!-- Renew Captains Admin Modal -->
-<div class="mo" id="rm"><div class="m">
+<div class="mo" id="rm"><div class="m" style="max-height:88vh;overflow-y:auto">
   <div class="m-hd"><h2>🔄 续舰名单管理</h2><button onclick="closeRenewAdmin()">✕</button></div>
   <div class="m-bd">
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input id="rn" type="text" placeholder="昵称" maxlength="20" style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:15px">
-      <button class="btn-p" id="rmAddBtn" style="flex:none" onclick="addRenewCaptain()">新增</button>
+    <div class="rn-tip">💡 这里的人会在主页名字墙上漂浮展示，且导出当月名单时自动带上他们的地址</div>
+
+    <!-- 编辑/新增表单 -->
+    <div class="rn-form" id="rnForm" style="display:none">
+      <div class="rn-form-hd"><b id="rnFormTitle">新增续舰</b><button class="rn-form-x" onclick="cancelRenewForm()">收起</button></div>
+      <div class="fg"><label>昵称 <span class="rq">*</span></label><input id="rn" type="text" placeholder="昵称" maxlength="20"></div>
+      <div class="fg"><label>手机号</label><input id="rph" type="tel" inputmode="numeric" placeholder="11位手机号（留空则保留原值）" maxlength="11"></div>
+      <div class="fg"><label>省份</label><select id="rp"><option value="">请选择省份</option></select></div>
+      <div class="fg"><label>城市</label><select id="rc" disabled><option value="">请先选省份</option></select></div>
+      <div class="fg"><label>区县</label><select id="rd" disabled><option value="">请先选城市</option></select></div>
+      <div class="fg"><label>详细地址</label><input id="ra" type="text" placeholder="详细地址（留空则保留原值）"></div>
+      <div class="fg"><label>备注</label><textarea id="rnote" rows="2" placeholder="备注（选填）"></textarea></div>
+      <button class="btn-p" style="width:100%" id="rmAddBtn" onclick="addRenewCaptain()">保存</button>
     </div>
-    <div id="rmBody" style="max-height:50vh;overflow-y:auto"></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="rnq" type="text" placeholder="搜索昵称..." maxlength="20" oninput="renderRenewAdmin()" style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px">
+      <button class="btn-p" style="flex:none" onclick="openRenewForm()">＋ 新增</button>
+    </div>
+    <div id="rmBody" style="max-height:44vh;overflow-y:auto"></div>
   </div>
   <div class="m-ft">
     <button class="cancel" onclick="closeRenewAdmin()" style="flex:1">关闭</button>
