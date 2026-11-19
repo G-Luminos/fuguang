@@ -22,7 +22,9 @@
     oauthRelayBaseUrl: 'https://www.workbuddy.cn/v2/as/genie-baas/oauth'
   };
 
-  var SDK_URL = 'https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js';
+  // 锁定精确版本：@dev 这类浮动标签一旦上游发版，全站可能直接白屏且无预警
+  // 升级时手动改这里的版本号，并回归验证（登录/读写/投稿）
+  var SDK_URL = 'https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@0.1.4/lib/index.global.js';
 
   var state = {
     client: null,
