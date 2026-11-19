@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="playlist.css">
 <link rel="stylesheet" href="games.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="shuke-pet.css">
 </head>
 <body>
 
@@ -489,48 +490,8 @@
   </div>
 </div>
 
-<!-- oneko.js 小猫咪 -->
-<style>
-#oneko {
-  transform: scale(2);
-  transform-origin: left top;
-  pointer-events: auto !important;
-  cursor: pointer;
-  transition: transform .15s ease;
-}
-</style>
-
-<script src="games.js"></script>
-<script src="gift-showcase.js"></script>
-<script src="cotton-candy.js"></script>
-<script src="playlist.js"></script>
-<!-- 实时推送中枢（Supabase Realtime / WebSocket），须在所有业务脚本之后加载 -->
-<script src="realtime.js"></script>
-<script src="realtime-binding.js"></script>
-<script data-cat="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.gif" src="https://cdn.jsdelivr.net/gh/adryd325/oneko.js@latest/oneko.js"></script>
-<script>
-(function(){
-  var hidden = false;
-  function hideCat(){
-    var c = document.getElementById('oneko');
-    if(!c || hidden) return;
-    hidden = true;
-    c.dataset.userHidden = '1';
-    c.style.display = 'none';
-  }
-  function bind(){
-    var c = document.getElementById('oneko');
-    if(!c) return setTimeout(bind, 200);
-    function onHide(e){
-      e.stopPropagation();
-      hideCat();
-    }
-    c.addEventListener('click', onHide);
-    c.addEventListener('touchend', onHide, { passive: true });
-  }
-  bind();
-})();
-</script>
+<!-- 舒克桌宠（全站常驻小黑猫） -->
+<script src="shuke-pet.js" defer></script>
 <!-- xlsx仅在导出时延迟加载 -->
 </body>
 </html>

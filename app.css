@@ -270,6 +270,3 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .gl-card.gl-old .gl-btn{display:none}
 .gl-card-tag{flex:none;margin-left:auto;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(0,192,145,.14);color:var(--ok)}
 .gl-card-tag.old{background:rgba(0,0,0,.06);color:var(--ts)}
-
-/* 进入应用后收起像素猫（oneko 异步加载，用兄弟选择器无视加载时机） */
-.app.show ~ #oneko{display:none !important}
