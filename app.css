@@ -82,7 +82,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 
 /* ===== Guest banner ===== */
 .gb{max-width:860px;margin:10px auto 0;padding:0 16px}
-.gb-in{background:linear-gradient(135deg,#E6F7FC,#F0F9FF);border:1.5px solid #BAE7FF;border-radius:var(--rd);padding:11px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ts)}
+.gb-in{background:linear-gradient(135deg,#E6F7FC,#F0F9FF);border:1.5px solid #BAE7FF;border-radius:var(--rd);padding:10px 14px;font-size:12px;color:var(--ts);line-height:1.7}
+.gb-line1{display:block;font-size:13px}
+.gb-line2{display:block;font-size:11px;opacity:.85;margin-top:1px}
 .gb-in b{color:var(--p)}
 
 /* ===== Cards ===== */
@@ -246,3 +248,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .rn-form-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .rn-form-hd b{font-size:14px}
 .rn-form-x{border:none;background:transparent;color:var(--ts);font-size:12px;cursor:pointer}
+
+
+/* ===== 移动端适配 ===== */
+@media(max-width:640px){
+  .hd{padding:10px 12px}
+  .hd-in{flex-wrap:wrap;gap:8px;row-gap:6px}
+  .hd-title{flex:1 1 100%;min-width:0}
+  .hd-title h1{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hd-title .sub{font-size:10px}
+  .hd-act{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  .hd-act .btn-o,.hd-act .btn-cotton-hd{padding:6px 9px;font-size:11px;white-space:nowrap;flex:none}
+}
+@media(max-width:380px){
+  .hd-title h1{font-size:13px}
+}
