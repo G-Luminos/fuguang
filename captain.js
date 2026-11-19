@@ -233,12 +233,17 @@ async function submitGuestNick() {
 function backToLanding() {
   document.getElementById('lp').style.display='';
   document.getElementById('app').classList.remove('show');
+  const cat = document.getElementById('oneko');
+  if (cat && !cat.dataset.userHidden) cat.style.display = '';
   closeGiftShowcase();
 }
 
 async function enterApp() {
   document.getElementById('lp').style.display='none';
   document.getElementById('app').classList.add('show');
+  // 像素猫会盖住左上角的「返回」，进应用后先收起来
+  const cat = document.getElementById('oneko');
+  if (cat) cat.style.display = 'none';
   const isA = window.role ==='admin';
   document.getElementById('btnHist').style.display = isA ? '' : 'none';
   document.getElementById('btnRenew').style.display = isA ? '' : 'none';

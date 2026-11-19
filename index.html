@@ -515,6 +515,7 @@
     var c = document.getElementById('oneko');
     if(!c || hidden) return;
     hidden = true;
+    c.dataset.userHidden = '1';
     c.style.display = 'none';
   }
   function bind(){
