@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>浮光-Luminos</title>
+<!--
+  旧地址迁移：GitHub Pages 已不能直连新后端。
+  云服务后端只接受本站域名（fuguang-luminos.app.workbuddy.host）的跨域请求，
+  从 g-luminos.github.io 发起的读写会在预检阶段被 403 拒绝，
+  所以旧站只做跳转，避免访客看到满屏报错。—— 见下方 SITE_MIGRATE
+-->
+<script>
+(function () {
+  var NEW_SITE = 'https://fuguang-luminos.app.workbuddy.host/?sharecode=7M44HIDFCE';
+  var host = location.hostname || '';
+  if (!/\.github\.io$/i.test(host)) return;          // 本站域名不动，正常跑应用
+  try { location.replace(NEW_SITE); } catch (e) { location.href = NEW_SITE; }
+})();
+</script>
 <link rel="preconnect" href="https://fuguang-luminos.app.workbuddy.host" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="gift-showcase.css">
