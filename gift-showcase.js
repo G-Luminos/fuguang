@@ -549,22 +549,19 @@ async function handleImageUpload(files) {
         maxBytes: 780 * 1024
       });
       
-      // 4. 保存到数据库
+      // 4. 保存到数据库（管理操作，走服务端口令校验）
       const currentImages = giftImages[currentMonthId] || [];
-      const { data: dbData, error: dbError } = await window.sb
-        .from('gift_images')
-        .insert({
-          month_id: currentMonthId,
-          storage_path: storagePath,
-          public_url: publicUrl,
-          sort_order: currentImages.length
-        })
-        .select()
-        .single();
-      
-      if (dbError) {
+      const saveRes = await window.adminOp('insert', 'gift_images', {
+        month_id: currentMonthId,
+        storage_path: storagePath,
+        public_url: publicUrl,
+        sort_order: currentImages.length
+      });
+      if (!saveRes || !saveRes.ok) {
+        console.error('[舰礼] 写入失败：' + ((saveRes && saveRes.error) || '未知错误'));
         continue;
       }
+      const dbData = saveRes.row;
       
       // 5. 更新本地数据
       if (!giftImages[currentMonthId]) {
@@ -680,14 +677,11 @@ async function deleteImage(imageId) {
     
     // 1. 图片本体以 dataURL 内嵌在记录中，删除记录即完成清理
     
-    // 2. 从数据库删除
-    const { error: dbError } = await window.sb
-      .from('gift_images')
-      .delete()
-      .eq('id', imageId);
-    
-    if (dbError) {
-      showToast('删除失败', 'e');
+    // 2. 从数据库删除（管理操作，走服务端口令校验）
+    const delRes = await window.adminOp('delete', 'gift_images', { id: imageId });
+    if (!delRes || !delRes.ok) {
+      console.error('[舰礼] 删除失败：' + ((delRes && delRes.error) || '未知错误'));
+      showToast('删除失败：' + ((delRes && delRes.error) || '未知错误'), 'e');
       return;
     }
     

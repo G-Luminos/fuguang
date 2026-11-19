@@ -208,8 +208,16 @@
 
     showLoading();
     try {
+      // 先把媒体压成 dataURL，再一次性写入：写库只需 INSERT，
+      // 不再依赖「插入后再更新」那一步，匿名用户的 UPDATE 权限因此可以收掉
+      var mediaUrls = [];
+      for (var i = 0; i < ccFiles.length; i++) {
+        var url = await uploadMedia(ccFiles[i].file);
+        if (url) mediaUrls.push(url);
+      }
+
       var insertResult = await window.sb.from(TABLE_NAME).insert({
-        content: text, media_urls: [], author_hash: generateAuthorHash()
+        content: text, media_urls: mediaUrls, author_hash: generateAuthorHash()
       }).select().single();
 
       if (insertResult.error) {
@@ -221,16 +229,6 @@
         console.error('[投稿] 写入未返回数据', insertResult);
         showToast('投稿结果未确认，请刷新页面看是否已发出', 'e');
         return;
-      }
-
-      var mediaUrls = [];
-      for (var i = 0; i < ccFiles.length; i++) {
-        var url = await uploadMedia(ccFiles[i].file, insertResult.data.id);
-        if (url) mediaUrls.push(url);
-      }
-
-      if (mediaUrls.length > 0) {
-        await window.sb.from(TABLE_NAME).update({ media_urls: mediaUrls }).eq('id', insertResult.data.id);
       }
 
       showToast('投稿成功 \u2728', 's');

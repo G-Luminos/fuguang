@@ -4,7 +4,7 @@
    ================================================================ */
 // 连接配置见 cloud-config.js，window.sb 由该文件的兼容层提供
 
-const ADMIN_U='fuguang', ADMIN_P='5099';
+const ADMIN_U='fuguang';   // 仅用于前端提示，真正的口令校验在服务端 admin_op
 const MUNI=['北京市','上海市','天津市','重庆市'];
 const SK='luminos_v6';
 
@@ -96,19 +96,12 @@ async function dbGetRecords(month) {
 
 async function dbInsertRecord(rec) {
   if (!window.sb) { window.__lastDbError = '云端连接未就绪'; return null; }
+  // 访客登记与管理员新增都走这里：数据库对匿名只开放 INSERT，删除/修改另有通道
   let { data, error } = await window.sb
     .from('records')
     .insert(rec)
     .select()
     .single();
-  if (error && error.message && error.message.indexOf('auto_renew') >= 0) {
-    // 数据库尚未建 auto_renew 字段，去掉该字段重试（自动续舰功能待建表后生效）
-    const safe = Object.assign({}, rec);
-    delete safe.auto_renew;
-    const retry = await window.sb.from('records').insert(safe).select().single();
-    if (retry.error) { reportDbError('records.insert', retry.error); return null; }
-    return retry.data;
-  }
   if (error) { reportDbError('records.insert', error); return null; }
   return data;
 }
@@ -120,31 +113,29 @@ function reportDbError(where, err) {
   try { console.error('[DB] ' + where + ' 失败：' + msg, err); } catch (e) {}
 }
 
-async function dbUpdateRecord(id, updates) {
-  if (!window.sb) return false;
-  let { error } = await window.sb
-    .from('records')
-    .update(updates)
-    .eq('id', id);
-  if (error && error.message && error.message.indexOf('auto_renew') >= 0) {
-    const safe = Object.assign({}, updates);
-    delete safe.auto_renew;
-    const retry = await window.sb.from('records').update(safe).eq('id', id);
-    if (retry.error) { reportDbError('records.update', retry.error); return false; }
-    return true;
+/** 管理写操作统一入口：口令由服务端校验，失败时把真实原因带到界面 */
+async function adminWrite(action, table, payload, conflict) {
+  if (typeof window.adminOp !== 'function') {
+    window.__lastDbError = '管理通道未就绪';
+    return { ok: false, error: '管理通道未就绪' };
   }
-  if (error) { reportDbError('records.update', error); return false; }
-  return true;
+  const res = await window.adminOp(action, table, payload, conflict);
+  if (!res || !res.ok) {
+    window.__lastDbError = (res && res.error) || '未知错误';
+    try { console.error('[Admin] ' + action + ' ' + table + ' 失败：' + window.__lastDbError); } catch (e) {}
+    return { ok: false, error: window.__lastDbError };
+  }
+  return res;
+}
+
+async function dbUpdateRecord(id, updates) {
+  const res = await adminWrite('update', 'records', Object.assign({ id }, updates));
+  return !!res.ok;
 }
 
 async function dbDeleteRecord(id) {
-  if (!window.sb) return false;
-  const { error } = await window.sb
-    .from('records')
-    .delete()
-    .eq('id', id);
-  if (error) { return false; }
-  return true;
+  const res = await adminWrite('delete', 'records', { id });
+  return !!res.ok;
 }
 
 async function dbGetMonths() {
@@ -181,25 +172,13 @@ async function dbUpsertRenewCaptain(cap) {
 }
 
 async function dbDeleteRenewCaptain(id) {
-  if (!window.sb) return false;
-  const { error } = await window.sb
-    .from('renew_captains')
-    .delete()
-    .eq('id', id);
-  if (error) { return false; }
-  return true;
+  const res = await adminWrite('delete', 'renew_captains', { id });
+  return !!res.ok;
 }
 
 async function dbUpdateRenewCaptain(id, updates) {
-  if (!window.sb) return null;
-  const { data, error } = await window.sb
-    .from('renew_captains')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-  if (error) { return null; }
-  return data;
+  const res = await adminWrite('update', 'renew_captains', Object.assign({ id }, updates));
+  return res.ok ? res.row : null;
 }
 
 /* ================================================================
@@ -221,16 +200,34 @@ function closeAdminLogin() { document.getElementById('alm').classList.remove('sh
 async function doLogin() {
   const u = document.getElementById('lu').value.trim();
   const p = document.getElementById('lpw').value;
-  if (u===ADMIN_U && p===ADMIN_P) {
+  const e = document.getElementById('le');
+  if (u !== ADMIN_U || !p) {
+    e.style.display='block';
+    setTimeout(()=>e.style.display='none', 3000);
+    return;
+  }
+  showLoading('⏳ 登录中...');
+  try {
+    // 口令在服务端比对哈希，前端不再保存任何口令字面量
+    if (typeof window.cloudReady === 'function') await window.cloudReady();
+    const res = await window.adminLogin(p);
+    if (!res || !res.ok) {
+      e.textContent = (res && res.error) === '口令错误' ? '口令不正确' : '登录失败：' + ((res && res.error) || '未知错误');
+      e.style.display = 'block';
+      setTimeout(()=>{ e.style.display='none'; e.textContent='用户名或密码错误'; }, 3000);
+      return;
+    }
     window.role ='admin';
     localStorage.setItem(SK+'_role','admin');
     closeAdminLogin();
     if (!initSB()) return;
-    showLoading('⏳ 登录中...');
-    try { await enterApp(); } finally { hideLoading(); }
-  } else {
-    const e = document.getElementById('le'); e.style.display='block';
-    setTimeout(()=>e.style.display='none', 3000);
+    await enterApp();
+  } catch (err) {
+    e.textContent = '登录失败：' + (err && err.message || '未知错误');
+    e.style.display = 'block';
+    setTimeout(()=>{ e.style.display='none'; e.textContent='用户名或密码错误'; }, 3000);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -253,15 +250,6 @@ async function submitGuestNick() {
   if (!initSB()) return;
   showLoading('⏳ 进入中...');
   try { await enterApp(); } finally { hideLoading(); }
-}
-
-function doLogout() {
-  window.role =null; guestName='';
-  localStorage.removeItem(SK+'_role');
-  localStorage.removeItem(SK+'_gn');
-  document.getElementById('lp').style.display='';
-  document.getElementById('app').classList.remove('show');
-  closeAdminLogin();
 }
 
 function backToLanding() {
@@ -939,9 +927,12 @@ initProvinces();
   // 加载首页背景名字墙（续舰名单）
   window.loadNameWall();
   const r = localStorage.getItem(SK+'_role');
-  if (r === 'admin') {
+  // 管理员身份需要本标签页内仍持有有效口令，否则回登录页重来（口令只存 sessionStorage）
+  if (r === 'admin' && typeof window.adminReady === 'function' && window.adminReady()) {
     window.role = 'admin';
     enterApp();
+  } else if (r === 'admin') {
+    localStorage.removeItem(SK+'_role');
   } else if (r === 'guest') {
     window.role = 'guest';
     guestName = localStorage.getItem(SK+'_gn') || '';

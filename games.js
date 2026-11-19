@@ -442,17 +442,21 @@
   }
 
   async function saveMonoBoards(boards) {
-    if (!window.sb) return;
+    if (!window.sb || typeof window.adminOp !== 'function') return;
     try {
-      var rows = [];
-      Object.keys(boards).forEach(function(name) {
+      var names = Object.keys(boards);
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
         var b = boards[name];
-        var author = (b._author || '');
         var cleanTiles = JSON.parse(JSON.stringify(b));
-        rows.push({ name: name, tiles: cleanTiles, author: author });
-      });
-      var res = await window.sb.from('monopoly_boards').upsert(rows, { onConflict: 'name' });
-      if (res.error) { return; }
+        // 存档属于管理操作，走服务端口令校验的通道
+        var r = await window.adminOp('upsert', 'monopoly_boards',
+          { name: name, tiles: cleanTiles, author: b._author || '' }, 'name');
+        if (!r || !r.ok) {
+          console.error('[存档] 保存失败：' + ((r && r.error) || '未知错误'));
+          return;
+        }
+      }
       // 直接更新缓存，省掉第二次select往返
       mpCachedBoards = boards;
       updateSyncStatus();
@@ -460,10 +464,16 @@
   }
 
   async function deleteMonoBoard(name) {
-    if (!window.sb || !name) return;
+    if (!window.sb || !name || typeof window.adminOp !== 'function') return;
     try {
-      var res = await window.sb.from('monopoly_boards').delete().eq('name', name);
-      if (res.error) { return; }
+      var q = await window.sb.from('monopoly_boards').select('id').eq('name', name).limit(1);
+      var id = q && q.data && q.data[0] && q.data[0].id;
+      if (!id) return;
+      var res = await window.adminOp('delete', 'monopoly_boards', { id: id });
+      if (!res || !res.ok) {
+        console.error('[存档] 删除失败：' + ((res && res.error) || '未知错误'));
+        return;
+      }
       // 直接更新缓存
       delete mpCachedBoards[name];
       updateSyncStatus();

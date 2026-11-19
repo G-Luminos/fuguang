@@ -17,10 +17,6 @@
    RealtimeHub.start()                   启动（幂等）
    RealtimeHub.stop()                    停止
    RealtimeHub.on(tables, handler, opts) 注册订阅，返回取消函数
-   RealtimeHub.getStatus()               当前状态
-   RealtimeHub.isConnected()             是否同步中
-   RealtimeHub.mute(ms)                  短暂静默（本地写库避免自我刷新）
-   RealtimeHub.pollNow()                 立即执行一次比对（可选）
 
    opts:
    - debounce: 防抖毫秒数，默认 180
@@ -73,7 +69,6 @@
     signatures: {},   // table -> 指纹字符串
     ready: {},        // table -> 是否已建立基线
     failCount: 0,
-    muteUntil: 0,
     eventCount: 0,
     lastEventAt: 0,
     lastRoundAt: 0
@@ -118,7 +113,6 @@
     if (sub.debounceTimer) clearTimeout(sub.debounceTimer);
     sub.debounceTimer = setTimeout(function () {
       sub.debounceTimer = null;
-      if (Date.now() < state.muteUntil) return;
       try {
         sub.handler(payload);
       } catch (err) {
@@ -316,15 +310,6 @@
       global.removeEventListener('offline', onOffline);
       setStatus(STATUS.STOPPED);
       log('info', 'stopped', {});
-    },
-
-    getStatus: function () { return state.status; },
-    isConnected: function () { return state.status === STATUS.CONNECTED; },
-
-    pollNow: function () { pollRound(); },
-
-    mute: function (ms) {
-      state.muteUntil = Date.now() + (typeof ms === 'number' ? ms : 800);
     },
 
     stats: function () {

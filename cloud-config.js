@@ -174,5 +174,80 @@
     return state.error ? String(state.error.message || state.error) : '';
   };
 
+  /* ================================================================
+     管理操作通道（admin_op）
+     ---------------------------------------------------------------
+     数据库对匿名用户只开放「读 + 投稿/登记」这类写操作，删除与修改一律
+     走这个 SECURITY DEFINER 函数，口令在服务端比对哈希后才执行。
+     口令不在前端代码里，也无法从页面源码推导，换口令只改库里的哈希。
+     ================================================================ */
+  var ADMIN_PASS_KEY = 'luminos_admin_pass';
+  var adminPass = '';
+
+  function readAdminPass() {
+    if (adminPass) return adminPass;
+    try { adminPass = sessionStorage.getItem(ADMIN_PASS_KEY) || ''; } catch (e) { adminPass = ''; }
+    return adminPass;
+  }
+
+  function rpcAdmin(args) {
+    if (!global.sb || typeof global.sb.rpc !== 'function') {
+      return Promise.resolve({ ok: false, error: '云端连接未就绪' });
+    }
+    return global.sb.rpc('admin_op', args).then(function (r) {
+      if (r && r.error) return { ok: false, error: r.error.message || String(r.error) };
+      return (r && r.data) || { ok: false, error: '服务端无返回' };
+    }).catch(function (e) {
+      return { ok: false, error: (e && e.message) || String(e) };
+    });
+  }
+
+  /** 校验口令；通过后本标签页内后续管理操作免重复输入 */
+  global.adminLogin = function (pass) {
+    return rpcAdmin({ p_pass: pass, p_action: 'check', p_table: '', p_payload: {} }).then(function (res) {
+      if (res && res.ok) {
+        adminPass = pass;
+        try { sessionStorage.setItem(ADMIN_PASS_KEY, pass); } catch (e) { /* 隐私模式忽略 */ }
+      }
+      return res;
+    });
+  };
+
+  global.adminLogout = function () {
+    adminPass = '';
+    try { sessionStorage.removeItem(ADMIN_PASS_KEY); } catch (e) { /* 忽略 */ }
+  };
+
+  /** 是否本会话内已通过口令校验 */
+  global.adminReady = function () {
+    return !!readAdminPass();
+  };
+
+  /**
+   * 管理写操作：action = delete | update | insert | upsert
+   * 返回 { ok, error, row }
+   */
+  global.adminOp = function (action, table, payload, conflict) {
+    var pass = readAdminPass();
+    if (!pass) {
+      return Promise.resolve({ ok: false, error: '管理口令已失效，请重新登录管理入口' });
+    }
+    return rpcAdmin({
+      p_pass: pass,
+      p_action: action,
+      p_table: table,
+      p_payload: payload || {},
+      p_conflict: conflict || 'id'
+    }).then(function (res) {
+      if (res && !res.ok && res.error === '口令错误') {
+        adminPass = '';
+        try { sessionStorage.removeItem(ADMIN_PASS_KEY); } catch (e) { /* 忽略 */ }
+        res.error = '管理口令已变更，请重新登录管理入口';
+      }
+      return res;
+    });
+  };
+
+
   log('info', 'cloud-config loaded', { hasClient: !!state.client });
 })(window);
