@@ -222,6 +222,17 @@ async function doLogin() {
     closeAdminLogin();
     if (!initSB()) return;
     await enterApp();
+    /* 留存巡检：每次管理员登录时清一次超过半年的投稿。
+       服务端有 6 天防抖，重复调用会自动跳过，不会反复删。 */
+    (async function () {
+      if (typeof window.purgeOldPosts !== 'function') return;
+      try {
+        const r = await window.purgeOldPosts(180, false);
+        if (r && r.ok && r.deleted > 0) {
+          toast('已按留存策略清理 ' + r.deleted + ' 条半年前的投稿', 'i');
+        }
+      } catch (e) { /* 清理失败不影响登录 */ }
+    })();
   } catch (err) {
     e.textContent = '登录失败：' + (err && err.message || '未知错误');
     e.style.display = 'block';

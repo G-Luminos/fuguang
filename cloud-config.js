@@ -190,16 +190,20 @@
     return adminPass;
   }
 
-  function rpcAdmin(args) {
+  function rpcCall(fnName, args) {
     if (!global.sb || typeof global.sb.rpc !== 'function') {
       return Promise.resolve({ ok: false, error: '云端连接未就绪' });
     }
-    return global.sb.rpc('admin_op', args).then(function (r) {
+    return global.sb.rpc(fnName, args).then(function (r) {
       if (r && r.error) return { ok: false, error: r.error.message || String(r.error) };
       return (r && r.data) || { ok: false, error: '服务端无返回' };
     }).catch(function (e) {
       return { ok: false, error: (e && e.message) || String(e) };
     });
+  }
+
+  function rpcAdmin(args) {
+    return rpcCall('admin_op', args);
   }
 
   /** 校验口令；通过后本标签页内后续管理操作免重复输入 */
@@ -227,6 +231,23 @@
    * 管理写操作：action = delete | update | insert | upsert
    * 返回 { ok, error, row }
    */
+  /**
+   * 投稿留存清理：删除超过 days 天的投稿（服务端硬性限制 90~365 天）。
+   * force=false 时服务端有 6 天防抖，重复调用会返回 skipped。
+   * 返回 { ok, deleted, skipped, error }
+   */
+  global.purgeOldPosts = function (days, force) {
+    var pass = readAdminPass();
+    if (!pass) {
+      return Promise.resolve({ ok: false, error: '管理口令已失效，请重新登录管理入口' });
+    }
+    return rpcCall('purge_old_posts', {
+      p_pass: pass,
+      p_days: days || 180,
+      p_force: !!force
+    });
+  };
+
   global.adminOp = function (action, table, payload, conflict) {
     var pass = readAdminPass();
     if (!pass) {

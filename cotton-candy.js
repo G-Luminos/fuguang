@@ -18,6 +18,13 @@
   var MAX_VIDEO_SIZE = 50 * 1024 * 1024;
   var TABLE_NAME = 'cotton_posts';
 
+  /* 留存期：库里最多保留最近半年的投稿，更早的由 purge_old_posts 删除。
+     服务端只接受 90~365 天，这里固定 180。 */
+  var RETENTION_DAYS = 180;
+  /* 单次拉取上限。半年量级约 300 条，留出余量；
+     若将来媒体改为内嵌 base64，这里要改成滚动分页。 */
+  var FETCH_LIMIT = 400;
+
   /* ===== 状态 ===== */
   var ccFiles = [];
   var ccSubmitting = false;
@@ -302,7 +309,7 @@
     container.innerHTML = '<div class="cc-empty"><div class="cc-loading-spinner"><p>\u23F3 小光正在努力...</p></div></div>';
 
     try {
-      var result = await window.sb.from(TABLE_NAME).select('*').order('created_at', { ascending: false }).limit(200);
+      var result = await window.sb.from(TABLE_NAME).select('*').order('created_at', { ascending: false }).limit(FETCH_LIMIT);
       if (result.error) {
         container.innerHTML = '<div class="cc-empty"><div class="cc-empty-icon">\uD83D\uDE14</div><p>加载失败，请重试</p></div>';
         return;
@@ -342,9 +349,12 @@
       html += '<div class="cc-admin-bar">' +
         '<div class="cc-admin-left">' +
           '<select class="cc-week-select" onchange="ccChangeWeek(this.value)">' + weekOptions + '</select>' +
-          '<span class="cc-admin-count">' + ccPosts.length + ' 条</span>' +
+          '<span class="cc-admin-count">' + ccPosts.length + ' 条 · 仅存半年</span>' +
         '</div>' +
-        '<button class="cc-present-btn" onclick="ccShowPresentDialog()">\uD83D\uDDA5\uFE0F 投屏演示</button>' +
+        '<div class="cc-admin-right">' +
+          '<button class="cc-purge-btn" onclick="ccPurgeOld()" title="永久删除半年前的投稿">\uD83E\uDDF9 清理旧稿</button>' +
+          '<button class="cc-present-btn" onclick="ccShowPresentDialog()">\uD83D\uDDA5\uFE0F 投屏演示</button>' +
+        '</div>' +
       '</div>';
     }
 
@@ -362,6 +372,35 @@
   window.ccChangeWeek = function(val) {
     ccWeekFilter = val;
     applyWeekFilter();
+  };
+
+  /* ===== 留存清理：删除超过半年的投稿（仅管理员，口令在服务端校验） ===== */
+  window.ccPurgeOld = async function() {
+    if (window.role !== 'admin') return;
+    var tip = '将永久删除 ' + RETENTION_DAYS + ' 天前的投稿，删除后无法恢复。\n\n'
+      + '当前已加载 ' + ccAllPosts.length + ' 条，更早的投稿会被清掉。\n'
+      + '建议先确认今天的自动备份已跑过。\n\n确定清理吗？';
+    if (!window.confirm(tip)) return;
+    if (typeof window.purgeOldPosts !== 'function') {
+      showToast('清理通道未就绪，请刷新页面重试', 'e');
+      return;
+    }
+    showLoading();
+    try {
+      var res = await window.purgeOldPosts(RETENTION_DAYS, true);
+      if (!res || !res.ok) {
+        showToast('清理失败：' + ((res && res.error) || '未知错误'), 'e');
+        return;
+      }
+      if (res.deleted > 0) {
+        showToast('已清理 ' + res.deleted + ' 条半年前的投稿', 's');
+        loadPosts();
+      } else {
+        showToast('没有超过半年的投稿，无需清理', 'i');
+      }
+    } finally {
+      hideLoading();
+    }
   };
 
   /* ===== 渲染单条投稿 ===== */
