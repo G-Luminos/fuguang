@@ -1163,20 +1163,21 @@
 }
 
 
-/* ===== 手机端横向卡片（600px 以下） ===== */
+/* ===== 手机端横向卡片（600px 以下，id 前缀防特异性被压） ===== */
 @media (max-width: 600px) {
-  .gift-timeline { grid-template-columns: 1fr !important; gap: 10px; }
-  .gift-card {
+  #giftContainer .gift-timeline { grid-template-columns: 1fr !important; gap: 10px; }
+  #giftContainer .gift-card {
     aspect-ratio: auto;
     min-height: 0;
     height: auto;
   }
-  .gift-card-inner {
+  #giftContainer .gift-card .gift-card-inner {
+    height: auto;
     flex-direction: row;
     align-items: stretch;
-    min-height: 108px;
+    min-height: 112px;
   }
-  .gift-card-front {
+  #giftContainer .gift-card .gift-card-front {
     flex: 1;
     align-items: flex-start;
     text-align: left;
@@ -1184,25 +1185,25 @@
     padding: 12px 14px;
     gap: 2px;
   }
-  .gift-month-badge { margin-bottom: 2px; }
-  .gift-card-front .gift-zodiac,
-  .gift-card-front .flower-zodiac {
+  #giftContainer .gift-month-badge { margin-bottom: 2px; }
+  #giftContainer .gift-card .gift-card-front .gift-zodiac,
+  #giftContainer .gift-card .gift-card-front .flower-zodiac {
     display: none;
   }
-  .gift-title { font-size: 14px; font-weight: 700; }
-  .gift-desc { font-size: 11px; -webkit-line-clamp: 2; line-height: 1.5; }
-  .gift-count { font-size: 10px; margin-top: 4px; }
-  .gift-preview {
-    width: 110px;
+  #giftContainer .gift-title { font-size: 14px; font-weight: 700; }
+  #giftContainer .gift-desc { font-size: 11px; -webkit-line-clamp: 2; line-height: 1.5; }
+  #giftContainer .gift-count { font-size: 10px; margin-top: 4px; }
+  #giftContainer .gift-card .gift-preview {
+    width: 112px;
     flex: none;
     height: auto;
-    min-height: 108px;
+    min-height: 112px;
     max-height: none;
     border-radius: 0 16px 16px 0;
     border-top: none;
     border-left: 1px solid rgba(255,255,255,.3);
   }
-  .gift-preview img { height: 100%; object-fit: cover; }
-  .gift-missing-badge { position: static; margin-top: 4px; display: inline-block; }
-  .gift-special-gift { display: none; }
+  #giftContainer .gift-preview img { height: 100%; object-fit: cover; }
+  #giftContainer .gift-missing-badge { position: static; margin-top: 4px; display: inline-block; }
+  #giftContainer .gift-special-gift { display: none; }
 }
