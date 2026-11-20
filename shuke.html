@@ -57,6 +57,7 @@
       <canvas class="sk-cat sk-cat-canvas" id="skCat" width="150" height="150"></canvas>
       <div class="sk-hero-glow" id="skHeroGlow"></div>
       <div class="sk-companion" id="skCompanion" style="display:none" title="我的猫咪伙伴"></div>
+      <button class="sk-plaza-entry" onclick="SK.switchPage('plaza')">🐱 猫咪广场</button>
     </div>
 
     <div class="sk-name-row">
@@ -94,7 +95,6 @@
       <button class="sk-tile" onclick="SK.openTasks()"><span>✅</span><b>今日任务</b><small id="skTaskHint">0/3 完成</small></button>
       <button class="sk-tile" onclick="SK.openShop()"><span>🎁</span><b>积分商店</b><small>兑换应援物</small></button>
       <button class="sk-tile" onclick="SK.switchPage('rank')"><span>🏆</span><b>排行榜</b><small id="skRankHint">看看名次</small></button>
-      <button class="sk-tile" onclick="SK.switchPage('plaza')"><span>🐱</span><b>猫咪广场</b><small id="skPlazaHint">看看别人家的猫</small></button>
     </div>
   </section>
 
@@ -206,9 +206,7 @@
     <div class="sk-card tip">
       <b>怎么玩</b>
       <p>种下种子，每 4 小时可以浇一次水（每次 +1 小时生长）。超过 12 小时没浇水会蔫，救回来只有一半收成。金南瓜产「彩虹露水」，攒 10 个可以换任意皮肤碎片 ×5。</p>
-      <p style="opacity:.6;font-size:11px">演示模式：底下有个加速按钮方便看流程。</p>
     </div>
-    <button class="sk-btn ghost farm-boost" onclick="SK.farmBoost()">⏩ 加速 1 小时（演示）</button>
   </section>
 
   <section class="sk-page" id="sk-page-me">

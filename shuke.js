@@ -1222,7 +1222,6 @@
     if (typeof G.lastCatX !== 'number') G.lastCatX = G.catX;
     var dir = G.catX > G.lastCatX + 0.003 ? 'E' : G.catX < G.lastCatX - 0.003 ? 'W' : 'idle';
     G.lastCatX = G.catX;
-    var dirFrame = null;
 
     for (var i = G.items.length - 1; i >= 0; i--) {
       var it = G.items[i];
@@ -1549,12 +1548,6 @@
     if (window.SKFX) SKFX.confetti(null, null, { count: 60 });
     if (window.ShukePet) window.ShukePet.gameNotify('farm_harvest');
   }
-  function farmBoost() {
-    var f = farm();
-    f.plots.forEach(function (p) { if (p) { p.plantedAt -= 3600000; p.waterAt -= 3600000; } });
-    renderFarm();
-    toast('⏩ 快进 1 小时（演示）');
-  }
 
 
   /* ================= 猫咪伙伴（三层方案） ================= */
@@ -1874,7 +1867,7 @@
       openPay: openPay, closePay: closePay, pickPack: pickPack, submitPay: submitPay,
       openAdmin: openAdmin, closeAdmin: closeAdmin, adminLogin: adminLogin,
       admMark: admMark, admPay: admPay, admCat: admCat, admCatAi: admCatAi,
-      farmPlant: farmPlant, farmDoPlant: farmDoPlant, farmWater: farmWater, farmHarvest: farmHarvest, farmBoost: farmBoost,
+      farmPlant: farmPlant, farmDoPlant: farmDoPlant, farmWater: farmWater, farmHarvest: farmHarvest,
       uploadCat: uploadCat, pickCatFilter: pickCatFilter, requestAiCat: requestAiCat, requestCustomCat: requestCustomCat,
       likeCat: likeCat, farmCatWater: farmCatWater, loadMyCats: loadMyCats
     };

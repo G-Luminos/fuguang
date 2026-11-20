@@ -556,15 +556,27 @@ body::before{
 .cat-filter span{position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;text-align:center}
 
 /* ===== 英雄区伙伴 ===== */
-.sk-companion{position:absolute;right:calc(50% - 130px);bottom:6px;display:flex;flex-direction:column;align-items:center;gap:2px;z-index:3}
+.sk-companion{position:absolute;right:calc(50% - 132px);bottom:8px;width:56px;height:78px;z-index:3}
 .cp-img{width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.4);position:absolute;top:0;left:0;opacity:0;transition:opacity .4s}
 .cp-img.on{opacity:1}
-.sk-companion{position:absolute}
-.sk-companion .cp-name{position:absolute;top:60px;font-size:9px;color:#9C8FC4;white-space:nowrap}
-.sk-companion{height:78px;width:56px}
+.sk-companion .cp-name{position:absolute;top:60px;left:50%;transform:translateX(-50%);font-size:9px;color:#9C8FC4;white-space:nowrap}
 .farm-catrow{margin-bottom:10px}
 .farm-cathelp{width:100%;padding:10px;border-radius:12px;border:1.5px dashed rgba(155,107,255,.4);background:rgba(155,107,255,.1);color:#C4B6E0;font-size:12px;font-weight:700;cursor:pointer}
 .farm-cathelp:disabled{opacity:.5;cursor:default}
 .farm-cathelp-off{font-size:11px;color:#9C8FC4;text-align:center;padding:6px}
 .sk-adm-cat{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none}
 .sk-adm-ai{background:linear-gradient(135deg,#9B6BFF,#FF6B9D) !important;color:#fff !important}
+
+
+/* ===== 布局修正 ===== */
+.sk-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.sk-quick .sk-qbtn{padding:10px 6px;flex-direction:column;gap:2px}
+.sk-quick .sk-q-ico{font-size:22px}
+.sk-quick .sk-q-txt{font-size:11px}
+.sk-quick small{font-size:9px}
+.sk-idle{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center}
+.sk-idle-hd{grid-column:1/-1}
+.sk-idle-amount{grid-column:1}
+.sk-idle-bar{grid-column:1/-1}
+.sk-idle #skIdleBtn{grid-row:2;grid-column:2;margin:0;padding:8px 14px;font-size:12px}
+.sk-plaza-entry{position:absolute;right:12px;top:12px;z-index:4;padding:7px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#F2ECFF;font-size:11px;font-weight:700;cursor:pointer;backdrop-filter:blur(6px)}
