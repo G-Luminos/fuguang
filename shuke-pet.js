@@ -420,6 +420,9 @@
     equip: '换上新衣服啦！好看好看',
     checkin: '签到成功！今天也有奖励喵',
     level: '升级啦！我为你骄傲',
+    farm_plant: '种下啦！我会帮你看着它长大的',
+    farm_water: '多喝点水，快快长大～',
+    farm_harvest: '丰收啦！你种的菜好棒喵',
     game: null
   };
   function gameNotify(kind, info) {

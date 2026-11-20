@@ -173,6 +173,7 @@
       pet: { date: '', count: 0 },
       play: { date: '', games: 0, best: 0, bestCombo: 0 },
       tasks: { date: '', progress: { play: 0, open: 0, pet: 0 }, claimed: {} },
+      farm: { plots: [null, null, null, null], seeds: { mint: 3, carrot: 1, pumpkin: 0 }, dew: 0 },
       exchanged: {},
       cloud: { nick: '' }
     };
@@ -789,10 +790,12 @@
     body.innerHTML = '<div class="sk-loading">加载中…</div>';
     Promise.all([
       window.adminRpc('shuke_redeem_list', {}),
-      window.adminRpc('shuke_pay_list', {})
+      window.adminRpc('shuke_pay_list', {}),
+      window.adminRpc('cats_rpc', { p_action: 'pending' })
     ]).then(function (rs) {
       var redeems = (rs[0] && rs[0].ok && rs[0].rows) || [];
       var pays = (rs[1] && rs[1].ok && rs[1].rows) || [];
+      var cats = (rs[2] && rs[2].ok && rs[2].rows) || [];
       var html = '';
       html += '<div class="sk-adm-sec">📦 兑换核销（' + redeems.filter(function (x) { return x.status === 'pending'; }).length + ' 待办）</div>';
       if (!redeems.length) html += '<div class="sk-loading">还没有兑换记录</div>';
@@ -804,6 +807,19 @@
           (r.status === 'pending'
             ? '<div class="sk-adm-act"><button onclick="SK.admMark(\'' + r.id + '\',\'done\')">完成</button><button onclick="SK.admMark(\'' + r.id + '\',\'rejected\')">驳回</button></div>'
             : '<div class="sk-adm-status">' + (r.status === 'done' ? '已完成' : '已驳回') + '</div>') +
+        '</div>';
+      });
+      html += '<div class="sk-adm-sec">🐱 猫咪审核（' + cats.length + ' 待办）</div>';
+      if (!cats.length) html += '<div class="sk-loading">没有待审核的猫</div>';
+      cats.forEach(function (c) {
+        html += '<div class="sk-adm-row">' +
+          '<img src="' + c.image + '" class="sk-adm-cat">' +
+          '<div class="sk-adm-info"><b>' + esc(c.name) + '</b><small>' + esc(c.owner_nick) + ' · ' + (c.kind === 'ai' ? '会动的' : c.kind === 'custom' ? '自定义' : '照片') + ' · ' + fmtTime(c.created_at) + '</small></div>' +
+          '<div class="sk-adm-act">' +
+            '<button onclick="SK.admCat(\'' + c.id + '\',1)">通过</button>' +
+            '<button onclick="SK.admCat(\'' + c.id + '\',0)">驳回</button>' +
+            (c.kind !== 'photo' ? '<button class="sk-adm-ai" onclick="SK.admCatAi(\'' + c.id + '\')">回填AI图</button>' : '') +
+          '</div>' +
         '</div>';
       });
       html += '<div class="sk-adm-sec">💎 充值核销（' + pays.filter(function (x) { return x.status === 'pending'; }).length + ' 待办）</div>';
@@ -827,6 +843,33 @@
   function fmtTime(t) {
     try { return new Date(t).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
     catch (e) { return ''; }
+  }
+
+  function admCat(id, ok) {
+    window.adminRpc('cats_rpc', { p_action: 'review', p_payload: { id: id, ok: ok ? '1' : '0' } }).then(function (r) {
+      if (r && r.ok) { toast(ok ? '已通过' : '已驳回'); loadAdminLists(); }
+      else toast('失败：' + ((r && r.error) || ''));
+    });
+  }
+  function admCatAi(id) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = function () {
+      var files = Array.from(input.files || []).slice(0, 4);
+      if (!files.length) return;
+      toast('处理图片中…');
+      Promise.all(files.map(function (f) {
+        return window.MediaUtil.blobToDataUrl(f, { maxDim: 512, maxBytes: 300000 });
+      })).then(function (urls) {
+        window.adminRpc('cats_rpc', { p_action: 'fulfill', p_payload: { id: id, images: urls } }).then(function (r) {
+          if (r && r.ok) { toast('已回填，变成会动的形象 ✅'); loadAdminLists(); }
+          else toast('失败：' + ((r && r.error) || ''));
+        });
+      });
+    };
+    input.click();
   }
 
   function admMark(id, status) {
@@ -939,6 +982,7 @@
   }
 
   function renderMe() {
+    loadMyCats();
     $('skMeName').textContent = SAVE.cloud.nick || (SAVE.user.name + '（本地）');
     $('skMeLevel').textContent = 'Lv.' + SAVE.user.level;
     $('skMePoints').textContent = nfmt(SAVE.user.points);
@@ -1288,6 +1332,8 @@
     if (page === 'collection') renderCollection();
     if (page === 'rank') { renderRank(); loadLeaderboard(); }
     if (page === 'me') renderMe();
+    if (page === 'farm') renderFarm();
+    if (page === 'plaza') loadPlaza();
     if (page === 'play') {
       setTimeout(fitGame, 30);
       if (!G.running) fitGame();
@@ -1368,6 +1414,449 @@
     if (!silent) toast('已退出登录，存档还在本机');
   }
 
+
+  /* ================= 菜园（demo，本机存档） ================= */
+  var CROPS = {
+    mint:    { name: '猫薄荷', icon: '🌿', hours: 8,  coins: [80, 120],  pts: 0,  dew: 0 },
+    carrot:  { name: '小萝卜', icon: '🥕', hours: 24, coins: [200, 300], pts: 8,  dew: 0 },
+    pumpkin: { name: '金南瓜', icon: '🎃', hours: 48, coins: [300, 500], pts: 15, dew: 2 }
+  };
+  var PLOT_UNLOCK = [0, 3, 10, 25];
+  var WATER_INTERVAL = 4 * 3600000;
+  var WILT_AFTER = 12 * 3600000;
+  var WATER_BOOST = 3600000;
+
+  function farm() { SAVE.farm = SAVE.farm || { plots: [null, null, null, null], seeds: { mint: 3, carrot: 1, pumpkin: 0 }, dew: 0 }; return SAVE.farm; }
+
+  function plotInfo(i) {
+    var p = farm().plots[i];
+    if (!p) return { state: 'empty' };
+    var c = CROPS[p.crop];
+    var now = Date.now();
+    var elapsed = now - p.plantedAt + (p.wateredCount || 0) * WATER_BOOST;
+    var need = c.hours * 3600000;
+    var progress = Math.min(1, elapsed / need);
+    var ready = progress >= 1;
+    var wilted = !ready && (now - p.waterAt) > WILT_AFTER;
+    var canWater = !ready && (now - p.waterAt) > WATER_INTERVAL;
+    var remain = Math.max(0, need - elapsed);
+    return { state: ready ? 'ready' : wilted ? 'wilt' : 'grow', progress: progress, canWater: canWater, remain: remain, crop: c };
+  }
+
+  function fmtRemain(ms) {
+    var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+    return h > 0 ? h + '小时' + (m ? m + '分' : '') : m + '分钟';
+  }
+
+  function renderFarm() {
+    var f = farm();
+    $('farmDew').textContent = f.dew;
+    var cat = approvedCat();
+    var cw = $('farmCatRow');
+    if (cw) {
+      if (cat) {
+        var used = f.catWaterDate === todayStr();
+        cw.innerHTML = '<button class="farm-cathelp" onclick="SK.farmCatWater()"' + (used ? ' disabled' : '') + '>🐱 ' + esc(cat.name) + ' 帮浇（直接跳 4 小时）' + (used ? ' · 今日已用' : '') + '</button>';
+      } else {
+        cw.innerHTML = '<div class="farm-cathelp-off">上传你家猫并通过审核后，它可以帮你浇水加速</div>';
+      }
+    }
+    var seedHtml = Object.keys(CROPS).map(function (id) {
+      var c = CROPS[id], n = f.seeds[id] || 0;
+      return '<span class="farm-seed' + (n ? '' : ' off') + '">' + c.icon + ' ' + c.name + ' ×' + n + '</span>';
+    }).join('');
+    $('farmSeeds').innerHTML = seedHtml;
+    var lv = SAVE.user.level;
+    var grid = '';
+    for (var i = 0; i < 4; i++) {
+      var need = PLOT_UNLOCK[i];
+      if (lv < need) {
+        grid += '<div class="farm-plot locked">🔒<small>Lv.' + need + ' 解锁</small></div>';
+        continue;
+      }
+      var pi = plotInfo(i);
+      if (pi.state === 'empty') {
+        grid += '<div class="farm-plot empty" onclick="SK.farmPlant(' + i + ')">＋<small>播种</small></div>';
+      } else if (pi.state === 'ready') {
+        grid += '<div class="farm-plot ready" onclick="SK.farmHarvest(' + i + ')">' +
+          '<div class="farm-crop big">' + pi.crop.icon + '</div><b>熟啦！点我收获</b></div>';
+      } else {
+        var icon = pi.state === 'wilt' ? '🥀' : (pi.progress < 0.33 ? '🌱' : pi.progress < 0.66 ? '🌿' : pi.crop.icon);
+        grid += '<div class="farm-plot ' + pi.state + '">' +
+          '<div class="farm-crop">' + icon + '</div>' +
+          '<b>' + pi.crop.name + (pi.state === 'wilt' ? '（蔫了）' : '') + '</b>' +
+          '<div class="farm-bar"><i style="width:' + Math.round(pi.progress * 100) + '%"></i></div>' +
+          '<small>' + (pi.state === 'wilt' ? '救活它吧' : '还差 ' + fmtRemain(pi.remain)) + '</small>' +
+          '<button class="farm-water" onclick="event.stopPropagation();SK.farmWater(' + i + ')"' + (pi.canWater || pi.state === 'wilt' ? '' : ' disabled') + '>💧 浇水</button>' +
+        '</div>';
+      }
+    }
+    $('farmGrid').innerHTML = grid;
+  }
+
+  function farmPlant(i) {
+    if (SAVE.user.level < PLOT_UNLOCK[i]) { toast('Lv.' + PLOT_UNLOCK[i] + ' 解锁这块地'); return; }
+    var f = farm();
+    var has = Object.keys(CROPS).filter(function (id) { return (f.seeds[id] || 0) > 0; });
+    if (!has.length) { toast('没有种子了，签到或开箱可以获得'); return; }
+    var html = has.map(function (id) {
+      var c = CROPS[id];
+      return '<button class="sk-btn ghost" style="width:100%;margin-bottom:8px" onclick="SK.farmDoPlant(' + i + ',\'' + id + '\')">' + c.icon + ' ' + c.name + ' ×' + f.seeds[id] + ' · ' + c.hours + 'h</button>';
+    }).join('');
+    openSheet('🌱 选一颗种子', html);
+  }
+  function farmDoPlant(i, cropId) {
+    closeSheet();
+    if (SAVE.user.level < PLOT_UNLOCK[i]) { toast('Lv.' + PLOT_UNLOCK[i] + ' 解锁这块地'); return; }
+    var f = farm();
+    if ((f.seeds[cropId] || 0) <= 0) return;
+    f.seeds[cropId]--;
+    f.plots[i] = { crop: cropId, plantedAt: Date.now(), waterAt: Date.now(), wateredCount: 0 };
+    scheduleSync();
+    renderFarm();
+    if (window.ShukePet) window.ShukePet.gameNotify('farm_plant');
+  }
+  function farmWater(i) {
+    var p = farm().plots[i];
+    if (!p) return;
+    var pi = plotInfo(i);
+    if (!pi.canWater && pi.state !== 'wilt') { toast('刚浇过，4 小时后再来'); return; }
+    p.waterAt = Date.now();
+    p.wateredCount = (p.wateredCount || 0) + 1;
+    scheduleSync();
+    renderFarm();
+    if (window.SKFX) SKFX.confetti(null, null, { count: 12, spread: 0.4 });
+    if (window.ShukePet && Math.random() < 0.4) window.ShukePet.gameNotify('farm_water');
+  }
+  function farmHarvest(i) {
+    var f = farm();
+    var p = f.plots[i];
+    if (!p) return;
+    var pi = plotInfo(i);
+    if (pi.state !== 'ready') return;
+    var c = pi.crop;
+    var wilted = (Date.now() - p.waterAt) > WILT_AFTER;
+    var coins = Math.round((c.coins[0] + Math.random() * (c.coins[1] - c.coins[0])) * (wilted ? 0.5 : 1));
+    var pts = Math.round(c.pts * (wilted ? 0.5 : 1));
+    SAVE.user.coins += coins;
+    SAVE.user.points += pts;
+    f.dew += c.dew;
+    f.plots[i] = null;
+    scheduleSync();
+    renderFarm();
+    renderHome();
+    toast('收获 ' + c.icon + ' +' + coins + '🧶' + (pts ? ' +' + pts + '⭐' : '') + (c.dew ? ' +' + c.dew + '💧' : '') + (wilted ? '（蔫了减半）' : ''));
+    if (window.SKFX) SKFX.confetti(null, null, { count: 60 });
+    if (window.ShukePet) window.ShukePet.gameNotify('farm_harvest');
+  }
+  function farmBoost() {
+    var f = farm();
+    f.plots.forEach(function (p) { if (p) { p.plantedAt -= 3600000; p.waterAt -= 3600000; } });
+    renderFarm();
+    toast('⏩ 快进 1 小时（演示）');
+  }
+
+
+  /* ================= 猫咪伙伴（三层方案） ================= */
+  var myCats = [];      // 我自己的猫（含待审）
+  var plazaCats = [];   // 广场（仅已通过）
+  var likedCats = {};   // 本机点过赞的
+
+  try { likedCats = JSON.parse(localStorage.getItem('shuke_cats_liked') || '{}'); } catch (e) {}
+  function saveLiked() { try { localStorage.setItem('shuke_cats_liked', JSON.stringify(likedCats)); } catch (e) {} }
+
+  function catsRpc(action, payload) {
+    if (!window.sb) return Promise.resolve({ ok: false, error: '未连接' });
+    return window.sb.rpc('cats_rpc', { p_action: action, p_payload: payload || {} }).then(function (r) {
+      return (r && r.data) || { ok: false, error: (r && r.error) || '失败' };
+    }).catch(function (e) { return { ok: false, error: e && e.message || '失败' }; });
+  }
+  function catsAdminRpc(action, payload) {
+    return window.adminRpc('cats_rpc', Object.assign({ p_action: action }, payload || {})).then(function (r) {
+      return r || { ok: false };
+    }).catch(function () { return { ok: false }; });
+  }
+  /* adminRpc 的签名是 adminRpc(fn, extraArgs)，cats_rpc 需要 p_action 在 args 里 */
+
+  function loadMyCats() {
+    var nick = SAVE.cloud.nick || SAVE.user.name;
+    if (!nick || nick === '小粉丝' || nick === '本地玩家') { myCats = []; renderMyCats(); return; }
+    catsRpc('mine', { owner_nick: nick }).then(function (r) {
+      myCats = (r.ok && r.rows) || [];
+      renderMyCats();
+      renderCompanion();
+    });
+  }
+
+  function approvedCat() {
+    return myCats.filter(function (c) { return c.status === 'approved'; })[0] || null;
+  }
+
+  /* 首页伙伴展示 */
+  var companionTimer = 0;
+  function renderCompanion() {
+    var el = $('skCompanion');
+    if (!el) return;
+    var cat = approvedCat();
+    if (!cat) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    var imgs = [cat.image].concat(cat.extra_images || []);
+    el.innerHTML = imgs.map(function (u, i) {
+      return '<img src="' + u + '" class="cp-img' + (i === 0 ? ' on' : '') + '">';
+    }).join('') + '<span class="cp-name">' + esc(cat.name) + '</span>';
+    clearInterval(companionTimer);
+    if (imgs.length > 1) {
+      var idx = 0;
+      companionTimer = setInterval(function () {
+        idx = (idx + 1) % imgs.length;
+        el.querySelectorAll('.cp-img').forEach(function (im, i) { im.classList.toggle('on', i === idx); });
+      }, 1600);
+    }
+  }
+
+  /* 上传：先选滤镜，再提交 */
+  var catFilters = [
+    { id: 'none', name: '原图', css: '' },
+    { id: 'warm', name: '暖阳', css: 'sepia(.25) saturate(1.2) brightness(1.05)' },
+    { id: 'soft', name: '柔光', css: 'brightness(1.1) contrast(.92) saturate(1.1)' },
+    { id: 'sketch', name: '线稿感', css: 'grayscale(1) contrast(1.6) brightness(1.15)' },
+    { id: 'poster', name: '海报风', css: 'saturate(1.6) contrast(1.25)' }
+  ];
+  var pendingCatImage = '';
+
+  function uploadCat() {
+    var nick = SAVE.cloud.nick || SAVE.user.name;
+    if (!SAVE.cloud.userId) { toast('先登录账号再上传猫咪哦'); openAuth(); return; }
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      showLoading && showLoading('⏳ 处理图片中…');
+      window.MediaUtil.blobToDataUrl(f, { maxDim: 640, maxBytes: 400000 }).then(function (dataUrl) {
+        pendingCatImage = dataUrl;
+        hideLoading && hideLoading();
+        openCatFilterSheet();
+      }).catch(function () { hideLoading && hideLoading(); toast('图片处理失败'); });
+    };
+    input.click();
+  }
+
+  function openCatFilterSheet() {
+    var html = '<div class="cat-filter-grid">' + catFilters.map(function (f) {
+      return '<div class="cat-filter" data-f="' + f.id + '" onclick="SK.pickCatFilter(\'' + f.id + '\')">' +
+        '<img src="' + pendingCatImage + '" style="filter:' + f.css + '">' +
+        '<span>' + f.name + '</span></div>';
+    }).join('') + '</div>' +
+    '<input id="catName" maxlength="8" placeholder="猫咪名字" class="sk-pay-input" style="margin-top:10px">';
+    openSheet('📷 给猫咪选个滤镜', html);
+  }
+
+  function pickCatFilter(fid) {
+    var f = catFilters.filter(function (x) { return x.id === fid; })[0] || catFilters[0];
+    var name = ($('catName') || {}).value || '';
+    if (!name.trim()) { toast('先给猫咪起个名字'); return; }
+    // 应用滤镜
+    applyFilter(pendingCatImage, f.css).then(function (finalUrl) {
+      var nick = SAVE.cloud.nick || SAVE.user.name;
+      showLoading && showLoading('⏳ 上传中…');
+      catsRpc('submit', { owner_nick: nick, name: name.trim(), image: finalUrl, kind: 'photo' }).then(function (r) {
+        hideLoading && hideLoading();
+        if (r && r.ok) {
+          closeSheet();
+          toast('已提交审核，通过后就会出现在广场和主页 🐱');
+          loadMyCats();
+          if (window.ShukePet) window.ShukePet.say('你家猫咪好可爱！审核通过就能跟我一起玩啦', 4500);
+        } else toast('提交失败：' + (r && r.error || ''));
+      });
+    });
+  }
+
+  function applyFilter(dataUrl, css) {
+    return new Promise(function (resolve) {
+      if (!css) return resolve(dataUrl);
+      var img = new Image();
+      img.onload = function () {
+        var cv = document.createElement('canvas');
+        cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+        var ctx = cv.getContext('2d');
+        ctx.filter = css;
+        ctx.drawImage(img, 0, 0);
+        resolve(cv.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = function () { resolve(dataUrl); };
+      img.src = dataUrl;
+    });
+  }
+
+  /* 我的猫咪列表 */
+  function renderMyCats() {
+    var el = $('myCatsList');
+    if (!el) return;
+    if (!myCats.length) {
+      el.innerHTML = '<div class="sk-loading" style="padding:14px">还没有上传猫咪</div>';
+    } else {
+      el.innerHTML = myCats.map(function (c) {
+        var st = c.status === 'approved' ? '✅ 已通过' : c.status === 'pending' ? '⏳ 审核中' : '❌ 未通过';
+        var cls = c.status === 'approved' ? 'ok' : c.status === 'pending' ? 'wait' : 'no';
+        return '<div class="mycat-row">' +
+          '<img src="' + c.image + '" class="mycat-ava">' +
+          '<div class="mycat-info"><b>' + esc(c.name) + '</b><small>' + (c.kind === 'ai' ? '会动的形象' : c.kind === 'custom' ? '自定义形象' : '照片') + ' · ' + c.likes + ' ❤️</small></div>' +
+          '<span class="mycat-st ' + cls + '">' + st + '</span>' +
+        '</div>';
+      }).join('');
+    }
+    renderTiers();
+  }
+
+  /* 三层闸：AI 成就解锁 / 星钻月限 */
+  function renderTiers() {
+    var aiOk = SAVE.checkin.streak >= 14 || SAVE.user.level >= 10;
+    var aiBtn = $('tierAiBtn'), aiHint = $('tierAiHint');
+    if (aiBtn) {
+      var hasAiReq = myCats.some(function (c) { return c.kind === 'ai' && c.status === 'pending'; });
+      if (hasAiReq) { aiBtn.disabled = true; aiBtn.textContent = '排队生成中'; }
+      else if (aiOk) { aiBtn.disabled = false; aiBtn.textContent = '申请生成'; }
+      else {
+        aiBtn.disabled = true;
+        aiBtn.textContent = '未解锁';
+        aiHint.textContent = '连签 14 天或 Lv.10 解锁（现在 ' + Math.max(SAVE.checkin.streak, 0) + ' 天 / Lv.' + SAVE.user.level + '）';
+      }
+    }
+    var cuBtn = $('tierCustomBtn');
+    if (cuBtn) {
+      var month = new Date().toISOString().slice(0, 7);
+      var used = SAVE.customGenMonth === month;
+      var hasCuReq = myCats.some(function (c) { return c.kind === 'custom' && c.status === 'pending'; });
+      if (hasCuReq) { cuBtn.disabled = true; cuBtn.textContent = '排队生成中'; }
+      else if (used) { cuBtn.disabled = true; cuBtn.textContent = '本月已用'; }
+      else if ((SAVE.user.gems || 0) < 30) { cuBtn.disabled = true; cuBtn.textContent = '星钻不足'; }
+      else { cuBtn.disabled = false; cuBtn.textContent = '申请（30💎）'; }
+    }
+  }
+
+  function needPhotoCat() {
+    var cat = approvedCat();
+    if (!cat) { toast('先上传一张自家猫照片并等审核通过，AI 会照它画'); return null; }
+    return cat;
+  }
+
+  function requestAiCat() {
+    var cat = needPhotoCat();
+    if (!cat) return;
+    showLoading && showLoading('⏳ 提交申请…');
+    catsRpc('submit', { owner_nick: SAVE.cloud.nick || SAVE.user.name, name: cat.name + '（会动的）', image: cat.image, kind: 'ai' }).then(function (r) {
+      hideLoading && hideLoading();
+      if (r && r.ok) {
+        toast('申请成功！生成好后会出现在这里');
+        loadMyCats();
+        if (window.ShukePet) window.ShukePet.say('好耶！你解锁了会动的形象，我帮你催爸爸画～', 4500);
+      } else toast('申请失败：' + (r && r.error || ''));
+    });
+  }
+
+  function requestCustomCat() {
+    var cat = needPhotoCat();
+    if (!cat) return;
+    var month = new Date().toISOString().slice(0, 7);
+    if (SAVE.customGenMonth === month) { toast('本月已经用过了'); return; }
+    if ((SAVE.user.gems || 0) < 30) { toast('星钻不够，去充值区看看'); openPay && openPay(); return; }
+    if (!confirm('用 30 星钻申请一次自定义生成？（本月限 1 次）')) return;
+    SAVE.user.gems -= 30;
+    SAVE.customGenMonth = month;
+    scheduleSync();
+    showLoading && showLoading('⏳ 提交申请…');
+    catsRpc('submit', { owner_nick: SAVE.cloud.nick || SAVE.user.name, name: cat.name + '（自定义）', image: cat.image, kind: 'custom' }).then(function (r) {
+      hideLoading && hideLoading();
+      if (r && r.ok) {
+        toast('申请成功！小光会尽快安排');
+        loadMyCats();
+      } else {
+        SAVE.user.gems += 30;
+        SAVE.customGenMonth = '';
+        scheduleSync();
+        toast('申请失败，星钻已退回：' + (r && r.error || ''));
+      }
+    });
+  }
+
+  /* ================= 猫咪广场 ================= */
+  function loadPlaza() {
+    catsRpc('plaza', {}).then(function (r) {
+      plazaCats = (r.ok && r.rows) || [];
+      renderPlaza();
+    });
+  }
+  function renderPlaza() {
+    var el = $('plazaGrid');
+    if (!el) return;
+    $('plazaCount').textContent = plazaCats.length + ' 只';
+    if (!plazaCats.length) {
+      el.innerHTML = '<div class="sk-loading" style="padding:30px">还没有猫通过审核，快去上传你家的！</div>';
+      return;
+    }
+    el.innerHTML = plazaCats.map(function (c, i) {
+      var liked = likedCats[c.id];
+      var crown = i === 0 ? '<span class="plaza-crown">👑</span>' : '';
+      var animated = (c.extra_images && c.extra_images.length > 1) ? ' animated' : '';
+      return '<div class="plaza-card' + animated + '">' + crown +
+        '<div class="plaza-img">' +
+          (c.extra_images && c.extra_images.length > 1
+            ? [c.image].concat(c.extra_images).map(function (u, k) { return '<img src="' + u + '" class="plaza-frame' + (k === 0 ? ' on' : '') + '">'; }).join('')
+            : '<img src="' + c.image + '">') +
+        '</div>' +
+        '<div class="plaza-info"><b>' + esc(c.name) + '</b><small>' + esc(c.owner_nick) + ' 家的</small></div>' +
+        '<button class="plaza-like' + (liked ? ' on' : '') + '" onclick="SK.likeCat(\'' + c.id + '\')">❤️ ' + c.likes + '</button>' +
+      '</div>';
+    }).join('');
+    // 动画帧切换
+    el.querySelectorAll('.plaza-card.animated .plaza-img').forEach(function (box) {
+      var frames = box.querySelectorAll('.plaza-frame');
+      if (frames.length < 2) return;
+      var idx = 0;
+      setInterval(function () {
+        idx = (idx + 1) % frames.length;
+        frames.forEach(function (f, k) { f.classList.toggle('on', k === idx); });
+      }, 1500);
+    });
+  }
+  function likeCat(id) {
+    if (likedCats[id]) { toast('已经点过啦'); return; }
+    likedCats[id] = true;
+    saveLiked();
+    catsRpc('like', { id: id }).then(function (r) {
+      if (r && r.ok) {
+        var c = plazaCats.filter(function (x) { return x.id === id; })[0];
+        if (c) c.likes++;
+        renderPlaza();
+      }
+    });
+  }
+
+  /* ================= 菜园：猫咪帮浇 ================= */
+  function farmCatWater() {
+    var cat = approvedCat();
+    if (!cat) { toast('先上传并审核通过一只猫'); return; }
+    var t = todayStr();
+    if (farm().catWaterDate === t) { toast(cat.name + ' 今天已经浇过了'); return; }
+    // 找一块没熟的地直接跳 4 小时
+    var f = farm();
+    var target = -1;
+    for (var i = 0; i < f.plots.length; i++) {
+      if (f.plots[i] && plotInfo(i).state !== 'ready') { target = i; break; }
+    }
+    if (target < 0) { toast('没有需要浇水的地'); return; }
+    f.plots[target].plantedAt -= 4 * 3600000;
+    f.plots[target].waterAt = Date.now();
+    f.catWaterDate = t;
+    scheduleSync();
+    renderFarm();
+    toast(cat.name + ' 帮你浇了水，这块地快进 4 小时！');
+    if (window.ShukePet) window.ShukePet.say(cat.name + ' 好能干！帮你把地浇啦', 4000);
+    if (window.SKFX) SKFX.confetti(null, null, { count: 20, spread: 0.5 });
+  }
+
   /* ================= 初始化 ================= */
   function init() {
     window.SK = {
@@ -1384,7 +1873,10 @@
       loadLeaderboard: loadLeaderboard,
       openPay: openPay, closePay: closePay, pickPack: pickPack, submitPay: submitPay,
       openAdmin: openAdmin, closeAdmin: closeAdmin, adminLogin: adminLogin,
-      admMark: admMark, admPay: admPay
+      admMark: admMark, admPay: admPay, admCat: admCat, admCatAi: admCatAi,
+      farmPlant: farmPlant, farmDoPlant: farmDoPlant, farmWater: farmWater, farmHarvest: farmHarvest, farmBoost: farmBoost,
+      uploadCat: uploadCat, pickCatFilter: pickCatFilter, requestAiCat: requestAiCat, requestCustomCat: requestCustomCat,
+      likeCat: likeCat, farmCatWater: farmCatWater, loadMyCats: loadMyCats
     };
 
     document.querySelectorAll('.sk-tab').forEach(function (t) {
@@ -1417,6 +1909,7 @@
     renderAll();
     loadLeaderboard();
     loadShop();
+    loadMyCats();
     if (window.ShukeAssets) window.ShukeAssets.refresh(function () { renderCollection(); renderHome(); });
 
     setInterval(function () {
