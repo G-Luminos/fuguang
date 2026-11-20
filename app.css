@@ -116,8 +116,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans G
 .empty p{font-size:14px}
 
 /* ===== FAB ===== */
-.fab{position:fixed;bottom:22px;right:22px;width:52px;height:52px;border-radius:50%;background:var(--al);color:#FFF;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 14px rgba(251,114,153,.4);z-index:99;display:flex;align-items:center;justify-content:center;transition:transform .15s}
-.fab:hover{transform:scale(1.08)}.fab:active{transform:scale(.95)}
 
 /* ===== Modal ===== */
 .mo{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}

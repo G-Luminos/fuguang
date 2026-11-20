@@ -1131,8 +1131,9 @@
     max-height: 95vh;
   }
 
+  /* 手机端：纵向列表卡片，可视区更大 */
   .gift-timeline {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
@@ -1159,4 +1160,48 @@
   /* 十二花语 */
   .gift-flower-grid { grid-template-columns: repeat(2, 1fr); }
   .flower-desc { display: none; }
+}
+
+
+/* ===== 手机端横向卡片（600px 以下） ===== */
+@media (max-width: 600px) {
+  .gift-card {
+    aspect-ratio: auto;
+    min-height: 0;
+    height: auto;
+  }
+  .gift-card-inner {
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 108px;
+  }
+  .gift-card-front {
+    flex: 1;
+    align-items: flex-start;
+    text-align: left;
+    justify-content: center;
+    padding: 12px 14px;
+    gap: 2px;
+  }
+  .gift-month-badge { margin-bottom: 2px; }
+  .gift-card-front .gift-zodiac,
+  .gift-card-front .flower-zodiac {
+    display: none;
+  }
+  .gift-title { font-size: 14px; font-weight: 700; }
+  .gift-desc { font-size: 11px; -webkit-line-clamp: 2; line-height: 1.5; }
+  .gift-count { font-size: 10px; margin-top: 4px; }
+  .gift-preview {
+    width: 110px;
+    flex: none;
+    height: auto;
+    min-height: 108px;
+    max-height: none;
+    border-radius: 0 16px 16px 0;
+    border-top: none;
+    border-left: 1px solid rgba(255,255,255,.3);
+  }
+  .gift-preview img { height: 100%; object-fit: cover; }
+  .gift-missing-badge { position: static; margin-top: 4px; display: inline-block; }
+  .gift-special-gift { display: none; }
 }
